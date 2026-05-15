@@ -1,21 +1,7 @@
-# Next.js template
+# Ingestalt
 
-This is a Next.js template with shadcn/ui.
+**Built for the IBM Bob Hackathon (May 15–17, 2026)**
 
-## Adding components
+### Overview
 
-To add components to your app, run the following command:
-
-```bash
-npx shadcn@latest add button
-```
-
-This will place the ui components in the `components` directory.
-
-## Using components
-
-To use the components in your app, import them as follows:
-
-```tsx
-import { Button } from "@/components/ui/button";
-```
+**Ingestalt** is a local-first, spatial documentation engine. It transforms flat Markdown files into an interactive architectural map. It is designed to act as a shared "mental model" for developers and AI agents, ensuring that as codebases scale, architectural intent remains visible and navigable.
