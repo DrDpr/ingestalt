@@ -2,7 +2,12 @@
 
 import React, { useState, useMemo } from 'react';
 import { 
-  Sparkles, Cpu, Loader2
+  Sparkles, Cpu, Loader2,
+  ExternalLink,
+  FolderOpen,
+  Plus,
+  Save,
+  Trash2
 } from 'lucide-react';
 import { db } from '../../lib/db';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -11,8 +16,9 @@ import { DynamicIcon } from '../DynamicIcon';
 import { useFileSystem } from '../../lib/hooks/useFileSystem';
 import { useSync } from '../../lib/hooks/useSync';
 import { useUIStore } from '../../lib/store/useUIStore';
-import { ExternalLink, FolderOpen, Save, Trash2, Plus, ChevronDown } from 'lucide-react';
 import { LocalInput, LocalTextArea } from '../ui/LocalInput';
+import { PromptModal } from '../PromptModal';
+import { Copy, AlertTriangle } from 'lucide-react';
 
 // --- Modular Imports ---
 import { 
@@ -30,6 +36,20 @@ export function PayloadInterpretersView({ node, hideHeader = false }: { node: an
   const [selectedColumns, setSelectedColumns] = useState<Set<string>>(new Set());
   const [isConfiguring, setIsConfiguring] = useState(false);
   const [rootInput, setRootInput] = useState('');
+  const [promptConfig, setPromptConfig] = useState<{
+    show: boolean;
+    title: string;
+    message: string;
+    type?: 'default' | 'danger' | 'warning' | 'success' | 'info';
+    icon?: React.ReactNode;
+    options?: { label: string; value: string; variant?: 'default' | 'danger' }[];
+    onConfirm: (val: string) => void;
+  }>({
+    show: false,
+    title: '',
+    message: '',
+    onConfirm: () => { },
+  });
   
   const { payload, configId } = node;
   const { openInCode, hasRoot, setLocalRoot, getLocalRoot } = useFileSystem();
@@ -68,12 +88,27 @@ export function PayloadInterpretersView({ node, hideHeader = false }: { node: an
   }, [activeStandards, configId]);
 
   const handleDeleteField = async (fieldName: string) => {
-    if (!confirm(`Remove field "${fieldName}" from this node?`)) return;
-    const newPayload = { ...payload };
-    delete newPayload[fieldName];
-    
-    await db.nodes.update(node.id, { payload: newPayload, lastModified: Date.now() });
-    if (autoSaveEnabled) await syncNodeToFile(node.id);
+    setPromptConfig({
+      show: true,
+      title: 'REMOVE FIELD',
+      message: `Are you sure you want to remove the field "${fieldName}" from this node? This will delete its stored data.`,
+      type: 'danger',
+      icon: <Trash2 size={24} />,
+      options: [
+        { label: 'REMOVE FIELD', value: 'confirm', variant: 'danger' },
+        { label: 'CANCEL', value: 'cancel' }
+      ],
+      onConfirm: async (val) => {
+        if (val === 'confirm') {
+          const newPayload = { ...payload };
+          delete newPayload[fieldName];
+          
+          await db.nodes.update(node.id, { payload: newPayload, lastModified: Date.now() });
+          if (autoSaveEnabled) await syncNodeToFile(node.id);
+        }
+        setPromptConfig(prev => ({ ...prev, show: false }));
+      }
+    });
   };
 
   const handleAddField = async (fieldName: string) => {
@@ -232,6 +267,15 @@ export function PayloadInterpretersView({ node, hideHeader = false }: { node: an
                       await handleUpdateField(field.name, newData);
                       handleUpdateFieldBlur();
                     }}
+                    onAlert={(msg) => setPromptConfig({
+                      show: true,
+                      title: 'NAVIGATION ERROR',
+                      message: msg,
+                      type: 'warning',
+                      icon: <AlertTriangle size={24} />,
+                      options: [{ label: 'UNDERSTOOD', value: 'close' }],
+                      onConfirm: () => setPromptConfig(prev => ({ ...prev, show: false }))
+                    })}
                   />
                 )}
                 {field.type === 'code_list' && (
@@ -241,6 +285,15 @@ export function PayloadInterpretersView({ node, hideHeader = false }: { node: an
                       await handleUpdateField(field.name, newData);
                       handleUpdateFieldBlur();
                     }}
+                    onAlert={(title, msg) => setPromptConfig({
+                      show: true,
+                      title: title,
+                      message: msg,
+                      type: 'success',
+                      icon: <Copy size={24} />,
+                      options: [{ label: 'EXCELLENT', value: 'close' }],
+                      onConfirm: () => setPromptConfig(prev => ({ ...prev, show: false }))
+                    })}
                   />
                 )}
                 {field.type === 'story_list' && (
@@ -356,6 +409,16 @@ export function PayloadInterpretersView({ node, hideHeader = false }: { node: an
           </div>
         )}
       </div>
+      <PromptModal
+        show={promptConfig.show}
+        title={promptConfig.title}
+        message={promptConfig.message}
+        type={promptConfig.type}
+        icon={promptConfig.icon}
+        options={promptConfig.options}
+        onConfirm={promptConfig.onConfirm}
+        onCancel={() => setPromptConfig(prev => ({ ...prev, show: false }))}
+      />
     </div>
   );
 }

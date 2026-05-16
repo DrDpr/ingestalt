@@ -68,14 +68,8 @@ export function Inspector() {
     [selectedNodeId]
   );
 
-  // Check for relationships to decide whether to show the panel
-  const hasRelationships = useLiveQuery(async () => {
-    if (!selectedNodeId) return false;
-    const count = await db.edges.where('sourceId').equals(selectedNodeId)
-      .or('targetId').equals(selectedNodeId)
-      .count();
-    return count > 0;
-  }, [selectedNodeId]);
+  // Always show the relationships panel to allow adding new ones
+  const hasRelationships = true;
 
   // Check for standards to decide if Properties panel is applicable
   // Filter by current workspace to avoid duplicates from other workspaces
@@ -210,67 +204,126 @@ export function Inspector() {
       />
 
       {/* Inspector Header */}
-      <div className="flex justify-between items-start p-4 border-b border-border bg-background/50 flex-shrink-0 z-20">
-        <div className="flex-1 min-w-0 mr-4">
-          <LocalInput
-            value={payload?.title || ''}
-            onChange={(val) => handleTitleChange(val)}
-            className="w-full bg-transparent border-none focus:ring-0 text-sm font-bold text-foreground/80 uppercase  placeholder:text-foreground/30"
-            placeholder="Node Title"
-          />
-          <div className="flex items-center gap-2 mt-1 flex-wrap">
+      <div className="p-4 border-b border-border bg-background/50 flex-shrink-0 z-20 space-y-4">
+        
+        {/* ROW 1: Title & Close */}
+        <div className="flex justify-between items-center">
+          <div className="flex-1 min-w-0 mr-4">
+            <LocalInput
+              value={payload?.title || ''}
+              onChange={(val) => handleTitleChange(val)}
+              className="w-full bg-transparent border-none focus:ring-0 text-lg font-black text-foreground/90 uppercase tracking-tight placeholder:text-foreground/20"
+              placeholder="Node Title"
+            />
+          </div>
+          <button 
+            onClick={() => setSelectedNodeId(null)}
+            className="p-1.5 hover:bg-secondary rounded-full text-foreground/40 hover:text-foreground transition-all"
+          >
+            <X size={18} />
+          </button>
+        </div>
+
+        {/* ROW 2: Primary Controls & Mode Switcher */}
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div className="flex items-center gap-2 bg-secondary/20 p-1 rounded-lg border border-border/30">
             {/* Standards Switcher */}
             <div className="relative" ref={standardsDropdownRef}>
               <button
                 onClick={() => setShowStandardsDropdown(!showStandardsDropdown)}
-                className="text-xs px-1.5 py-0.5 rounded bg-background text-foreground/50 font-bold uppercase hover:bg-secondary transition-colors flex items-center gap-1"
+                className="text-[10px] px-2 py-1 rounded bg-background text-foreground/60 font-black uppercase hover:bg-secondary transition-colors flex items-center gap-1.5 shadow-sm"
               >
                 {type}
                 <ChevronDown size={10} />
               </button>
               {showStandardsDropdown && (
-                <div className="absolute top-full left-0 mt-1 bg-card border border-border rounded-lg shadow-lg z-50 min-w-[150px] max-h-[200px] overflow-y-auto custom-scrollbar">
-                  {activeStandards?.map((std) => (
-                    <div key={std.id}>
-                      {std.payload?.definitions?.map((def: any) => (
-                        <button
-                          key={def.id}
-                          onClick={() => handleStandardChange(def.id)}
-                          className={`w-full px-3 py-2 text-left text-xs hover:bg-secondary transition-colors flex items-center gap-2 ${
-                            activeNode.configId === def.id ? 'bg-secondary' : ''
-                          }`}
-                        >
-                          <DynamicIcon name={def.icon || 'Box'} size={12} style={{ color: def.color }} />
-                          <span>{def.type}</span>
-                        </button>
-                      ))}
-                    </div>
-                  ))}
+                <div className="absolute top-full left-0 mt-2 bg-card border border-border rounded-xl shadow-xl z-50 min-w-[180px] max-h-[250px] overflow-y-auto custom-scrollbar animate-in fade-in zoom-in-95 duration-100">
+                  <div className="p-1.5">
+                    {activeStandards?.map((std) => (
+                      <div key={std.id} className="mb-1 last:mb-0">
+                        {std.payload?.definitions?.map((def: any) => (
+                          <button
+                            key={def.id}
+                            onClick={() => handleStandardChange(def.id)}
+                            className={`w-full px-3 py-2 text-left text-xs rounded-lg hover:bg-secondary transition-all flex items-center gap-2.5 ${
+                              activeNode.configId === def.id ? 'bg-secondary text-blue-500 font-bold' : 'text-foreground/60'
+                            }`}
+                          >
+                            <DynamicIcon name={def.icon || 'Box'} size={14} style={{ color: def.color }} />
+                            <span>{def.type}</span>
+                          </button>
+                        ))}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
 
-            {/* Color Picker */}
-            <div className="flex items-center gap-1">
-              <Palette size={10} className="text-foreground/40" />
-              <input
-                type="color"
-                value={payload?.color || '#52525b'}
-                onChange={(e) => handleColorChange(e.target.value)}
-                className="w-6 h-4 rounded cursor-pointer border border-border"
-                title="Node Color"
-              />
+            <div className="w-px h-3 bg-border/50 mx-0.5" />
+
+            {/* Icon & Color Picker */}
+            <div className="flex items-center gap-1.5 px-1">
+              <button
+                onClick={() => setShowIconPicker(true)}
+                className="p-1 rounded hover:bg-background transition-colors"
+                title="Change Icon"
+              >
+                <DynamicIcon name={payload?.icon || 'FileText'} size={14} style={{ color: payload?.color || '#52525b' }} />
+              </button>
+              <div className="flex items-center">
+                <input
+                  type="color"
+                  value={payload?.color || '#52525b'}
+                  onChange={(e) => handleColorChange(e.target.value)}
+                  className="w-6 h-4 rounded cursor-pointer border border-border bg-transparent"
+                  title="Node Color"
+                />
+              </div>
             </div>
 
-            {/* Icon Picker */}
-            <button
-              onClick={() => setShowIconPicker(true)}
-              className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-background hover:bg-secondary transition-colors"
-              title="Change Icon"
-            >
-              <DynamicIcon name={payload?.icon || 'FileText'} size={12} style={{ color: payload?.color || '#52525b' }} />
-            </button>
+            <div className="w-px h-3 bg-border/50 mx-0.5" />
 
+            {/* Mode Switcher */}
+            <div className="flex gap-0.5 p-0.5">
+              <button 
+                onClick={() => setMode('preview')}
+                className={`p-1.5 rounded transition-colors ${mode === 'preview' ? 'bg-background text-foreground shadow-sm' : 'text-foreground/40 hover:text-foreground/60'}`}
+                title="Preview Mode"
+              >
+                <Eye size={14} />
+              </button>
+              <button 
+                onClick={() => setMode('edit')}
+                className={`p-1.5 rounded transition-colors ${mode === 'edit' ? 'bg-background text-foreground shadow-sm' : 'text-foreground/40 hover:text-foreground/60'}`}
+                title="Edit Mode"
+              >
+                <Edit2 size={14} />
+              </button>
+            </div>
+          </div>
+
+          {/* Manual Save Button */}
+          {!autoSaveEnabled && (
+            <button 
+              onClick={handleManualSave}
+              disabled={isSavingManual}
+              className={`flex items-center gap-2 px-4 py-1.5 rounded-lg border transition-all text-[10px] font-black uppercase tracking-widest ${
+                isSavingManual 
+                  ? 'bg-blue-600/20 border-blue-500/50 text-blue-400' 
+                  : 'bg-blue-600 text-white hover:bg-blue-500 shadow-lg shadow-blue-500/20 border-transparent'
+              }`}
+            >
+              {isSavingManual ? <Loader2 size={12} className="animate-spin" /> : <HardDrive size={12} />}
+              {isSavingManual ? 'Saving...' : 'Save to Disk'}
+            </button>
+          )}
+        </div>
+
+        {/* ROW 3: Filename & Tags */}
+        <div className="flex items-center justify-between gap-4 pt-1 flex-wrap">
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+            <FileText size={10} className="text-foreground/30 flex-shrink-0" />
             <LocalInput
               value={payload?.filename || `${activeNode.id}.md`}
               onChange={async (val) => {
@@ -280,18 +333,17 @@ export function Inspector() {
                 });
                 if (autoSaveEnabled) await syncNodeToFile(selectedNodeId);
               }}
-              className="bg-transparent border-none focus:ring-0 text-xs text-foreground/50 font-mono italic outline-none hover:text-foreground/30 transition-colors flex-1 min-w-[100px]"
+              className="bg-transparent border-none focus:ring-0 text-[10px] text-foreground/40 font-mono italic outline-none hover:text-foreground/60 transition-colors w-full"
               placeholder={`${activeNode.id}.md`}
             />
           </div>
 
-          {/* Inline Tag Editor */}
-          <div className="flex items-center gap-1 mt-2 flex-wrap">
-            <Tag size={10} className="text-foreground/40" />
+          <div className="flex items-center gap-1.5 flex-wrap justify-end">
+            <Tag size={10} className="text-foreground/30" />
             {(payload?.tags || []).map((tag: string) => (
               <div
                 key={tag}
-                className="group flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-500/20 border border-blue-500/30 text-xs text-blue-400"
+                className="group flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-[10px] font-bold text-blue-400"
               >
                 <span>{tag}</span>
                 <button
@@ -305,7 +357,7 @@ export function Inspector() {
                 </button>
               </div>
             ))}
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 ml-1">
               <input
                 type="text"
                 value={newTagInput}
@@ -317,7 +369,7 @@ export function Inspector() {
                   }
                 }}
                 placeholder="Add tag..."
-                className="w-20 px-2 py-0.5 text-xs bg-transparent border border-dashed border-border rounded focus:outline-none focus:border-blue-500 text-foreground/60"
+                className="w-20 px-2 py-0.5 text-[10px] bg-transparent border border-dashed border-border rounded focus:outline-none focus:border-blue-500 text-foreground/60"
               />
               <button
                 onClick={handleAddTag}
@@ -328,43 +380,6 @@ export function Inspector() {
               </button>
             </div>
           </div>
-        </div>
-        <div className="flex items-center gap-2">
-          {!autoSaveEnabled && (
-            <button 
-              onClick={handleManualSave}
-              disabled={isSavingManual}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all text-xs font-bold uppercase  ${
-                isSavingManual 
-                  ? 'bg-blue-600/20 border-blue-500/50 text-blue-400' 
-                  : 'bg-background border-input text-foreground/50 hover:border-blue-500/50 hover:text-foreground'
-              }`}
-            >
-              {isSavingManual ? <Loader2 size={12} className="animate-spin" /> : <HardDrive size={12} />}
-              {isSavingManual ? 'Saving...' : 'Save to Disk'}
-            </button>
-          )}
-
-          <div className="flex bg-background rounded-lg p-1 mr-2">
-            <button 
-              onClick={() => setMode('preview')}
-              className={`p-1.5 rounded-md transition-colors ${mode === 'preview' ? 'bg-background text-foreground' : 'text-foreground/50 hover:text-foreground/60'}`}
-            >
-              <Eye size={14} />
-            </button>
-            <button 
-              onClick={() => setMode('edit')}
-              className={`p-1.5 rounded-md transition-colors ${mode === 'edit' ? 'bg-background text-foreground' : 'text-foreground/50 hover:text-foreground/60'}`}
-            >
-              <Edit2 size={14} />
-            </button>
-          </div>
-          <button 
-            onClick={() => setSelectedNodeId(null)}
-            className="p-1 hover:bg-background rounded text-foreground/50 hover:text-foreground transition-colors"
-          >
-            <X size={16} />
-          </button>
         </div>
       </div>
 
@@ -388,14 +403,14 @@ export function Inspector() {
         {showGovernance && (
           <CollapsibleSection 
             id="governance" 
-            title="Governance Manifest" 
+            title="Node Types" 
             icon={<ShieldAlert size={14} className="text-amber-500" />} 
             isOpen={openPanels.governance} 
             onToggle={() => togglePanel('governance')}
             headerAction={
               <button 
                 onClick={(e) => { e.stopPropagation(); setIsEditingGovernance(!isEditingGovernance); }}
-                className={`p-1 rounded-md transition-colors ${isEditingGovernance ? 'bg-amber-600 text-foreground' : 'hover:bg-background text-foreground/50'}`}
+                className={`p-1 rounded-md transition-colors ${isEditingGovernance ? 'bg-amber-600/50 text-foreground/80' : 'hover:bg-background text-foreground/50'}`}
               >
                 <Settings2 size={12} />
               </button>

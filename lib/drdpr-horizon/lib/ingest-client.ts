@@ -7,7 +7,7 @@ import { parseMarkdownToNode } from './parser';
 /**
  * ARCHITECTURAL LAYOUT CONFIGURATION
  */
-const LAYOUT_CONFIG = {
+export const LAYOUT_CONFIG = {
   COLUMN_WIDTH: 250,
   NESTING_OFFSET: 60,
   MIN_Y_GAP: 20,
@@ -17,15 +17,17 @@ const LAYOUT_CONFIG = {
   ROOT_START_Y: 50,
 };
 
-const TYPE_X_BASE: Record<string, number> = {
-  database: 0,
-  api: LAYOUT_CONFIG.COLUMN_WIDTH,
-  hook: LAYOUT_CONFIG.COLUMN_WIDTH * 2,
-  frontend: LAYOUT_CONFIG.COLUMN_WIDTH * 3,
-  standards: -LAYOUT_CONFIG.COLUMN_WIDTH,
-  horizonDoc: -LAYOUT_CONFIG.COLUMN_WIDTH * 2,
-  other: LAYOUT_CONFIG.COLUMN_WIDTH * 4
-};
+export function getXBase(config: typeof LAYOUT_CONFIG) {
+  return {
+    database: 0,
+    api: config.COLUMN_WIDTH,
+    hook: config.COLUMN_WIDTH * 2,
+    frontend: config.COLUMN_WIDTH * 3,
+    standards: -config.COLUMN_WIDTH,
+    horizonDoc: -config.COLUMN_WIDTH * 2,
+    other: config.COLUMN_WIDTH * 4
+  };
+}
 
 /**
  * Shared layout + persistence engine.
@@ -90,12 +92,13 @@ export async function layoutAndPersist(
 
   const positionedNodes = new Map<string, any>();
   const columnWatermarks = new Map<number, number>();
+  const typeXBase = getXBase(LAYOUT_CONFIG);
 
   const placeNode = (node: any, depth: number, preferredY?: number) => {
     if (positionedNodes.has(node.id)) return;
 
     const type = node.payload?.type || 'other';
-    const baseX = TYPE_X_BASE[type] ?? LAYOUT_CONFIG.COLUMN_WIDTH * 4;
+    const baseX = typeXBase[type] ?? LAYOUT_CONFIG.COLUMN_WIDTH * 4;
     const x = baseX + (depth * LAYOUT_CONFIG.NESTING_OFFSET);
 
     const placedParents = (parentsOf.get(node.id) || [])
@@ -143,7 +146,7 @@ export async function layoutAndPersist(
     n => !parentsOf.has(n.id) || n.payload?.type === 'database' || n.payload?.type === 'standards'
   );
   roots.sort((a, b) =>
-    (TYPE_X_BASE[a.payload?.type || 'other'] || 0) - (TYPE_X_BASE[b.payload?.type || 'other'] || 0)
+    (typeXBase[a.payload?.type || 'other'] || 0) - (typeXBase[b.payload?.type || 'other'] || 0)
   );
   roots.forEach(root => placeNode(root, 0));
   rawNodes.forEach(node => placeNode(node, 0));
@@ -161,6 +164,94 @@ export async function layoutAndPersist(
   }
 
   return { count: positionedNodes.size, nodeIds };
+}
+
+/**
+ * Recalculates spatial layout for a given set of nodes.
+ * Useful for cleanup after manual dragging or during batch operations.
+ */
+export async function performAutoLayout(nodeIds: string[], config: typeof LAYOUT_CONFIG = LAYOUT_CONFIG) {
+  if (nodeIds.length === 0) return;
+  
+  const rawNodes = await db.nodes.bulkGet(nodeIds);
+  const nodes = rawNodes.filter((n): n is any => n !== undefined);
+  
+  const edges = await db.edges.where('sourceId').anyOf(nodeIds)
+    .or('targetId').anyOf(nodeIds)
+    .toArray();
+  
+  // Filter edges to only those connecting nodes within the set
+  const internalEdges = edges.filter(e => nodeIds.includes(e.sourceId) && nodeIds.includes(e.targetId));
+
+  const adjacency = new Map<string, string[]>();
+  const parentsOf = new Map<string, string[]>();
+  internalEdges.forEach(e => {
+    adjacency.set(e.sourceId, [...(adjacency.get(e.sourceId) || []), e.targetId]);
+    parentsOf.set(e.targetId, [...(parentsOf.get(e.targetId) || []), e.sourceId]);
+  });
+
+  const positionedNodes = new Map<string, any>();
+  const columnWatermarks = new Map<number, number>();
+  const typeXBase = getXBase(config);
+
+  const placeNode = (node: any, depth: number, preferredY?: number) => {
+    if (positionedNodes.has(node.id)) return;
+
+    const type = node.payload?.type || 'other';
+    const baseX = typeXBase[type] ?? config.COLUMN_WIDTH * 4;
+    const x = baseX + (depth * config.NESTING_OFFSET);
+
+    const placedParents = (parentsOf.get(node.id) || [])
+      .map(id => positionedNodes.get(id))
+      .filter(Boolean);
+
+    let targetY: number;
+    if (placedParents.length > 0) {
+      targetY = placedParents.reduce((sum: number, p: any) => sum + p.position.y, 0) / placedParents.length;
+    } else {
+      targetY = preferredY ?? config.ROOT_START_Y;
+    }
+
+    const colKey = Math.floor(x / 100);
+    let finalY = Math.max(targetY, columnWatermarks.get(colKey) || config.ROOT_START_Y);
+
+    let foundSpot = false;
+    while (!foundSpot) {
+      const overlap = Array.from(positionedNodes.values()).find(n =>
+        Math.abs(n.position.x - x) < config.NODE_WIDTH_BOUND &&
+        Math.abs(n.position.y - finalY) < config.NODE_HEIGHT_BOUND
+      );
+      if (overlap) {
+        finalY += config.NUDGE_STEP;
+      } else {
+        foundSpot = true;
+      }
+    }
+
+    [colKey - 1, colKey, colKey + 1].forEach(b =>
+      columnWatermarks.set(b, finalY + config.MIN_Y_GAP)
+    );
+
+    positionedNodes.set(node.id, { ...node, position: { x, y: finalY } });
+
+    const childrenIds = adjacency.get(node.id) || [];
+    const children = nodes.filter(n => childrenIds.includes(n.id));
+    children.forEach((child, i) => {
+      const spreadOffset = (i * config.MIN_Y_GAP) - ((children.length - 1) * (config.MIN_Y_GAP / 2));
+      placeNode(child, depth + 1, finalY + spreadOffset);
+    });
+  };
+
+  const roots = nodes.filter(
+    n => !parentsOf.has(n.id) || n.payload?.type === 'database' || n.payload?.type === 'standards'
+  );
+  roots.sort((a, b) =>
+    (typeXBase[a.payload?.type || 'other'] || 0) - (typeXBase[b.payload?.type || 'other'] || 0)
+  );
+  roots.forEach(root => placeNode(root, 0));
+  nodes.forEach(node => placeNode(node, 0));
+
+  await db.nodes.bulkPut(Array.from(positionedNodes.values()));
 }
 
 /**

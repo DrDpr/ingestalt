@@ -4,13 +4,48 @@ import React from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/lib/drdpr-horizon/lib/db';
 import { DynamicIcon } from '@/lib/drdpr-horizon/components/DynamicIcon';
-import { Plus, GripHorizontal, Wifi, Zap, ZapOff } from 'lucide-react';
+import { Plus, GripHorizontal, FolderOpen, Zap, ZapOff, CheckCircle2, Upload } from 'lucide-react';
 import { useSync } from '@/lib/drdpr-horizon/lib/hooks/useSync';
 import { useUIStore } from '@/lib/drdpr-horizon/lib/store/useUIStore';
+import { getStoredFolderHandle, connectAndStoreFolder, verifyPermission } from '@/lib/drdpr-horizon/lib/ingest-fsa';
 
 export function Palette() {
-  const { connectFolder } = useSync();
   const { autoSaveEnabled, setAutoSaveEnabled, isLeftOpen, isPaletteOpen } = useUIStore();
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  
+  const [connectedFolder, setConnectedFolder] = React.useState<string | null>(null);
+  const [permissionState, setPermissionState] = React.useState<'granted' | 'prompt' | 'denied'>('prompt');
+
+  // Sync folder status on mount
+  React.useEffect(() => {
+    const checkHandle = async () => {
+      const handle = await getStoredFolderHandle();
+      if (handle) {
+        setConnectedFolder(handle.name);
+        const hasPerm = await verifyPermission(handle);
+        setPermissionState(hasPerm ? 'granted' : 'prompt');
+      }
+    };
+    checkHandle();
+  }, []);
+
+  const handleConnect = async () => {
+    const handle = await connectAndStoreFolder();
+    if (handle) {
+      setConnectedFolder(handle.name);
+      setPermissionState('granted');
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      window.dispatchEvent(new CustomEvent('import-file', { detail: { file } }));
+    }
+    // Reset so the same file can be imported twice if needed
+    e.target.value = '';
+  };
+
   const activeStandards = useLiveQuery(
     () => db.nodes.toArray().then(nodes => nodes.filter(n => n.payload?.type === 'standards')),
     []
@@ -52,23 +87,55 @@ export function Palette() {
     >
       <div className="flex flex-col items-center gap-2 pb-2 border-b border-border/5 mb-1 group/sync">
         <button
-          onClick={connectFolder}
-          className="w-10 h-10 rounded-xl bg-blue-600/10 hover:bg-blue-600/20 border border-blue-500/20 flex items-center justify-center transition-all shadow-xs"
-          title="Connect Local Project Folder"
+          onClick={handleConnect}
+          className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all shadow-xs border ${
+            connectedFolder 
+              ? "bg-blue-600/10 border-blue-500/20 hover:bg-blue-600/20" 
+              : "bg-secondary border-border/10 hover:bg-secondary/80"
+          }`}
+          title={connectedFolder ? `Connected to ${connectedFolder}` : "Connect Local Project Folder"}
         >
-          <Wifi size={18} className="text-blue-400 group-hover/sync:scale-110 transition-transform" />
+          {connectedFolder ? (
+            <div className="relative">
+              <FolderOpen size={18} className="text-blue-400" />
+              {permissionState === 'granted' ? (
+                <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-card" />
+              ) : (
+                <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 bg-amber-500 rounded-full border-2 border-card animate-pulse" />
+              )}
+            </div>
+          ) : (
+            <FolderOpen size={18} className="text-foreground/20" />
+          )}
         </button>
 
-        <button
-          onClick={() => setAutoSaveEnabled(!autoSaveEnabled)}
-          className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${autoSaveEnabled
-            ? 'bg-amber-500/20 border border-amber-500/30 text-amber-500 shadow-lg'
-            : 'bg-secondary border border-border/5 text-foreground/30 hover:text-foreground/90'
-            }`}
-          title={autoSaveEnabled ? "Auto-Save Enabled" : "Auto-Save Disabled"}
-        >
-          {autoSaveEnabled ? <Zap size={14} /> : <ZapOff size={14} />}
-        </button>
+        <div className="flex gap-1">
+          <button
+            onClick={() => setAutoSaveEnabled(!autoSaveEnabled)}
+            className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${autoSaveEnabled
+              ? 'bg-amber-500/20 border border-amber-500/30 text-amber-500 shadow-lg'
+              : 'bg-secondary border border-border/5 text-foreground/30 hover:text-foreground/90'
+              }`}
+            title={autoSaveEnabled ? "Auto-Save Enabled" : "Auto-Save Disabled"}
+          >
+            {autoSaveEnabled ? <Zap size={14} /> : <ZapOff size={14} />}
+          </button>
+
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="w-8 h-8 rounded-lg flex items-center justify-center transition-all bg-secondary border border-border/5 text-foreground/30 hover:text-foreground/90 hover:bg-secondary/80"
+            title="Import JSON/Markdown"
+          >
+            <Upload size={14} />
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              className="hidden" 
+              accept=".json,.md"
+              onChange={handleFileChange}
+            />
+          </button>
+        </div>
 
         <span className="text-xs uppercase font-black tracking-tighter text-foreground/40">Settings</span>
       </div>

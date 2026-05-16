@@ -25,144 +25,111 @@ export function KeyboardShortcutsHelp() {
     {
       title: 'Canvas Navigation',
       shortcuts: [
-        {
-          keys: [
-            { icon: <ArrowUp size={12} />, label: '↑' },
-            { icon: <ArrowDown size={12} />, label: '↓' },
-            { icon: <ArrowLeft size={12} />, label: '←' },
-            { icon: <ArrowRight size={12} />, label: '→' }
-          ],
-          description: 'Pan canvas'
-        },
-        {
-          keys: [
-            'Shift',
-            { icon: <ArrowUp size={12} />, label: '↑' },
-            { icon: <ArrowDown size={12} />, label: '↓' },
-            { icon: <ArrowLeft size={12} />, label: '←' },
-            { icon: <ArrowRight size={12} />, label: '→' }
-          ],
-          description: 'Fast pan'
-        },
-        { keys: [mod, '+'], description: 'Zoom in' },
-        { keys: [mod, '-'], description: 'Zoom out' },
-        { keys: [mod, '0'], description: 'Fit all nodes' },
-        { keys: [mod, 'Shift', '0'], description: 'Fit selected nodes' },
-        { keys: [mod, '1'], description: 'Reset zoom to 100%' },
+        { keys: ['Space + Drag'], description: 'Pan canvas (Hold Space)' },
+        { keys: ['Middle Click'], description: 'Pan canvas' },
+        { keys: [mod, 'Wheel'], description: 'Zoom in/out' },
+        { keys: [mod, '0'], description: 'Fit view' },
       ],
     },
     {
-      title: 'Node Operations',
+      title: 'Workspace Architecture',
       shortcuts: [
-        { keys: ['Delete'], description: 'Delete selected' },
-        { keys: [mod, 'D'], description: 'Duplicate selected' },
-        { keys: [mod, 'C'], description: 'Copy selected' },
-        { keys: [mod, 'V'], description: 'Paste copied' },
-        { keys: ['Esc'], description: 'Deselect' },
-        { keys: ['Enter'], description: 'Open inspector' },
+        { keys: [mod, 'B'], description: 'Toggle Sidebar' },
+        { keys: [mod, 'I'], description: 'Toggle Inspector' },
+        { keys: [mod, 'P'], description: 'Toggle Palette' },
+        { keys: [mod, 'K'], description: 'Command Search' },
       ],
     },
     {
-      title: 'Search & Filtering',
+      title: 'Nodes & Selection',
       shortcuts: [
-        { keys: [mod, 'K'], description: 'Open search' },
-        { keys: [mod, 'P'], description: 'Open search' },
-        { keys: [mod, 'F'], description: 'Focus search' },
+        { keys: ['Click'], description: 'Select node' },
+        { keys: ['Shift + Click'], description: 'Multi-select' },
+        { keys: ['Drag'], description: 'Move nodes' },
+        { keys: [mod, 'C'], description: 'Copy node' },
+        { keys: [mod, 'V'], description: 'Paste node' },
+        { keys: ['Backspace', 'Del'], description: 'Delete node' },
       ],
     },
     {
-      title: 'View Modes',
+      title: 'Inspector Logic',
       shortcuts: [
-        { keys: [mod, 'E'], description: 'Cycle edge styles' },
-        { keys: [mod, 'D'], description: 'Toggle dark/light theme' },
-      ],
-    },
-    {
-      title: 'Inspector',
-      shortcuts: [
-        { keys: ['Esc'], description: 'Close inspector' },
-        { keys: [mod, 'S'], description: 'Save changes' },
-      ],
-    },
-    {
-      title: 'Help',
-      shortcuts: [
-        { keys: [mod, 'Shift', '?'], description: 'Show this help' },
-        { keys: ['F1'], description: 'Show this help' },
+        { keys: ['Enter'], description: 'Open selected node' },
+        { keys: ['Esc'], description: 'Close / Deselect' },
+        { keys: [mod, 'S'], description: 'Sync to disk' },
       ],
     },
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="relative w-full max-w-4xl max-h-[90vh] overflow-auto bg-neutral-900 border border-neutral-800 rounded-2xl shadow-2xl">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-md p-4 animate-in fade-in duration-300">
+      <div className="w-full max-w-3xl max-h-[85vh] flex flex-col bg-card border border-border/40 rounded-[2rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
         {/* Header */}
-        <div className="sticky top-0 z-10 flex items-center justify-between p-6 bg-neutral-900 border-b border-neutral-800">
+        <div className="flex items-center justify-between p-8 border-b border-border/10 bg-secondary/20">
           <div>
-            <h2 className="text-2xl font-bold text-white">Keyboard Shortcuts</h2>
-            <p className="text-sm text-neutral-400 mt-1">
-              Master Horizon with these keyboard shortcuts
+            <h2 className="text-xl font-black uppercase tracking-tight text-foreground">Master Horizon</h2>
+            <p className="text-xs font-bold uppercase tracking-widest text-foreground/40 mt-1">
+              Keyboard Architecture & Shortcuts
             </p>
           </div>
           <button
             onClick={() => setShortcutsHelpOpen(false)}
-            className="p-2 rounded-lg hover:bg-neutral-800 transition-colors"
+            className="p-3 rounded-2xl bg-secondary/50 hover:bg-secondary border border-border/10 transition-all text-foreground/40 hover:text-foreground"
             aria-label="Close"
           >
-            <X className="w-5 h-5 text-neutral-400" />
+            <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Content */}
-        <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
-          {shortcutGroups.map((group, idx) => (
-            <div key={idx} className="space-y-3">
-              <h3 className="text-lg font-semibold text-white border-b border-neutral-800 pb-2">
-                {group.title}
-              </h3>
-              <div className="space-y-2">
-                {group.shortcuts.map((shortcut, sidx) => (
-                  <div
-                    key={sidx}
-                    className="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-neutral-800/50 transition-colors"
-                  >
-                    <span className="text-sm text-neutral-300">
-                      {shortcut.description}
-                    </span>
-                    <div className="flex items-center gap-1">
-                      {shortcut.keys.map((key, kidx) => (
-                        <React.Fragment key={kidx}>
-                          {kidx > 0 && (
-                            <span className="text-neutral-600 text-xs mx-0.5">+</span>
-                          )}
-                          <kbd className="px-2 py-1 text-xs font-mono bg-neutral-800 border border-neutral-700 rounded shadow-sm text-neutral-200">
-                            {typeof key === 'string' ? key : (
-                              <span className="flex items-center gap-1">
-                                {key.icon}
-                                <span>{key.label}</span>
-                              </span>
+        <div className="p-8 overflow-y-auto custom-scrollbar">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-10">
+            {shortcutGroups.map((group, idx) => (
+              <div key={idx} className="space-y-4">
+                <div className="flex items-center gap-3 border-b border-border/10 pb-2">
+                  <div className="w-1 h-3 bg-blue-500 rounded-full" />
+                  <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/60">
+                    {group.title}
+                  </h3>
+                </div>
+                <div className="space-y-1">
+                  {group.shortcuts.map((shortcut, sidx) => (
+                    <div
+                      key={sidx}
+                      className="flex items-center justify-between py-2.5 px-3 rounded-xl hover:bg-secondary/30 transition-all group"
+                    >
+                      <span className="text-xs font-medium text-foreground/70 group-hover:text-foreground transition-colors">
+                        {shortcut.description}
+                      </span>
+                      <div className="flex items-center gap-1.5">
+                        {shortcut.keys.map((key, kidx) => (
+                          <React.Fragment key={kidx}>
+                            {kidx > 0 && (
+                              <span className="text-foreground/20 text-[10px]">+</span>
                             )}
-                          </kbd>
-                        </React.Fragment>
-                      ))}
+                            <kbd className="min-w-[24px] h-6 px-2 flex items-center justify-center text-[10px] font-mono bg-background/50 backdrop-blur border border-border/20 rounded shadow-[0_2px_0_rgba(0,0,0,0.1)] text-foreground/80 font-bold">
+                              {typeof key === 'string' ? key : (
+                                <span className="flex items-center gap-1">
+                                  {key.icon}
+                                  <span>{key.label}</span>
+                                </span>
+                              )}
+                            </kbd>
+                          </React.Fragment>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
 
         {/* Footer */}
-        <div className="sticky bottom-0 p-4 bg-neutral-900 border-t border-neutral-800 text-center">
-          <p className="text-xs text-neutral-500">
-            Press <kbd className="px-2 py-0.5 text-xs font-mono bg-neutral-800 border border-neutral-700 rounded">
-              {mod}
-            </kbd> + <kbd className="px-2 py-0.5 text-xs font-mono bg-neutral-800 border border-neutral-700 rounded">
-              ?
-            </kbd> or <kbd className="px-2 py-0.5 text-xs font-mono bg-neutral-800 border border-neutral-700 rounded">
-              F1
-            </kbd> to toggle this help
+        <div className="p-6 bg-secondary/10 border-t border-border/10 text-center">
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-foreground/30">
+            Press <kbd className="px-1.5 py-0.5 bg-background/40 rounded border border-border/20 mx-1">{mod}</kbd> + <kbd className="px-1.5 py-0.5 bg-background/40 rounded border border-border/20 mx-1">?</kbd> to toggle help
           </p>
         </div>
       </div>

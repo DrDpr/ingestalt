@@ -166,13 +166,14 @@ export const TablesList = ({ data, selectedColumns, onToggle, onUpdate }: { data
   );
 };
 
-export const InterfaceList = ({ data, filePath, onAction, onUpdate }: { data: any[], filePath?: string, onAction?: (callback: () => void) => void, onUpdate?: (newData: any[]) => void }) => {
+export const InterfaceList = ({ data, filePath, onAction, onUpdate, onAlert }: { data: any[], filePath?: string, onAction?: (callback: () => void) => void, onUpdate?: (newData: any[]) => void, onAlert?: (msg: string) => void }) => {
   const { openInCode } = useFileSystem();
   const items = Array.isArray(data) ? data : [];
 
   const handleJump = async (methodName: string) => {
     if (!filePath) {
-      alert("No file path associated with this node to jump to.");
+      if (onAlert) onAlert("No file path associated with this node to jump to.");
+      else alert("No file path associated with this node to jump to.");
       return;
     }
     const performJump = async () => {
@@ -253,7 +254,7 @@ export const InterfaceList = ({ data, filePath, onAction, onUpdate }: { data: an
   );
 };
 
-export const CodeList = ({ data, onUpdate }: { data: any[], onUpdate?: (newData: any[]) => void }) => {
+export const CodeList = ({ data, onUpdate, onAlert }: { data: any[], onUpdate?: (newData: any[]) => void, onAlert?: (title: string, msg: string) => void }) => {
   const items = Array.isArray(data) ? data : [];
   return (
     <div className="space-y-3">
@@ -275,7 +276,11 @@ export const CodeList = ({ data, onUpdate }: { data: any[], onUpdate?: (newData:
               <span className="uppercase  text-xs">{snip.name || 'Snippet'}</span>
             )}
             <div className="flex gap-2">
-              <button onClick={() => { navigator.clipboard.writeText(snip.code); alert('Copied!'); }} className="hover:text-foreground transition-colors text-xs">COPY</button>
+              <button onClick={() => { 
+                navigator.clipboard.writeText(snip.code); 
+                if (onAlert) onAlert('COPIED', 'Snippet code has been successfully copied to your clipboard.');
+                else alert('Copied!'); 
+              }} className="hover:text-foreground transition-colors text-xs">COPY</button>
               {onUpdate && (
                 <button
                   onClick={() => {

@@ -13,6 +13,7 @@ interface UIState {
   // Global Selection
   selectedNodeId: string | null;
   hoveredNodeId: string | null;
+  highlightNodeId: string | null;
   selectedNodeIds: Set<string>;
   
   // Search & Filtering
@@ -45,6 +46,7 @@ interface UIState {
   
   // Actions
   setSelectedNodeId: (id: string | null) => void;
+  setHighlightNodeId: (id: string | null) => void;
   setPrimaryNodeId: (id: string | null) => void; // Sets inspector node WITHOUT resetting multi-select set
   clearSelection: () => void;
   setHoveredNodeId: (id: string | null) => void;
@@ -83,6 +85,7 @@ export const useUIStore = create<UIState>()(
       // Initial State
       selectedNodeId: null,
       hoveredNodeId: null,
+      highlightNodeId: null,
       selectedNodeIds: new Set<string>(),
       isLeftOpen: true,
       searchQuery: '',
@@ -110,6 +113,8 @@ export const useUIStore = create<UIState>()(
         selectedNodeIds: id ? new Set([id]) : new Set<string>(),
         isInspectorOpen: !!id
       }),
+      
+      setHighlightNodeId: (id) => set({ highlightNodeId: id }),
 
       setPrimaryNodeId: (id) => set({
         selectedNodeId: id,

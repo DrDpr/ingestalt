@@ -45,8 +45,11 @@ const edgeTypes = {
 
 import { Palette } from './Palette';
 import { BatchActionToolbar } from './BatchActionToolbar';
+import { CommandSearch } from '../layout/CommandSearch';
 
 import { useSync } from '../../lib/hooks/useSync';
+import { Plus, Trash2, Type, Sparkles, Upload, FileJson, FileText as LucideFileText, X } from 'lucide-react';
+import { parseMarkdownToNode } from '../../lib/parser';
 
 export function HorizonCanvas() {
   const {
@@ -62,7 +65,9 @@ export function HorizonCanvas() {
     title: string;
     message: string;
     defaultValue?: string;
-    options?: { label: string; value: string }[];
+    options?: { label: string; value: string; variant?: 'default' | 'danger' }[];
+    icon?: React.ReactNode;
+    type?: 'default' | 'danger' | 'warning' | 'success' | 'info';
     onConfirm: (val: string) => void;
   }>({
     show: false,
@@ -76,6 +81,8 @@ export function HorizonCanvas() {
   const { screenToFlowPosition, getNodes } = useReactFlow();
   const { syncNodeToFile } = useSync();
 
+  const { setHighlightNodeId } = useUIStore();
+
   // Get the active graph to determine its workspaceId
   const activeGraph = useLiveQuery(async () => {
     if (!activeGraphId) return null;
@@ -84,6 +91,106 @@ export function HorizonCanvas() {
 
   // Determine the workspace filter: use graph's workspaceId if graph exists, otherwise use activeGraphId directly
   const workspaceFilter = activeGraph?.workspaceId || activeGraphId;
+
+  const handleFileImport = useCallback(async (file: File, position?: { x: number, y: number }) => {
+    try {
+      const text = await file.text();
+      const workspaceId = workspaceFilter || 'default';
+      
+      // 1. Handle JSON Import (Horizon Export)
+      if (file.name.endsWith('.json')) {
+        const data = JSON.parse(text);
+        if (!data.nodes || !Array.isArray(data.nodes)) {
+          throw new Error('Invalid export file: No nodes found.');
+        }
+
+        const nodesToImport = data.nodes.map((n: any) => ({
+          ...n,
+          workspaceId,
+          lastModified: Date.now()
+        }));
+
+        const edgesToImport = (data.edges || []).map((e: any) => ({
+          ...e,
+          workspaceId
+        }));
+
+        await db.nodes.bulkPut(nodesToImport);
+        await db.edges.bulkPut(edgesToImport);
+
+        setPromptConfig({
+          show: true,
+          title: 'IMPORT SUCCESSFUL',
+          message: `Successfully imported ${nodesToImport.length} nodes and ${edgesToImport.length} edges into the current workspace.`,
+          type: 'success',
+          icon: <FileJson size={24} className="text-emerald-400" />,
+          options: [{ label: 'AWESOME', value: 'close' }],
+          onConfirm: () => setPromptConfig(prev => ({ ...prev, show: false }))
+        });
+      } 
+      // 2. Handle Markdown Import (Individual Node Ingestion)
+      else if (file.name.endsWith('.md')) {
+        const result = parseMarkdownToNode(text, workspaceId, true);
+        const node = result.node;
+        
+        if (position) {
+          node.position = position;
+        }
+        
+        await db.nodes.add(node);
+        if (result.edges && result.edges.length > 0) {
+          await db.edges.bulkAdd(result.edges);
+        }
+        
+        if (autoSaveEnabled) await syncNodeToFile(node.id);
+
+        setPromptConfig({
+          show: true,
+          title: 'NODE INGESTED',
+          message: `Successfully parsed "${node.payload?.title}" from markdown and added it to the workspace.`,
+          type: 'success',
+          icon: <LucideFileText size={24} className="text-blue-400" />,
+          options: [{ label: 'VIEW NODE', value: 'view' }, { label: 'CLOSE', value: 'close' }],
+          onConfirm: (val) => {
+            if (val === 'view') setSelectedNodeId(node.id);
+            setPromptConfig(prev => ({ ...prev, show: false }));
+          }
+        });
+      }
+    } catch (error: any) {
+      setPromptConfig({
+        show: true,
+        title: 'IMPORT FAILED',
+        message: `Could not import file: ${error.message}`,
+        type: 'danger',
+        icon: <X size={24} className="text-red-500" />,
+        options: [{ label: 'OK', value: 'close' }],
+        onConfirm: () => setPromptConfig(prev => ({ ...prev, show: false }))
+      });
+    }
+  }, [workspaceFilter, autoSaveEnabled, syncNodeToFile, setSelectedNodeId]);
+
+  // Listen for search highlights and import events
+  useEffect(() => {
+    const handleHighlight = (e: any) => {
+      const id = e.detail?.id;
+      if (id) {
+        setHighlightNodeId(id);
+        setTimeout(() => setHighlightNodeId(null), 3000); // Pulse for 3 seconds
+      }
+    };
+    const handleImport = (e: any) => {
+      const file = e.detail?.file;
+      if (file) handleFileImport(file);
+    };
+
+    window.addEventListener('highlight-node', handleHighlight);
+    window.addEventListener('import-file', handleImport);
+    return () => {
+      window.removeEventListener('highlight-node', handleHighlight);
+      window.removeEventListener('import-file', handleImport);
+    };
+  }, [setHighlightNodeId, handleFileImport]);
 
   // 1. Fetch agnostic data (filtered by active graph's workspace)
   const dbNodesData = useLiveQuery(() => {
@@ -239,8 +346,21 @@ export function HorizonCanvas() {
   }, [clearSelection]);
   const onMoveEnd = useCallback((e: any, vp: any) => setViewport(vp), [setViewport]);
   const onNodeDragStop = useCallback(async (e: any, node: Node) => {
-    await db.nodes.update(node.id, { position: node.position });
-  }, []);
+    // If multiple nodes are selected, they all move together.
+    // We need to persist all of them.
+    const allNodes = getNodes();
+    const draggedNodes = allNodes.filter(n => n.selected);
+    
+    // Fallback to the single node if selection is empty or doesn't include the dragged node
+    const nodesToUpdate = draggedNodes.length > 0 ? draggedNodes : [node];
+    
+    // Use a transaction for atomic updates to avoid jittering
+    await db.transaction('rw', db.nodes, async () => {
+      for (const n of nodesToUpdate) {
+        await db.nodes.update(n.id, { position: n.position });
+      }
+    });
+  }, [getNodes]);
 
   const onConnect = useCallback(async (params: any) => {
     const { source, target } = params;
@@ -263,8 +383,10 @@ export function HorizonCanvas() {
       show: true,
       title: 'DELETE CONNECTION',
       message: 'Are you sure you want to remove this relationship?',
+      type: 'danger',
+      icon: <Trash2 size={24} />,
       options: [
-        { label: 'DELETE CONNECTION', value: 'confirm' },
+        { label: 'DELETE CONNECTION', value: 'confirm', variant: 'danger' },
         { label: 'CANCEL', value: 'cancel' }
       ],
       onConfirm: async (val) => {
@@ -284,9 +406,20 @@ export function HorizonCanvas() {
     event.dataTransfer.dropEffect = 'move';
   }, []);
 
+
   const onDrop = useCallback(
     async (event: React.DragEvent) => {
       event.preventDefault();
+
+      // Handle File Drop
+      if (event.dataTransfer.files && event.dataTransfer.files.length > 0) {
+        const position = screenToFlowPosition({
+          x: event.clientX,
+          y: event.clientY,
+        });
+        handleFileImport(event.dataTransfer.files[0], position);
+        return;
+      }
 
       const type = event.dataTransfer.getData('application/reactflow');
       const configId = event.dataTransfer.getData('application/horizon-config');
@@ -357,54 +490,32 @@ export function HorizonCanvas() {
 
   const onPaneContextMenu = useCallback((event: React.MouseEvent) => {
     event.preventDefault();
-    const x = event.clientX;
-    const y = event.clientY;
-
-    // Step 1: Prompt for Type
-    setPromptConfig({
-      show: true,
-      title: 'SPAWN NODE',
-      message: 'Select the architectural type for the new node.',
-      options: [
-        { label: 'DATABASE (ENTITY)', value: 'database' },
-        { label: 'API (ENDPOINT)', value: 'api' },
-        { label: 'FRONTEND (UI)', value: 'frontend' },
-        { label: 'OTHER (GENERAL)', value: 'other' }
-      ],
-      onConfirm: (type) => {
-        // Step 2: Prompt for Title
-        setPromptConfig({
-          show: true,
-          title: `NEW ${type.toUpperCase()}`,
-          message: 'Give your new node a descriptive title.',
-          defaultValue: 'New Node',
-          onConfirm: (title) => {
-            const id = `node_${Math.random().toString(36).substr(2, 9)}`;
-            const position = screenToFlowPosition({ x, y });
-            db.nodes.add({
-              id, configId: `node_standards_${type}`, workspaceId: workspaceFilter || 'default', position, lastModified: Date.now(),
-              payload: { title, type, content: `# ${title}\nGenerated on canvas.`, tags: [] }
-            });
-            setPromptConfig(prev => ({ ...prev, show: false }));
-          }
-        });
-      }
-    });
-  }, [screenToFlowPosition, workspaceFilter]);
+  }, []);
 
   // Keyboard shortcuts handlers
   const handleDelete = useCallback(async (nodeIds: string[]) => {
     setPromptConfig({
       show: true,
-      title: 'DELETE NODES',
-      message: `Delete ${nodeIds.length} node(s) from the workspace?`,
+      title: 'DELETE SELECTION',
+      message: `Are you sure you want to delete ${nodeIds.length} selected nodes and all their connections?`,
+      type: 'danger',
+      icon: <Trash2 size={24} />,
       options: [
-        { label: 'DELETE ALL', value: 'confirm' },
+        { label: 'DELETE ALL', value: 'confirm', variant: 'danger' },
         { label: 'CANCEL', value: 'cancel' }
       ],
       onConfirm: async (val) => {
         if (val === 'confirm') {
-          await Promise.all(nodeIds.map(id => db.nodes.delete(id)));
+          // Bulk Delete nodes from DB
+          await db.nodes.bulkDelete(nodeIds);
+          
+          // Identify and delete connected edges
+          const edges = await db.edges.toArray();
+          const edgesToDelete = edges.filter(e => 
+            nodeIds.includes(e.sourceId) || nodeIds.includes(e.targetId)
+          );
+          await db.edges.bulkDelete(edgesToDelete.map(e => e.id));
+          
           clearSelection();
         }
         setPromptConfig(prev => ({ ...prev, show: false }));
@@ -468,6 +579,7 @@ export function HorizonCanvas() {
       <Palette />
       <KeyboardShortcutsHelp />
       <BatchActionToolbar />
+      <CommandSearch />
       <ReactFlow
         nodes={nodes} edges={edges}
         onNodesChange={onNodesChange} onEdgesChange={onEdgesChange}
@@ -483,9 +595,11 @@ export function HorizonCanvas() {
         defaultViewport={viewport}
         proOptions={{ hideAttribution: true }}
         panOnDrag={[1, 2]}
+        panActivationKeyCode="Space"
         selectionOnDrag
         selectionMode={SelectionMode.Partial}
         multiSelectionKeyCode={['Shift', 'Control', 'Meta']}
+        deleteKeyCode={null}
         colorMode={mounted ? (resolvedTheme as 'dark' | 'light' | 'system' || 'light') : 'light'}
       >
         <Background
@@ -494,14 +608,6 @@ export function HorizonCanvas() {
           gap={20}
           size={1}
         />
-        <Controls />
-        <MiniMap
-          nodeColor={(node) => {
-            const nodeData = node.data as any;
-            return nodeData?.color || (resolvedTheme === 'dark' ? '#52525b' : '#e4e4e7');
-          }}
-          className="bg-card border-border"
-        />
       </ReactFlow>
       <PromptModal
         show={promptConfig.show}
@@ -509,6 +615,8 @@ export function HorizonCanvas() {
         message={promptConfig.message}
         defaultValue={promptConfig.defaultValue}
         options={promptConfig.options}
+        icon={promptConfig.icon}
+        type={promptConfig.type}
         onConfirm={promptConfig.onConfirm}
         onCancel={() => setPromptConfig(prev => ({ ...prev, show: false }))}
       />

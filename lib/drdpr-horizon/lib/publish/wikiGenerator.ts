@@ -1,6 +1,14 @@
 import { HorizonNode, HorizonEdge } from '../db';
 
-export function generateProfessionalWiki(nodes: HorizonNode[], edges: HorizonEdge[] = [], standards: HorizonNode[] = []): string {
+export interface WikiOptions {
+  title?: string;
+  author?: string;
+}
+
+export function generateProfessionalWiki(nodes: HorizonNode[], edges: HorizonEdge[] = [], standards: HorizonNode[] = [], options: WikiOptions = {}): string {
+  const wikiTitle = options.title || 'Documentation Wiki';
+  const author = options.author || 'Ingestalt Spatial Engine';
+  
   const sortedNodes = [...nodes].sort((a, b) => 
     (a.payload?.title || '').localeCompare(b.payload?.title || '')
   );
@@ -12,9 +20,8 @@ export function generateProfessionalWiki(nodes: HorizonNode[], edges: HorizonEdg
   return `<!DOCTYPE html>
 <html lang="en" class="dark">
 <head>
-  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Documentation Wiki</title>
+  <title>${wikiTitle}</title>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css" id="hljs-theme">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
@@ -626,7 +633,8 @@ export function generateProfessionalWiki(nodes: HorizonNode[], edges: HorizonEdg
 <body>
   <aside>
     <div class="sidebar-header">
-      <h1><span>📚</span> Wiki</h1>
+      <h1 style="font-size: 1.1rem; letter-spacing: -0.01em; color: var(--accent);"><span>📚</span> ${wikiTitle}</h1>
+      <div style="font-size: 0.65rem; color: var(--muted); margin-top: 0.25rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em;">BY ${author}</div>
     </div>
     <div class="search-container">
       <input type="text" id="search-input" placeholder="Search documentation..." autocomplete="off">
@@ -1038,7 +1046,7 @@ export function generateProfessionalWiki(nodes: HorizonNode[], edges: HorizonEdg
         if (!definitions || !definitions.length) return '';
         
         let html = \`<div class="relations-section" style="margin-top: 0; border-top: none;">\`;
-        html += \`<div class="nav-group-title">Governance Manifest</div>\`;
+        html += \`<div class="nav-group-title">Node Types</div>\`;
         
         definitions.forEach(def => {
           html += \`

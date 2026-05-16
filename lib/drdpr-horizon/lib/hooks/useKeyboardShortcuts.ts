@@ -21,15 +21,21 @@ export function useKeyboardShortcuts(options: KeyboardShortcutsOptions = {}) {
   const { setTheme, resolvedTheme } = useTheme();
   const {
     selectedNodeId,
-    clearSelection,
     cycleEdgePathType,
     setShortcutsHelpOpen,
     setInspectorOpen,
     isInspectorOpen,
+    setLeftOpen,
+    isLeftOpen,
+    setPaletteOpen,
+    isPaletteOpen,
     setSearchOpen,
+    isSearchOpen,
     copiedNodeIds,
     setCopiedNodeIds,
     clearCopiedNodes,
+    selectedNodeIds,
+    clearSelection,
   } = useUIStore();
 
   // Detect platform for Cmd (Mac) vs Ctrl (Windows/Linux)
@@ -37,7 +43,7 @@ export function useKeyboardShortcuts(options: KeyboardShortcutsOptions = {}) {
   const modKey = isMac ? 'metaKey' : 'ctrlKey';
 
   const handleKeyDown = useCallback(
-    (event: KeyboardEvent) => {
+    async (event: KeyboardEvent) => {
       const target = event.target as HTMLElement;
       const isInputField = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable;
 
@@ -68,13 +74,6 @@ export function useKeyboardShortcuts(options: KeyboardShortcutsOptions = {}) {
         return;
       }
 
-      // FR-10.2.1: Delete selected node (Delete or Backspace)
-      if ((event.key === 'Delete' || event.key === 'Backspace') && selectedNodeId && !isInputField) {
-        event.preventDefault();
-        options.onDelete?.([selectedNodeId]);
-        return;
-      }
-
       // FR-10.2.3: Copy selected node (Ctrl/Cmd+C)
       if (mod && event.key === 'c' && selectedNodeId) {
         event.preventDefault();
@@ -97,6 +96,15 @@ export function useKeyboardShortcuts(options: KeyboardShortcutsOptions = {}) {
         return;
       }
 
+      // Delete (Backspace / Delete)
+      if ((event.key === 'Backspace' || event.key === 'Delete') && !isInputField) {
+        if (selectedNodeIds.size > 0) {
+          event.preventDefault();
+          options.onDelete?.(Array.from(selectedNodeIds));
+        }
+        return;
+      }
+
       // FR-10.3.3: Save changes (Ctrl/Cmd+S)
       if (mod && event.key === 's') {
         event.preventDefault();
@@ -107,7 +115,25 @@ export function useKeyboardShortcuts(options: KeyboardShortcutsOptions = {}) {
       // FR-10.4.1 & FR-10.4.2: Open search (Ctrl/Cmd+K or Ctrl/Cmd+P or Ctrl/Cmd+F)
       if (mod && (event.key === 'k' || event.key === 'p' || event.key === 'f')) {
         event.preventDefault();
-        setSearchOpen(true);
+        if (event.key === 'p') {
+          setPaletteOpen(!isPaletteOpen);
+        } else {
+          setSearchOpen(!isSearchOpen);
+        }
+        return;
+      }
+
+      // Toggle Sidebar (Ctrl/Cmd+B)
+      if (mod && event.key === 'b') {
+        event.preventDefault();
+        setLeftOpen(!isLeftOpen);
+        return;
+      }
+
+      // Toggle Inspector (Ctrl/Cmd+I)
+      if (mod && event.key === 'i') {
+        event.preventDefault();
+        setInspectorOpen(!isInspectorOpen);
         return;
       }
 
@@ -237,6 +263,8 @@ export function useKeyboardShortcuts(options: KeyboardShortcutsOptions = {}) {
       setInspectorOpen,
       setSearchOpen,
       setCopiedNodeIds,
+      selectedNodeIds,
+      clearSelection,
     ]
   );
 

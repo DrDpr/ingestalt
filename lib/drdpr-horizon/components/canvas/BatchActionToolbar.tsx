@@ -3,19 +3,25 @@
 import React, { useState } from 'react';
 import { useUIStore } from '@/lib/drdpr-horizon/lib/store/useUIStore';
 import { db } from '@/lib/drdpr-horizon/lib/db';
-import { X, Trash2, Download, FileText, Copy } from 'lucide-react';
+import { X, Trash2, Download, FileText, Copy, Sparkles, Loader2, LayoutGrid, ChevronUp, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { generateProfessionalWiki } from '@/lib/drdpr-horizon/lib/publish/wikiGenerator';
+import { performAutoLayout, LAYOUT_CONFIG } from '@/lib/drdpr-horizon/lib/ingest-client';
 import { PromptModal } from '../PromptModal';
 
 export function BatchActionToolbar() {
   const { selectedNodeIds, clearNodeSelection } = useUIStore();
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isLayouting, setIsLayouting] = useState(false);
+  const [showLayoutSettings, setShowLayoutSettings] = useState(false);
+  const [layoutConfig, setLayoutConfig] = useState(LAYOUT_CONFIG);
   const [promptConfig, setPromptConfig] = useState<{
     show: boolean;
     title: string;
     message: string;
-    options?: { label: string; value: string }[];
+    options?: { label: string; value: string; variant?: 'default' | 'danger' }[];
+    type?: 'default' | 'danger' | 'warning' | 'success' | 'info';
+    icon?: React.ReactNode;
     onConfirm: (val: string) => void;
   }>({
     show: false,
@@ -31,8 +37,10 @@ export function BatchActionToolbar() {
       show: true,
       title: 'DELETE SELECTION',
       message: `Are you sure you want to delete ${selectedNodeIds.size} selected nodes and all their connections?`,
+      type: 'danger',
+      icon: <Trash2 size={24} />,
       options: [
-        { label: 'DELETE ALL', value: 'confirm' },
+        { label: 'DELETE ALL', value: 'confirm', variant: 'danger' },
         { label: 'CANCEL', value: 'cancel' }
       ],
       onConfirm: async (val) => {
@@ -52,11 +60,18 @@ export function BatchActionToolbar() {
 
   const handleExport = async () => {
     const nodes = await db.nodes.bulkGet(Array.from(selectedNodeIds));
-    const validNodes = nodes.filter(n => n !== undefined);
+    const validNodes = nodes.filter((n): n is any => n !== undefined);
+    
+    // Also export edges between these nodes
+    const allEdges = await db.edges.toArray();
+    const relevantEdges = allEdges.filter(e => 
+      selectedNodeIds.has(e.sourceId) && selectedNodeIds.has(e.targetId)
+    );
     
     const exportData = {
-      version: '1.0',
+      version: '1.1',
       nodes: validNodes,
+      edges: relevantEdges,
       exportedAt: Date.now(),
       count: validNodes.length
     };
@@ -65,7 +80,7 @@ export function BatchActionToolbar() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `nodes_export_${Date.now()}.json`;
+    a.download = `horizon_export_${Date.now()}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -73,34 +88,60 @@ export function BatchActionToolbar() {
   };
 
   const handleGenerateWiki = async () => {
-    setIsGenerating(true);
-    
-    try {
-      const selectedNodes = await db.nodes.bulkGet(Array.from(selectedNodeIds));
-      const validNodes = selectedNodes.filter(n => n !== undefined);
-      
-      const allEdges = await db.edges.toArray();
-      const relevantEdges = allEdges.filter(e => 
-        selectedNodeIds.has(e.sourceId) && selectedNodeIds.has(e.targetId)
-      );
-      
-      const allNodes = await db.nodes.toArray();
-      const standards = allNodes.filter(n => n.payload?.type === 'standards');
-      
-      const html = generateProfessionalWiki(validNodes, relevantEdges, standards);
-      
-      const blob = new Blob([html], { type: 'text/html' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `wiki_${Date.now()}.html`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    } finally {
-      setIsGenerating(false);
-    }
+    // Step 1: Prompt for Wiki Title
+    setPromptConfig({
+      show: true,
+      title: 'WIKI TITLE',
+      message: 'Enter a professional title for your generated documentation portal.',
+      defaultValue: 'Project Knowledge Base',
+      type: 'info',
+      icon: <FileText size={24} />,
+      onConfirm: (wikiTitle) => {
+        // Step 2: Prompt for Author
+        setPromptConfig({
+          show: true,
+          title: 'AUTHOR NAME',
+          message: 'Who should be credited as the author of this documentation?',
+          defaultValue: 'Ingestalt User',
+          type: 'info',
+          icon: <Copy size={24} />,
+          onConfirm: async (authorName) => {
+            setPromptConfig(prev => ({ ...prev, show: false }));
+            setIsGenerating(true);
+            
+            try {
+              const selectedNodes = await db.nodes.bulkGet(Array.from(selectedNodeIds));
+              const validNodes = selectedNodes.filter(n => n !== undefined);
+              
+              const allEdges = await db.edges.toArray();
+              const relevantEdges = allEdges.filter(e => 
+                selectedNodeIds.has(e.sourceId) && selectedNodeIds.has(e.targetId)
+              );
+              
+              const allNodes = await db.nodes.toArray();
+              const standards = allNodes.filter(n => n.payload?.type === 'standards');
+              
+              const html = generateProfessionalWiki(validNodes, relevantEdges, standards, {
+                title: wikiTitle,
+                author: authorName
+              });
+              
+              const blob = new Blob([html], { type: 'text/html' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = `${wikiTitle.replace(/\s+/g, '_')}_wiki.html`;
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+              URL.revokeObjectURL(url);
+            } finally {
+              setIsGenerating(false);
+            }
+          }
+        });
+      }
+    });
   };
 
   const handleCopyContent = async () => {
@@ -116,9 +157,20 @@ export function BatchActionToolbar() {
       show: true,
       title: 'COPIED',
       message: `${validNodes.length} nodes have been serialized and copied to your clipboard as Markdown.`,
+      type: 'success',
+      icon: <Copy size={24} />,
       options: [{ label: 'EXCELLENT', value: 'close' }],
       onConfirm: () => setPromptConfig(prev => ({ ...prev, show: false }))
     });
+  };
+
+  const handleAutoLayout = async () => {
+    setIsLayouting(true);
+    try {
+      await performAutoLayout(Array.from(selectedNodeIds), layoutConfig);
+    } finally {
+      setIsLayouting(false);
+    }
   };
 
   const isVisible = selectedNodeIds.size > 0;
@@ -153,6 +205,55 @@ export function BatchActionToolbar() {
           disabled={isGenerating}
         />
         
+        <div className="relative flex items-center group/layout">
+          <ActionButton 
+            onClick={handleAutoLayout} 
+            icon={isLayouting ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />} 
+            label={isLayouting ? "Layouting..." : "Autolayout Selection"} 
+            color="text-amber-400"
+            disabled={isLayouting}
+          />
+          <button 
+            onClick={() => setShowLayoutSettings(!showLayoutSettings)}
+            className={`p-1 -ml-2 mr-1 rounded-full hover:bg-amber-500/10 transition-colors z-[110] ${showLayoutSettings ? 'text-amber-400 bg-amber-500/5' : 'text-foreground/20 hover:text-amber-400'}`}
+            title="Layout Settings"
+          >
+            <ChevronUp size={12} className={`transition-transform duration-300 ${showLayoutSettings ? 'rotate-180' : ''}`} />
+          </button>
+
+          {showLayoutSettings && (
+            <div className="absolute bottom-16 left-0 p-4 bg-card/90 backdrop-blur-3xl border border-border/40 rounded-3xl shadow-2xl min-w-[220px] animate-in slide-in-from-bottom-4 fade-in duration-300 z-[120]">
+              <h3 className="text-[10px] font-black uppercase tracking-widest text-foreground/40 mb-4 ml-1">Layout Parameters</h3>
+              <div className="space-y-4">
+                <LayoutParam 
+                  label="Column Width" 
+                  value={layoutConfig.COLUMN_WIDTH} 
+                  min={100} max={500} step={10}
+                  onChange={(v) => setLayoutConfig(c => ({ ...c, COLUMN_WIDTH: v }))} 
+                />
+                <LayoutParam 
+                  label="Vertical Gap" 
+                  value={layoutConfig.MIN_Y_GAP} 
+                  min={5} max={100} step={5}
+                  onChange={(v) => setLayoutConfig(c => ({ ...c, MIN_Y_GAP: v }))} 
+                />
+                <LayoutParam 
+                  label="Nesting Depth" 
+                  value={layoutConfig.NESTING_OFFSET} 
+                  min={0} max={200} step={10}
+                  onChange={(v) => setLayoutConfig(c => ({ ...c, NESTING_OFFSET: v }))} 
+                />
+                <button 
+                  onClick={() => setLayoutConfig(LAYOUT_CONFIG)}
+                  className="w-full py-2 text-[9px] font-bold uppercase tracking-tighter text-foreground/30 hover:text-foreground transition-colors mt-2"
+                >
+                  Reset Defaults
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+        
         <div className="w-px h-6 bg-border/20 mx-1 self-center" />
         
         <ActionButton 
@@ -178,6 +279,8 @@ export function BatchActionToolbar() {
         title={promptConfig.title}
         message={promptConfig.message}
         options={promptConfig.options}
+        type={promptConfig.type}
+        icon={promptConfig.icon}
         onConfirm={promptConfig.onConfirm}
         onCancel={() => setPromptConfig(prev => ({ ...prev, show: false }))}
       />
@@ -204,5 +307,24 @@ function ActionButton({ onClick, icon, label, color, disabled }: { onClick: () =
   );
 }
 
-import { Loader2 } from 'lucide-react';
+function LayoutParam({ label, value, min, max, step, onChange }: { label: string, value: number, min: number, max: number, step: number, onChange: (v: number) => void }) {
+  return (
+    <div className="space-y-1.5">
+      <div className="flex justify-between items-center px-1">
+        <label className="text-[9px] font-bold uppercase tracking-tight text-foreground/60">{label}</label>
+        <span className="text-[10px] font-mono text-amber-400 font-bold">{value}px</span>
+      </div>
+      <input 
+        type="range" 
+        min={min} 
+        max={max} 
+        step={step} 
+        value={value} 
+        onChange={(e) => onChange(parseInt(e.target.value))}
+        className="w-full h-1 bg-secondary rounded-full appearance-none cursor-pointer accent-amber-500 hover:accent-amber-400 transition-all"
+      />
+    </div>
+  );
+}
+
 // Made with Bob

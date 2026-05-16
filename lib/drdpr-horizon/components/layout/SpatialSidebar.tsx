@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { DynamicIcon } from '@/lib/drdpr-horizon/components/DynamicIcon';
 import { PromptModal } from '../PromptModal';
+import { useReactFlow } from '@xyflow/react';
 
 const CORE_TEMPLATES = [
   { id: 'note', title: 'Note', icon: FileText, color: '#94a3b8' },
@@ -34,7 +35,8 @@ const CORE_TEMPLATES = [
 ];
 
 export function SpatialSidebar() {
-  const { activeGraphId, setActiveGraphId } = useUIStore();
+  const { activeGraphId, setActiveGraphId, setSelectedNodeId } = useUIStore();
+  const { setCenter, fitView } = useReactFlow();
   const [searchQuery, setSearchQuery] = React.useState('');
   const [isCreatingGraph, setIsCreatingGraph] = React.useState(false);
   const [newGraphName, setNewGraphName] = React.useState('');
@@ -50,6 +52,29 @@ export function SpatialSidebar() {
     message: '',
     onConfirm: () => { },
   });
+
+  // Dynamic Standards Map (replicated from CommandSearch/Canvas)
+  const standardsMap = useLiveQuery(async () => {
+    const nodes = await db.nodes.toArray();
+    const map = new Map<string, any>();
+    nodes.forEach(node => {
+      if (node.payload?.type === 'standards') {
+        const defs = node.payload?.definitions || [];
+        defs.forEach((d: any) => {
+          map.set(d.id, d);
+        });
+        if (node.payload?.configId || node.id) {
+          map.set(node.payload?.configId || node.id, {
+            type: node.payload?.type,
+            label: node.payload?.title,
+            icon: node.payload?.icon || 'ShieldAlert',
+            color: node.payload?.color || '#f59e0b',
+          });
+        }
+      }
+    });
+    return map;
+  }, []) || new Map();
   
   // 1. Load Canvas (Space feature)
   const graphs = useLiveQuery(() => db.graphs.toArray()) || [];
@@ -132,8 +157,10 @@ export function SpatialSidebar() {
       show: true,
       title: 'DELETE CANVAS',
       message: 'This will remove the canvas and all nodes associated with it. This cannot be undone.',
+      type: 'danger',
+      icon: <Trash2 size={24} />,
       options: [
-        { label: 'DELETE EVERYTHING', value: 'confirm' },
+        { label: 'DELETE EVERYTHING', value: 'confirm', variant: 'danger' },
         { label: 'CANCEL', value: 'cancel' }
       ],
       onConfirm: async (val) => {
@@ -172,6 +199,8 @@ export function SpatialSidebar() {
       show: true,
       title: 'SNAPSHOT SAVED',
       message: 'Canvas snapshot has been successfully recorded to the local database.',
+      type: 'success',
+      icon: <Save size={24} />,
       options: [{ label: 'EXCELLENT', value: 'close' }],
       onConfirm: () => setPromptConfig(prev => ({ ...prev, show: false }))
     });
@@ -187,6 +216,8 @@ export function SpatialSidebar() {
         show: true,
         title: 'NO SNAPSHOT',
         message: 'No recorded snapshot found for this canvas to restore from.',
+        type: 'warning',
+        icon: <RotateCcw size={24} />,
         options: [{ label: 'UNDERSTOOD', value: 'close' }],
         onConfirm: () => setPromptConfig(prev => ({ ...prev, show: false }))
       });
@@ -197,6 +228,8 @@ export function SpatialSidebar() {
       show: true,
       title: 'RESTORE CANVAS',
       message: `Restore node positions from snapshot taken on ${new Date(graph.snapshot.timestamp).toLocaleString()}?`,
+      type: 'info',
+      icon: <RotateCcw size={24} />,
       options: [
         { label: 'RESTORE POSITIONS', value: 'confirm' },
         { label: 'CANCEL', value: 'cancel' }
@@ -211,6 +244,8 @@ export function SpatialSidebar() {
             show: true,
             title: 'RESTORED',
             message: 'Canvas has been restored to the snapshot state.',
+            type: 'success',
+            icon: <CheckSquare size={24} />,
             options: [{ label: 'PERFECT', value: 'close' }],
             onConfirm: () => setPromptConfig(prev => ({ ...prev, show: false }))
           });
@@ -276,6 +311,8 @@ export function SpatialSidebar() {
             show: true,
             title: 'INVALID ATLAS',
             message: 'The selected file does not appear to be a valid Ingestalt Atlas format.',
+            type: 'danger',
+            icon: <Upload size={24} />,
             options: [{ label: 'TRY AGAIN', value: 'close' }],
             onConfirm: () => setPromptConfig(prev => ({ ...prev, show: false }))
           });
@@ -317,6 +354,8 @@ export function SpatialSidebar() {
           show: true,
           title: 'IMPORT SUCCESS',
           message: `Atlas for "${atlasData.graph.name}" has been successfully imported into a new workspace.`,
+          type: 'success',
+          icon: <Download size={24} />,
           options: [{ label: 'VIEW CANVAS', value: 'close' }],
           onConfirm: () => setPromptConfig(prev => ({ ...prev, show: false }))
         });
@@ -578,31 +617,54 @@ export function SpatialSidebar() {
           count={filteredNodes.filter(n => n.payload?.type !== 'standards').length}
           isOpen={openSections.nodes}
           onToggle={() => toggleSection('nodes')}
-        >
-          <div className="px-4 pb-12 space-y-0.5">
-            {filteredNodes
-              .filter(n => n.payload?.type !== 'standards')
-              .filter(n => !searchQuery || n.payload?.title?.toLowerCase().includes(searchQuery.toLowerCase()))
-              .map((node) => (
+    >
+      <div className="px-4 pb-12 space-y-0.5">
+        {filteredNodes
+          .filter(n => n.payload?.type !== 'standards')
+          .filter(n => !searchQuery || n.payload?.title?.toLowerCase().includes(searchQuery.toLowerCase()))
+          .map((node) => {
+            // Resolve standard appearance
+            const standard = standardsMap.get(node.configId);
+            const nodeColor = node.payload?.color || (standard ? standard.color : '#52525b');
+            const nodeIcon = node.payload?.icon || (standard ? standard.icon : 'FileText');
+
+            return (
               <div
                 key={node.id}
                 draggable
                 onDragStart={(e) => onNodeDragStart(e, node.id)}
-                className="group flex flex-col p-3 hover:bg-secondary/[0.03] border border-transparent hover:border-border/5 transition-all cursor-grab active:cursor-grabbing"
+                onClick={() => {
+                  // Highlight and Select Node
+                  setSelectedNodeId(node.id);
+                  if (node.position) {
+                    setCenter(node.position.x, node.position.y, { zoom: 0.8, duration: 800 });
+                  } else {
+                    fitView({ nodes: [{ id: node.id }], duration: 800, padding: 0.5 });
+                  }
+                  window.dispatchEvent(new CustomEvent('highlight-node', { detail: { id: node.id } }));
+                }}
+                className="group flex flex-col p-3 hover:bg-secondary/[0.03] border border-transparent hover:border-border/5 transition-all cursor-grab active:cursor-grabbing relative overflow-hidden"
               >
+                {/* Edge accent based on registered color */}
+                <div className="absolute left-0 top-0 bottom-0 w-0.5 opacity-40" style={{ backgroundColor: nodeColor }} />
+                
                 <div className="flex items-center justify-between">
-                  <div className="text-xs font-bold text-foreground/60 group-hover:text-foreground truncate tracking-wider">
-                    {node.payload?.title || 'UNTITLED_NODE'}
+                  <div className="flex items-center gap-2 min-w-0">
+                    <DynamicIcon name={nodeIcon} size={12} style={{ color: nodeColor }} className="opacity-80 shrink-0" />
+                    <div className="text-xs font-bold text-foreground/60 group-hover:text-foreground truncate tracking-wider">
+                      {node.payload?.title || 'UNTITLED_NODE'}
+                    </div>
                   </div>
-                  <div className="text-xs text-foreground/10">{node.payload?.type}</div>
+                  <div className="text-[10px] uppercase font-black tracking-tighter text-foreground/10 group-hover:text-foreground/20">{node.payload?.type}</div>
                 </div>
-                <div className="flex items-center gap-2 mt-1">
-                  <div className="text-xs text-foreground/20 tabular-nums">ID_{node.id.slice(0,8)}</div>
-                  <div className="size-1 rounded-full bg-secondary/10" />
-                  <div className="text-xs text-foreground/20 truncate">MOD_{new Date(node.lastModified).toLocaleDateString()}</div>
+                <div className="flex items-center gap-2 mt-1 ml-5">
+                  <div className="text-[10px] text-foreground/20 tabular-nums">ID_{node.id.slice(0,8)}</div>
+                  <div className="size-0.5 rounded-full bg-secondary/10" />
+                  <div className="text-[10px] text-foreground/20 truncate">MOD_{new Date(node.lastModified).toLocaleDateString()}</div>
                 </div>
               </div>
-            ))}
+            );
+          })}
           </div>
         </SidebarCollapsible>
       </div>

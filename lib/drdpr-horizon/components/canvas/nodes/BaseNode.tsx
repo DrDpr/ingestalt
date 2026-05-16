@@ -15,19 +15,14 @@ export interface BaseNodeProps {
 }
 
 function BaseNodeInner({ id, data, icon, colorClass, isStatic, style }: BaseNodeProps) {
-  const { selectedNodeId, selectedNodeIds, hoveredNodeId } = useUIStore();
+  const { selectedNodeId, selectedNodeIds, hoveredNodeId, highlightNodeId } = useUIStore();
   const isPrimary = !isStatic && selectedNodeId === id; // primary = inspector open
   const isInMultiSelect = !isStatic && selectedNodeIds.has(id);
+  const isHighlighted = highlightNodeId === id;
   const isSelected = isPrimary || isInMultiSelect;
   const isHovered = hoveredNodeId === id || hoveredNodeId === data.id;
   const nodeColor = data.color || '#52525b';
 
-  const handleDelete = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (confirm(`Delete node "${data.label}"?`)) {
-      await db.nodes.delete(id);
-    }
-  };
 
   return (
     <div 
@@ -35,11 +30,20 @@ function BaseNodeInner({ id, data, icon, colorClass, isStatic, style }: BaseNode
         "group relative rounded-2xl border p-4 min-w-[200px] shadow-xl backdrop-blur-xl transition-all duration-300",
         colorClass,
         isHovered && "scale-110 shadow-[0_0_30px_rgba(59,130,246,0.5)] z-50",
+        isHighlighted && "animate-pulse ring-4 ring-offset-4 ring-blue-500/50"
       )}
       style={{
         ...style,
+        // Highlight logic (takes precedence over selection)
+        ...(isHighlighted && {
+          outline: '4px solid #3b82f6',
+          outlineOffset: '8px',
+          transform: 'scale(1.1)',
+          boxShadow: '0 0 50px rgba(59,130,246,0.5)',
+          zIndex: 100,
+        }),
         // Primary selection: bright ring with node's own color + glow
-        ...(isPrimary && !isHovered && {
+        ...(isPrimary && !isHovered && !isHighlighted && {
           outline: `2px solid ${nodeColor}`,
           outlineOffset: '3px',
           boxShadow: `0 0 16px ${nodeColor}60`,
@@ -58,14 +62,6 @@ function BaseNodeInner({ id, data, icon, colorClass, isStatic, style }: BaseNode
         }),
       }}
     >
-      {!isStatic && (
-        <button 
-          onClick={handleDelete}
-          className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-red-500 text-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg hover:bg-red-600 z-50"
-        >
-          <X size={12} />
-        </button>
-      )}
 
       {!isStatic && <Handle type="target" position={Position.Top} id="t" className="w-2 h-2 !bg-white/10 border-none opacity-0 hover:opacity-100" />}
       {!isStatic && <Handle type="source" position={Position.Bottom} id="b" className="w-2 h-2 !bg-white/10 border-none opacity-0 hover:opacity-100" />}
