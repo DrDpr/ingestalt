@@ -817,11 +817,17 @@ export function generateProfessionalWiki(nodes: HorizonNode[], edges: HorizonEdg
 
       // If href matches a node ID, make it an internal navigation link
       if (nodes.some(n => n.id === href)) {
-        return \`<a href="#\${href}" onclick="navigateTo('\${href}'); return false;" title="\${title || ''}">\${text}</a>\`;
+        return \`<a href="#\${href}" onclick="event.stopPropagation(); navigateTo('\${href}'); return false;" title="\${title || ''}">\${text}</a>\`;
+      }
+
+      // Local anchors for headings
+      if (href && href.startsWith('#')) {
+        return \`<a href="\${href}" title="\${title || ''}">\${text}</a>\`;
       }
 
       // VS Code Protocol Support for local files
-      const isLocalPath = href.endsWith('.md') || href.endsWith('.ts') || href.endsWith('.tsx') || href.endsWith('.js') || href.endsWith('.jsx') || href.startsWith('../') || href.startsWith('./');
+      const isLocalPath = href && (href.endsWith('.md') || href.endsWith('.ts') || href.endsWith('.tsx') || href.endsWith('.js') || href.endsWith('.jsx') || href.startsWith('../') || href.startsWith('./'));
+      
       if (isLocalPath && !href.startsWith('http')) {
         if (!basePath) {
           return \`<a href="#" onclick="alert('Please enter your Project Root path at the top of the page first!\\\\n\\\\nExample: d:/Desktop/ingestalt'); return false;" title="Set Project Root to open in VS Code" style="border-bottom: 1px dashed var(--accent); color: var(--accent); cursor: pointer;">\${text} ⚙️</a>\`;
@@ -847,6 +853,18 @@ export function generateProfessionalWiki(nodes: HorizonNode[], edges: HorizonEdg
       // Standard markdown links with target="_blank"
       return \`<a href="\${href}" title="\${title || ''}" target="_blank" rel="noopener noreferrer">\${text}</a>\`;
     };
+
+    function scrollToHeading(id) {
+      const el = document.getElementById(id);
+      const contentArea = document.getElementById('page-content');
+      // Only scroll if the target exists and is strictly within the article content
+      if (el && contentArea && contentArea.contains(el)) {
+        document.querySelector('main').scrollTo({
+          top: el.offsetTop - 80,
+          behavior: 'smooth'
+        });
+      }
+    }
 
     function navigateTo(id) {
       currentNodeId = id;
@@ -1157,7 +1175,11 @@ export function generateProfessionalWiki(nodes: HorizonNode[], edges: HorizonEdg
     window.addEventListener('hashchange', () => {
       const hash = window.location.hash.substring(1);
       if (hash && hash !== currentNodeId) {
-        navigateTo(hash);
+        if (nodes.some(n => n.id === hash)) {
+          navigateTo(hash);
+        } else {
+          scrollToHeading(hash);
+        }
       }
     });
   </script>
