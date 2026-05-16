@@ -57,7 +57,7 @@ export function HorizonCanvas() {
     toggleNodeSelection, selectedNodeIds, selectAllNodes, setPrimaryNodeId
   } = useUIStore();
   const { resolvedTheme } = useTheme();
-  const { screenToFlowPosition } = useReactFlow();
+  const { screenToFlowPosition, getNodes } = useReactFlow();
   const { syncNodeToFile } = useSync();
 
   // Get the active graph to determine its workspaceId
@@ -128,8 +128,8 @@ export function HorizonCanvas() {
         id: node.id,
         type: ['database', 'api', 'frontend', 'hook', 'standards', 'ai-task'].includes(resolvedType) ? resolvedType : 'other',
         position: node.position,
-        // NOTE: do NOT set `selected` here — BaseNode reads store directly for visuals.
-        // Setting it here causes React Flow to fire onSelectionChange → infinite loop.
+        // We do NOT pass `selected` to React Flow here to avoid the infinite sync loop.
+        // Visual selection is handled by BaseNode reading from useUIStore.
         data: {
           id: node.id,
           label: node.payload?.title || 'Untitled',
@@ -198,24 +198,24 @@ export function HorizonCanvas() {
   useEffect(() => { setEdges(filteredEdges); }, [filteredEdges, setEdges]);
 
   const onNodeClick = useCallback((e: any, node: Node) => {
+    // Multi-select with Ctrl/Cmd/Shift key
     if (e.ctrlKey || e.metaKey || e.shiftKey) {
-      // Ctrl/Cmd/Shift: toggle node in multi-select
       toggleNodeSelection(node.id);
     } else {
-      // Plain click: single select (sets primary + inspector)
       setSelectedNodeId(node.id);
     }
   }, [setSelectedNodeId, toggleNodeSelection]);
 
-  // Bridge React Flow's native drag-select box back to the store.
-  // Uses setPrimaryNodeId (not setSelectedNodeId) to avoid overwriting the multi-select Set.
-  const onSelectionChange = useCallback(({ nodes: selectedNodes }: { nodes: Node[] }) => {
-    if (selectedNodes.length === 0) return; // pane click is handled by onPaneClick
-    const ids = selectedNodes.map((n: Node) => n.id);
+  // Handle drag-selection at the END of the drag action to avoid infinite loops
+  const onSelectionEnd = useCallback(() => {
+    const selectedNodes = getNodes().filter(n => n.selected);
+    if (selectedNodes.length === 0) return;
+    
+    const ids = selectedNodes.map(n => n.id);
     selectAllNodes(ids);
-    // Focus the last node in inspector without resetting the Set
+    // Focus the last node in the group
     setPrimaryNodeId(ids[ids.length - 1]);
-  }, [selectAllNodes, setPrimaryNodeId]);
+  }, [getNodes, selectAllNodes, setPrimaryNodeId]);
 
   const onPaneClick = useCallback(() => {
     clearSelection();
@@ -408,7 +408,7 @@ export function HorizonCanvas() {
         nodes={nodes} edges={edges}
         onNodesChange={onNodesChange} onEdgesChange={onEdgesChange}
         onNodeClick={onNodeClick} onPaneClick={onPaneClick}
-        onSelectionChange={onSelectionChange}
+        onSelectionEnd={onSelectionEnd}
         onMoveEnd={onMoveEnd} onNodeDragStop={onNodeDragStop}
         onConnect={onConnect} onEdgeDoubleClick={onEdgeDoubleClick}
         onPaneContextMenu={onPaneContextMenu}
@@ -421,7 +421,7 @@ export function HorizonCanvas() {
         panOnDrag={[1, 2]}
         selectionOnDrag
         selectionMode={SelectionMode.Partial}
-        multiSelectionKeyCode="Shift"
+        multiSelectionKeyCode={['Shift', 'Control', 'Meta']}
         colorMode={resolvedTheme as 'dark' | 'light' | 'system' || 'system'}
       >
         <Background

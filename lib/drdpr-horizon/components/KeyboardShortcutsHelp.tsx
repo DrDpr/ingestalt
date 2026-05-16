@@ -74,7 +74,7 @@ export function KeyboardShortcutsHelp() {
       title: 'View Modes',
       shortcuts: [
         { keys: [mod, 'E'], description: 'Cycle edge styles' },
-        { keys: [mod, 'Shift', 'T'], description: 'Toggle theme' },
+        { keys: [mod, 'D'], description: 'Toggle dark/light theme' },
       ],
     },
     {
