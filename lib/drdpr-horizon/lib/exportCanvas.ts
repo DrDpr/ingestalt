@@ -12,42 +12,98 @@ interface ExportOptions {
 }
 
 /**
- * Export the entire React Flow canvas as an image
+ * Core helper that uses the official React Flow image export method.
+ * It targets the `.react-flow__viewport` and applies a temporary transform via CSS
+ * to perfectly frame the requested nodes, ensuring even off-screen nodes are captured.
  */
-export async function exportCanvas(
+async function captureViewportBounds(
   canvasElement: HTMLElement,
-  options: ExportOptions & { download?: boolean } = {}
+  nodesToExport: Node[],
+  options: ExportOptions & { download?: boolean }
 ): Promise<{ dataUrl: string, filename: string, format: string }> {
   const {
     format = 'png',
     quality = 0.95,
     backgroundColor = '#09090b',
-    filename = `canvas-export-${Date.now()}`
+    padding = 50,
+    filename = `export-${Date.now()}`
   } = options;
+
+  const viewportElement = canvasElement.querySelector('.react-flow__viewport') as HTMLElement;
+  if (!viewportElement) {
+    throw new Error('Could not find React Flow viewport element.');
+  }
+
+  if (nodesToExport.length === 0) {
+    throw new Error('No nodes provided for export.');
+  }
+
+  // Calculate precise bounds of the target nodes
+  const bounds = getNodesBounds(nodesToExport);
+  const imageWidth = bounds.width + padding * 2;
+  const imageHeight = bounds.height + padding * 2;
+  
+  // We force a 1:1 scale (zoom: 1) to prevent CSS scaling which causes blurry text in html-to-image.
+  // We simply translate the viewport so the bounding box starts exactly after our padding.
+  const transform = {
+    x: -bounds.x + padding,
+    y: -bounds.y + padding,
+    zoom: 1
+  };
+
+  const exportOptions = {
+    backgroundColor,
+    cacheBust: true,
+    pixelRatio: 2, // 2x resolution for retina-crisp exports
+    width: imageWidth,
+    height: imageHeight,
+    style: {
+      width: `${imageWidth}px`,
+      height: `${imageHeight}px`,
+      // This is the magic: temporarily overrides the viewport transform just for the capture
+      transform: `translate(${transform.x}px, ${transform.y}px) scale(${transform.zoom})`,
+    },
+  };
+
+  // Chromium bug fix: SVG foreignObject rendering fails with backdrop-filter and box-shadows on transformed elements.
+  // We temporarily disable them and apply a solid background, then restore them afterwards.
+  const isDark = document.documentElement.classList.contains('dark');
+  const solidBg = isDark ? '#09090b' : '#ffffff';
+  const modifiedNodes: { el: HTMLElement, filter: string, webkitFilter: string, bg: string, shadow: string }[] = [];
+
+  // Disable on nodes (they have backdrop-blur-xl and shadow-xl)
+  viewportElement.querySelectorAll('.react-flow__node > div').forEach((el) => {
+    const htmlEl = el as HTMLElement;
+    modifiedNodes.push({
+      el: htmlEl,
+      filter: htmlEl.style.backdropFilter,
+      webkitFilter: htmlEl.style.webkitBackdropFilter,
+      bg: htmlEl.style.backgroundColor,
+      shadow: htmlEl.style.boxShadow
+    });
+    
+    htmlEl.style.setProperty('backdrop-filter', 'none', 'important');
+    htmlEl.style.setProperty('-webkit-backdrop-filter', 'none', 'important');
+    htmlEl.style.setProperty('box-shadow', 'none', 'important');
+    htmlEl.style.setProperty('background-color', solidBg, 'important');
+  });
 
   try {
     let dataUrl: string;
-
-    const exportOptions = {
-      backgroundColor,
-      cacheBust: true,
-      pixelRatio: 2, // Higher quality
-    };
-
     switch (format) {
       case 'jpeg':
-        dataUrl = await toJpeg(canvasElement, { ...exportOptions, quality });
+        dataUrl = await toJpeg(viewportElement, { ...exportOptions, quality });
         break;
       case 'svg':
-        dataUrl = await toSvg(canvasElement, exportOptions);
+        dataUrl = await toSvg(viewportElement, exportOptions);
         break;
       case 'png':
       default:
-        dataUrl = await toPng(canvasElement, exportOptions);
+        dataUrl = await toPng(viewportElement, exportOptions);
         break;
     }
 
-    // Download the image if requested
+    // Auto-download if not explicitly disabled
     if (options.download !== false) {
       const link = document.createElement('a');
       link.download = `${filename}.${format}`;
@@ -56,15 +112,36 @@ export async function exportCanvas(
     }
     
     return { dataUrl, filename, format };
+  } finally {
+    // Restore original styles
+    modifiedNodes.forEach(({ el, filter, webkitFilter, bg, shadow }) => {
+      el.style.backdropFilter = filter;
+      el.style.webkitBackdropFilter = webkitFilter;
+      el.style.backgroundColor = bg;
+      el.style.boxShadow = shadow;
+    });
+  }
+}
+
+/**
+ * Export the entire React Flow canvas as an image, including all off-screen nodes.
+ */
+export async function exportCanvas(
+  canvasElement: HTMLElement,
+  nodes: Node[],
+  options: ExportOptions & { download?: boolean } = {}
+): Promise<{ dataUrl: string, filename: string, format: string }> {
+  try {
+    const filename = options.filename || `canvas-export-${Date.now()}`;
+    return await captureViewportBounds(canvasElement, nodes, { ...options, filename });
   } catch (error) {
-    console.error('Failed to export canvas:', error);
+    console.error('Failed to export entire canvas:', error);
     throw error;
   }
 }
 
 /**
- * Export a specific node with its relationships
- * This focuses the viewport on the node and its connected nodes
+ * Export a specific node along with any nodes directly connected to it via edges.
  */
 export async function exportNodeWithRelationships(
   canvasElement: HTMLElement,
@@ -73,16 +150,8 @@ export async function exportNodeWithRelationships(
   targetNodeId: string,
   options: ExportOptions & { download?: boolean } = {}
 ): Promise<{ dataUrl: string, filename: string, format: string }> {
-  const {
-    format = 'png',
-    quality = 0.95,
-    backgroundColor = '#09090b',
-    padding = 100,
-    filename
-  } = options;
-
   try {
-    // Find the target node and all connected nodes
+    // 1. Find the target node and all connected nodes
     const connectedNodeIds = new Set<string>([targetNodeId]);
     
     // Find all edges connected to the target node
@@ -96,98 +165,23 @@ export async function exportNodeWithRelationships(
       connectedNodeIds.add(edge.target);
     });
 
-    // Get the nodes to export
+    // 2. Filter down to only the nodes we want to capture
     const nodesToExport = nodes.filter(node => connectedNodeIds.has(node.id));
     
     if (nodesToExport.length === 0) {
-      throw new Error('No nodes found to export');
+      throw new Error('Target node not found or has no connections');
     }
 
-    // Get the target node for filename
+    // 3. Generate a nice filename based on the primary node
     const targetNode = nodes.find(n => n.id === targetNodeId);
     const label = targetNode?.data?.label;
     const defaultFilename = label && typeof label === 'string'
       ? `${label.replace(/[^a-z0-9]/gi, '_').toLowerCase()}-export-${Date.now()}`
       : `node-export-${Date.now()}`;
 
-    // Calculate bounds of the nodes to export
-    const bounds = getNodesBounds(nodesToExport);
-    
-    // Add padding
-    const paddedBounds = {
-      x: bounds.x - padding,
-      y: bounds.y - padding,
-      width: bounds.width + padding * 2,
-      height: bounds.height + padding * 2,
-    };
+    const filename = options.filename || defaultFilename;
 
-    // Get viewport for these bounds
-    const viewport = getViewportForBounds(
-      paddedBounds,
-      canvasElement.offsetWidth,
-      canvasElement.offsetHeight,
-      0.5, // min zoom
-      2,   // max zoom
-      0.1  // padding
-    );
-
-    // Create a temporary container with the calculated viewport
-    const tempContainer = document.createElement('div');
-    tempContainer.style.position = 'fixed';
-    tempContainer.style.top = '-9999px';
-    tempContainer.style.left = '-9999px';
-    tempContainer.style.width = `${paddedBounds.width}px`;
-    tempContainer.style.height = `${paddedBounds.height}px`;
-    tempContainer.style.backgroundColor = backgroundColor;
-    document.body.appendChild(tempContainer);
-
-    // Clone the canvas element
-    const clonedCanvas = canvasElement.cloneNode(true) as HTMLElement;
-    
-    // Apply viewport transformation
-    const reactFlowViewport = clonedCanvas.querySelector('.react-flow__viewport') as HTMLElement;
-    if (reactFlowViewport) {
-      reactFlowViewport.style.transform = `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.zoom})`;
-    }
-    
-    tempContainer.appendChild(clonedCanvas);
-
-    // Export the temporary container
-    let dataUrl: string;
-    const exportOptions = {
-      backgroundColor,
-      cacheBust: true,
-      pixelRatio: 2,
-      width: paddedBounds.width,
-      height: paddedBounds.height,
-    };
-
-    switch (format) {
-      case 'jpeg':
-        dataUrl = await toJpeg(tempContainer, { ...exportOptions, quality });
-        break;
-      case 'svg':
-        dataUrl = await toSvg(tempContainer, exportOptions);
-        break;
-      case 'png':
-      default:
-        dataUrl = await toPng(tempContainer, exportOptions);
-        break;
-    }
-
-    // Clean up
-    document.body.removeChild(tempContainer);
-
-    const finalFilename = filename || defaultFilename;
-    // Download the image
-    if (options.download !== false) {
-      const link = document.createElement('a');
-      link.download = `${finalFilename}.${format}`;
-      link.href = dataUrl;
-      link.click();
-    }
-    
-    return { dataUrl, filename: finalFilename, format };
+    return await captureViewportBounds(canvasElement, nodesToExport, { ...options, filename });
   } catch (error) {
     console.error('Failed to export node with relationships:', error);
     throw error;
@@ -195,7 +189,7 @@ export async function exportNodeWithRelationships(
 }
 
 /**
- * Export selected nodes with their interconnections
+ * Export only the nodes currently selected by the user.
  */
 export async function exportSelectedNodes(
   canvasElement: HTMLElement,
@@ -204,60 +198,22 @@ export async function exportSelectedNodes(
   selectedNodeIds: string[],
   options: ExportOptions & { download?: boolean } = {}
 ): Promise<{ dataUrl: string, filename: string, format: string }> {
-  const {
-    format = 'png',
-    quality = 0.95,
-    backgroundColor = '#09090b',
-    padding = 100,
-    filename = `selection-export-${Date.now()}`
-  } = options;
-
   try {
     if (selectedNodeIds.length === 0) {
       throw new Error('No nodes selected');
     }
 
-    // Get the nodes to export
     const nodesToExport = nodes.filter(node => selectedNodeIds.includes(node.id));
     
     if (nodesToExport.length === 0) {
-      throw new Error('No nodes found to export');
+      throw new Error('Selected nodes not found in graph');
     }
 
-    // Export using the full canvas approach
-    let dataUrl: string;
-    const exportOptions = {
-      backgroundColor,
-      cacheBust: true,
-      pixelRatio: 2,
-    };
+    const filename = options.filename || `selection-export-${Date.now()}`;
 
-    switch (format) {
-      case 'jpeg':
-        dataUrl = await toJpeg(canvasElement, { ...exportOptions, quality });
-        break;
-      case 'svg':
-        dataUrl = await toSvg(canvasElement, exportOptions);
-        break;
-      case 'png':
-      default:
-        dataUrl = await toPng(canvasElement, exportOptions);
-        break;
-    }
-
-    // Download the image
-    if (options.download !== false) {
-      const link = document.createElement('a');
-      link.download = `${filename}.${format}`;
-      link.href = dataUrl;
-      link.click();
-    }
-    
-    return { dataUrl, filename, format };
+    return await captureViewportBounds(canvasElement, nodesToExport, { ...options, filename });
   } catch (error) {
     console.error('Failed to export selected nodes:', error);
     throw error;
   }
 }
-
-// Made with Bob
