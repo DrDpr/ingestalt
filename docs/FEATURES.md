@@ -1,8 +1,8 @@
 # Horizon IDE - Feature Specification
 
-> **Spec-Driven Development Document**  
-> Version: 1.0.0  
-> Last Updated: 2026-05-15
+> **Spec-Driven Development Document**
+> Version: 1.1.0
+> Last Updated: 2026-05-16
 
 ---
 
@@ -30,6 +30,17 @@ Horizon is a **spatial graph IDE** that enables developers to visualize, documen
 - **FR-1.2.4**: Nodes display icon, title, and type indicator
 - **FR-1.2.5**: Selection ring highlights active node
 - **FR-1.2.6**: Double-click node to open Inspector
+
+#### 1.4 Node Appearance Customization
+- **FR-1.4.1**: Node color customization at type level (Standards node defines default colors)
+- **FR-1.4.2**: Per-node color override capability for individual customization
+- **FR-1.4.3**: Node icon selection from integrated icon library (Lucide icons)
+- **FR-1.4.4**: Node size presets (compact, standard, expanded)
+- **FR-1.4.5**: Node border style options (solid, dashed, dotted) with thickness control
+- **FR-1.4.6**: Node shape variants (rounded-lg, rounded-xl, rounded-2xl, square)
+- **FR-1.4.7**: Appearance settings accessible from Inspector panel
+- **FR-1.4.8**: Real-time preview of appearance changes
+- **FR-1.4.9**: Reset to type defaults option
 
 #### 1.3 Edge Management
 - **FR-1.3.1**: Users can create edges between nodes
@@ -240,19 +251,63 @@ Horizon is a **spatial graph IDE** that enables developers to visualize, documen
 
 ---
 
-### 9. **Collaboration Features** (Future)
+### 10. **Keyboard Shortcuts**
 
-#### 9.1 Real-time Sync
-- **FR-9.1.1**: WebSocket connection for live updates
-- **FR-9.1.2**: Cursor presence indicators
-- **FR-9.1.3**: Conflict resolution for concurrent edits
-- **FR-9.1.4**: Activity feed
+#### 10.1 Canvas Navigation
+- **FR-10.1.1**: Pan canvas with arrow keys (Shift+Arrow for faster pan)
+- **FR-10.1.2**: Zoom in/out with Ctrl/Cmd + Plus/Minus
+- **FR-10.1.3**: Fit view to all nodes (Ctrl/Cmd+0)
+- **FR-10.1.4**: Fit view to selected nodes (Ctrl/Cmd+Shift+0)
+- **FR-10.1.5**: Reset zoom to 100% (Ctrl/Cmd+1)
 
-#### 9.2 Sharing
-- **FR-9.2.1**: Generate shareable links
-- **FR-9.2.2**: Export to static HTML
-- **FR-9.2.3**: Embed canvas in other apps
-- **FR-9.2.4**: Permission management
+#### 10.2 Node Operations
+- **FR-10.2.1**: Delete selected node (Delete or Backspace)
+- **FR-10.2.2**: Duplicate selected node (Ctrl/Cmd+D)
+- **FR-10.2.3**: Copy selected node (Ctrl/Cmd+C)
+- **FR-10.2.4**: Paste copied node (Ctrl/Cmd+V)
+- **FR-10.2.5**: Deselect (Escape)
+- **FR-10.2.6**: Open node inspector (Enter or Double-click)
+
+#### 10.3 Inspector & Editing
+- **FR-10.3.1**: Close inspector panel (Escape)
+- **FR-10.3.2**: Switch inspector tabs (Ctrl/Cmd+1-5 for tabs 1-5)
+- **FR-10.3.3**: Save changes (Ctrl/Cmd+S)
+- **FR-10.3.4**: Focus search in inspector (Ctrl/Cmd+F)
+
+#### 10.4 Search & Filtering
+- **FR-10.4.1**: Open global search (Ctrl/Cmd+K or Ctrl/Cmd+P)
+- **FR-10.4.2**: Focus search bar (Ctrl/Cmd+F)
+- **FR-10.4.3**: Clear search (Escape when search focused)
+- **FR-10.4.4**: Navigate search results (Up/Down arrows)
+
+#### 10.5 View Modes & Display
+- **FR-10.5.1**: Toggle relationship mode (Ctrl/Cmd+R)
+- **FR-10.5.2**: Cycle edge styles (Ctrl/Cmd+E)
+- **FR-10.5.3**: Toggle theme (Ctrl/Cmd+Shift+T)
+- **FR-10.5.4**: Toggle sidebar (Ctrl/Cmd+B)
+- **FR-10.5.5**: Toggle mini-map (Ctrl/Cmd+M)
+
+#### 10.6 Customization & Help
+- **FR-10.6.1**: Keyboard shortcuts displayed in tooltips
+- **FR-10.6.2**: Shortcuts help panel (Ctrl/Cmd+? or F1)
+- **FR-10.6.3**: Platform-aware shortcuts (Cmd on Mac, Ctrl on Windows/Linux)
+- **FR-10.6.4**: Configurable shortcuts via settings (future enhancement)
+
+---
+
+### 11. **Collaboration Features** (Future)
+
+#### 11.1 Real-time Sync
+- **FR-11.1.1**: WebSocket connection for live updates
+- **FR-11.1.2**: Cursor presence indicators
+- **FR-11.1.3**: Conflict resolution for concurrent edits
+- **FR-11.1.4**: Activity feed
+
+#### 11.2 Sharing
+- **FR-11.2.1**: Generate shareable links
+- **FR-11.2.2**: Export to static HTML
+- **FR-11.2.3**: Embed canvas in other apps
+- **FR-11.2.4**: Permission management
 
 ---
 
@@ -265,6 +320,19 @@ Horizon is a **spatial graph IDE** that enables developers to visualize, documen
 - **UX-4**: Accessible color contrast (WCAG AA)
 - **UX-5**: Keyboard navigation support
 - **UX-6**: Responsive layout (mobile-friendly)
+
+### Keyboard Navigation
+- **UX-7**: All major features accessible via keyboard
+- **UX-8**: Visual feedback for keyboard focus states
+- **UX-9**: Keyboard shortcuts follow platform conventions
+- **UX-10**: Shortcuts help accessible via Ctrl/Cmd+?
+
+### Node Customization
+- **UX-11**: Appearance changes preview in real-time
+- **UX-12**: Color picker with preset palette
+- **UX-13**: Icon picker with search functionality
+- **UX-14**: Appearance settings accessible from inspector
+
 
 ### Performance
 - **PERF-1**: Canvas renders 1000+ nodes smoothly
@@ -337,19 +405,24 @@ Horizon is a **spatial graph IDE** that enables developers to visualize, documen
 - Bulk ingest from directory
 - YAML frontmatter parsing
 
-### Phase 4: Hybrid Spatial OS
+### Phase 4: Enhanced Interaction
+- Keyboard shortcuts system
+- Node appearance customization UI
+- Keyboard shortcuts help panel
+
+### Phase 5: Hybrid Spatial OS
 - Perspectives and Multiple View support
 - Integrated Entity Library
 - Autoregistration from Standards
 - Noir Editorial design implementation
 
-### Phase 5: AI Features
+### Phase 6: AI Features
 - `/api/generate` endpoint
 - Context-aware generation
 - Prompt modal UI
 - Generation history
 
-### Phase 6: Advanced Features
+### Phase 7: Advanced Features
 - Full-text search
 - Graph queries
 - Export to static HTML
