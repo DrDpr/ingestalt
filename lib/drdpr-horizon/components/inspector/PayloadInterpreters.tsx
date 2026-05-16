@@ -191,7 +191,7 @@ export const InterfaceList = ({ data, filePath, onAction, onUpdate, onAlert }: {
     <div className="space-y-2">
       {items.map((item: any, i: number) => (
         <div key={i} className="flex gap-2 items-start group">
-          <div className="flex-1 text-left bg-green-950/5 border border-green-900/20 rounded-lg p-3 hover:bg-green-950/20 hover:border-green-500/30 transition-all group/btn">
+          <div className="flex-1 text-left bg-green-950/5 border border-green-600/10 rounded-lg p-3 hover:bg-green-600/20 hover:border-green-500/30 transition-all group/btn">
             <div className="flex items-center justify-between mb-1">
               {onUpdate ? (
                 <LocalInput

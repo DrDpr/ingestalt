@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Type } from 'lucide-react';
+import { HelpCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface PromptModalProps {
@@ -92,7 +92,7 @@ export function PromptModal({
                 {/* Icon and Title */}
                 <div className="flex items-start gap-4 mb-4">
                     <div className={`${activeColor} shrink-0`}>
-                        {icon || <Type size={32} />}
+                        {icon || <HelpCircle size={32} />}
                     </div>
                     <div className="flex-1">
                         {title && (

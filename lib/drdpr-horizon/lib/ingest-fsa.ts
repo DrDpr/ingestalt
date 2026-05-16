@@ -9,7 +9,7 @@ import { layoutAndPersist, ingestWorkspace } from './ingest-client';
 /**
  * Reads all .md files from a FileSystemDirectoryHandle recursively.
  */
-async function readFilesFromHandle(dirHandle: FileSystemDirectoryHandle, path = ''): Promise<{ content: string; filepath: string }[]> {
+export async function readFilesFromHandle(dirHandle: FileSystemDirectoryHandle, path = ''): Promise<{ content: string; filepath: string }[]> {
   const results: { content: string; filepath: string }[] = [];
 
   for await (const [name, entry] of (dirHandle as any).entries()) {
@@ -95,7 +95,8 @@ export async function ingestFromFileSystem(
   onProgress?: (msg: string) => void, 
   skipRootCheck = false,
   forceNewIds = true,
-  whitelistPaths?: string[]
+  whitelistPaths?: string[],
+  preReadFiles?: { content: string; filepath: string }[]
 ): Promise<{ count: number; nodeIds: string[]; isProjectRoot?: boolean }> {
   onProgress?.('Checking stored folder handle...');
 
@@ -120,7 +121,7 @@ export async function ingestFromFileSystem(
   }
 
   onProgress?.(`Reading files from "${handle.name}"...`);
-  const files = await readFilesFromHandle(handle);
+  const files = preReadFiles || await readFilesFromHandle(handle);
 
   if (files.length === 0) {
     onProgress?.('No markdown files found in selected folder.');

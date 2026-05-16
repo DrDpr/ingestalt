@@ -437,20 +437,6 @@ export function SpatialSidebar() {
         <h2 className="text-xs font-black text-foreground/80 mt-0.5">Ingestalt</h2>
       </div>
 
-      {/* Filter */}
-      <div className="px-6 py-4 border-b border-border/5 bg-secondary/[0.02]">
-        <div className="relative group">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3 text-foreground/20 group-focus-within:text-foreground transition-colors" />
-          <input 
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search nodes..."
-            className="w-full bg-secondary/5 border-none rounded-none py-2 pl-9 pr-4 text-xs tracking-widest focus:ring-1 focus:ring-muted/10 placeholder:text-foreground/10 transition-all"
-          />
-        </div>
-      </div>
-
       <div className="flex-1 overflow-y-auto scrollbar-none">
         {/* Canvas Section */}
         <SidebarCollapsible
@@ -528,7 +514,7 @@ export function SpatialSidebar() {
               >
                 <div className="flex items-center gap-3 flex-1 min-w-0">
                   <Layout size={12} className={activeGraphId === graph.id ? "text-blue-400" : ""} />
-                  <span className="text-xs font-bold truncate tracking-wider">{graph.name}</span>
+                  <span className="text-xs font-semibold truncate tracking-wider">{graph.name}</span>
                 </div>
                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button
@@ -593,7 +579,7 @@ export function SpatialSidebar() {
             {/* Autoregistered Types */}
             {autoregisteredTypes.length > 0 && (
               <div className="space-y-2 pt-2 border-t border-border/5">
-                <div className="text-xs text-foreground/40 tracking-widest mb-2">FROM CANVAS</div>
+                <div className="text-xs font-semibold text-foreground/40 tracking-widest mb-2">FROM CANVAS</div>
                 <div className="grid grid-cols-4 gap-2">
                   {autoregisteredTypes.map(type => (
                     <div
@@ -620,6 +606,19 @@ export function SpatialSidebar() {
           isOpen={openSections.nodes}
           onToggle={() => toggleSection('nodes')}
     >
+      {/* Filter */}
+      <div className="px-6 py-4 border-b border-border/5 bg-secondary/[0.02]">
+        <div className="relative group">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3 text-foreground/20 group-focus-within:text-foreground transition-colors" />
+          <input 
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search nodes..."
+            className="w-full bg-secondary/50 border-none rounded-none py-2 pl-9 pr-4 text-xs focus:ring-1 focus:ring-muted/10 placeholder:text-foreground/40 transition-all"
+          />
+        </div>
+      </div>
       <div className="px-4 pb-12 space-y-0.5">
         {filteredNodes
           .filter(n => n.payload?.type !== 'standards')
@@ -653,7 +652,7 @@ export function SpatialSidebar() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 min-w-0">
                     <DynamicIcon name={nodeIcon} size={12} style={{ color: nodeColor }} className="opacity-80 shrink-0" />
-                    <div className="text-xs font-bold text-foreground/60 group-hover:text-foreground truncate tracking-wider">
+                    <div className="text-xs font-semibold text-foreground/60 group-hover:text-foreground truncate tracking-wider">
                       {node.payload?.title || 'UNTITLED_NODE'}
                     </div>
                   </div>

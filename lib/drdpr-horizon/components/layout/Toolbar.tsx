@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { RefreshCw, Share2, Anchor, Zap, ZapOff, Cpu, Plus, Compass, Trash2, FolderOpen, CheckCircle2, Loader2, Sun, Moon, Eraser, Keyboard, FileText, Camera, Info, ChevronDown } from 'lucide-react';
 import { useUIStore } from '@/lib/drdpr-horizon/lib/store/useUIStore';
-import { ingestFromFileSystem, getStoredFolderHandle, connectAndStoreFolder, verifyPermission, syncFromFileSystem } from '@/lib/drdpr-horizon/lib/ingest-fsa';
+import { ingestFromFileSystem, getStoredFolderHandle, connectAndStoreFolder, verifyPermission, syncFromFileSystem, readFilesFromHandle } from '@/lib/drdpr-horizon/lib/ingest-fsa';
 import { db } from '@/lib/drdpr-horizon/lib/db';
 import { useTheme } from 'next-themes';
 import { PromptModal } from '../PromptModal';
@@ -36,6 +36,8 @@ export function Toolbar() {
 
   const [isIngesting, setIsIngesting] = useState(false);
   const [showRefreshMenu, setShowRefreshMenu] = useState(false);
+  const [showRelationMenu, setShowRelationMenu] = useState(false);
+  const [showEdgeMenu, setShowEdgeMenu] = useState(false);
   const [permissionState, setPermissionState] = useState<'granted' | 'prompt' | 'denied'>('prompt');
   const [exportTarget, setExportTarget] = useState<'node' | 'selection' | 'canvas' | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -84,6 +86,20 @@ export function Toolbar() {
     checkHandle();
   }, []);
 
+  // Click outside to close all dropdowns
+  useEffect(() => {
+    const handleDocumentClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest('.dropdown-trigger') && !target.closest('.dropdown-menu')) {
+        setShowRefreshMenu(false);
+        setShowRelationMenu(false);
+        setShowEdgeMenu(false);
+      }
+    };
+    document.addEventListener('click', handleDocumentClick);
+    return () => document.removeEventListener('click', handleDocumentClick);
+  }, []);
+
   const handleIngest = async () => {
     setIsIngesting(true);
     try {
@@ -119,15 +135,58 @@ export function Toolbar() {
         toast({ title: 'New Canvas', description: `Initialized workspace for ${handle.name}` });
       }
 
+      // PEEK PHASE
+      const files = await readFilesFromHandle(handle);
+      if (files.length === 0) {
+        toast({ title: 'Discovery Empty', description: 'No markdown files found', variant: 'destructive' });
+        return;
+      }
+
+      // COLLISION CHECK
+      const existingNodes = await db.nodes.where('workspaceId').equals(targetWorkspaceId).toArray();
+      const existingFilenames = new Set(existingNodes.map(n => n.payload.filename).filter(Boolean));
+      const collisions = files.filter(f => existingFilenames.has(f.filepath));
+
+      if (collisions.length > 0) {
+        setPromptConfig({
+          show: true,
+          title: 'DUPLICATE NODES DETECTED',
+          message: `${collisions.length} of the ${files.length} files already exist on this canvas. Do you want to update existing nodes or duplicate them?`,
+          type: 'warning',
+          options: [
+            { label: 'UPDATE EXISTING', value: 'update' },
+            { label: 'DUPLICATE ALL', value: 'duplicate' }
+          ],
+          onConfirm: async (val) => {
+            setPromptConfig(prev => ({ ...prev, show: false }));
+            setIsIngesting(true);
+            try {
+              if (val === 'update') {
+                const result = await ingestFromFileSystem(() => {}, true, false, undefined, files);
+                finalizeIngestion(result, targetWorkspaceId);
+              } else {
+                const result = await ingestFromFileSystem(() => {}, true, true, undefined, files);
+                finalizeIngestion(result, targetWorkspaceId);
+              }
+            } finally {
+              setIsIngesting(false);
+            }
+          }
+        });
+        setIsIngesting(false); // Stop the initial "Discovery" loading state while prompting
+        return;
+      }
+
       let result = await ingestFromFileSystem((msg) => {
         toast({ title: 'Discovery Progress', description: msg, duration: 1000 });
-      }, false, true);
+      }, false, true, undefined, files);
 
       if (result.isProjectRoot) {
         setPromptConfig({
           show: true,
           title: 'WIDE INGESTION WARNING',
           message: `The folder "${handle.name}" contains project files. Ingesting this will index everything. Continue?`,
+          type: 'warning',
           options: [
             { label: 'INGEST ANYWAY', value: 'confirm' },
             { label: 'CANCEL', value: 'cancel' }
@@ -239,6 +298,7 @@ export function Toolbar() {
       show: true,
       title: 'CLEAR CANVAS',
       message: 'Are you sure you want to clear all nodes and connections from the current canvas? This cannot be undone.',
+      type: 'danger',
       options: [
         { label: 'CLEAR ALL', value: 'confirm', variant: 'danger' },
         { label: 'CANCEL', value: 'cancel' }
@@ -282,6 +342,7 @@ export function Toolbar() {
       message: orphans.length > 0
         ? `Found ${orphans.length} orphaned nodes from deleted canvases. Purge them?`
         : 'No orphaned nodes found. Your database is clean.',
+      type: orphans.length > 0 ? 'warning' : 'success',
       options: orphans.length > 0
         ? [{ label: 'PURGE DATABASE', value: 'confirm', variant: 'danger' }, { label: 'CANCEL', value: 'cancel' }]
         : [{ label: 'EXCELLENT', value: 'close' }],
@@ -299,31 +360,29 @@ export function Toolbar() {
   };
 
   return (
-    <div className="absolute top-6 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-3">
+    <div className="absolute top-6 left-0 right-0 z-[100] flex justify-center pointer-events-none transition-all duration-200">
+      <div className="flex items-center gap-3 pointer-events-auto">
       {/* 1. SYSTEM ISLAND */}
       <Island>
+                
+
+        <ActionButton
+          onClick={() => setPaletteOpen(!isPaletteOpen)}
+          icon={<ZapOff size={14} className={isPaletteOpen ? 'text-amber-400' : ''} />}
+          label={isPaletteOpen ? "Hide Palette" : "Show Palette"}
+        />
         <ActionButton
           onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
           icon={mounted && resolvedTheme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
           label={mounted && resolvedTheme === 'dark' ? 'Light Mode' : 'Dark Mode'}
         />
-        <ActionButton
-          onClick={() => setShortcutsHelpOpen(true)}
-          icon={<Keyboard size={14} />}
-          label="Shortcuts"
-        />
         <div className="w-px h-3 bg-border/20 mx-0.5" />
-        <ActionButton
-          onClick={handlePurgeOrphans}
-          icon={<Eraser size={14} />}
-          label="Clean Database"
-          color="text-amber-400/60"
-        />
+
         <ActionButton
           onClick={handleClear}
           disabled={!activeGraphId}
           icon={<Trash2 size={14} />}
-          label="Nuke Canvas"
+          label="Clear Canvas"
           color="text-red-400"
         />
       </Island>
@@ -350,20 +409,20 @@ export function Toolbar() {
               <RefreshCw size={14} className={isIngesting || refreshRate > 0 ? 'animate-spin-slow' : ''} />
               
               {/* Tooltip - Adjusted to bottom */}
-              <div className="absolute top-12 left-1/2 -translate-x-1/2 px-2 py-1 rounded bg-background/90 backdrop-blur-md text-xs text-foreground whitespace-nowrap opacity-0 group-hover/btn:opacity-100 transition-opacity uppercase font-black tracking-widest border border-border/20 pointer-events-none z-[120]">
+              <div className="absolute top-12 left-1/2 -translate-x-1/2 px-2 py-1 rounded bg-background/90 backdrop-blur-md text-xs text-foreground whitespace-nowrap opacity-0 group-hover/btn:opacity-100 transition-opacity uppercase tracking-widest border border-border/20 pointer-events-none z-[120]">
                 {refreshRate > 0 ? `Auto-Pull (${refreshRate}s)` : "Manual Pull"}
               </div>
             </button>
             
             <button
               onClick={() => setShowRefreshMenu(!showRefreshMenu)}
-              className={`p-1 -ml-1.5 rounded-full hover:bg-secondary transition-colors z-[110] ${showRefreshMenu ? 'text-green-400' : 'text-foreground/20'}`}
+              className={`dropdown-trigger p-1 -ml-1.5 rounded-full hover:bg-secondary transition-colors z-[110] ${showRefreshMenu ? 'text-green-400' : 'text-foreground/20'}`}
             >
               <ChevronDown size={10} className={`transition-transform duration-300 ${showRefreshMenu ? 'rotate-180' : ''}`} />
             </button>
 
             {showRefreshMenu && (
-              <div className="absolute top-10 left-0 p-2 bg-card/90 backdrop-blur-3xl border border-border/40 rounded-xl shadow-2xl min-w-[120px] animate-in slide-in-from-top-2 fade-in duration-200 z-[120]">
+              <div className="dropdown-menu absolute top-10 left-0 p-2 bg-card/90 backdrop-blur-3xl border border-border/40 rounded-xl shadow-2xl min-w-[120px] animate-in slide-in-from-top-2 fade-in duration-200 z-[120]">
                 <h3 className="text-xs font-black uppercase tracking-widest text-foreground/40 mb-2 ml-1">Pull Interval</h3>
                 <div className="flex flex-col gap-1">
                   {[0, 5, 10, 30].map((rate) => (
@@ -377,7 +436,7 @@ export function Toolbar() {
                         refreshRate === rate ? 'bg-green-500/20 text-green-400' : 'hover:bg-secondary text-foreground/60'
                       }`}
                     >
-                      {rate === 0 ? 'Manual' : `${rate}s Interval`}
+                      {rate === 0 ? 'Manual' : `Every ${rate}s`}
                     </button>
                   ))}
                 </div>
@@ -403,12 +462,12 @@ export function Toolbar() {
               <div className="flex items-center gap-2 max-w-[140px]">
                 <span className="text-xs font-mono opacity-60 truncate">{connectedFolder}</span>
                 {permissionState !== 'granted' && (
-                  <span className="text-xs font-black uppercase tracking-widest bg-amber-500/20 px-1 rounded">RE-AUTH</span>
+                  <span className="text-xs uppercase tracking-widest bg-amber-500/20 px-1 rounded">RE-AUTH</span>
                 )}
               </div>
             )}
             
-            <div className="absolute top-12 left-1/2 -translate-x-1/2 px-2 py-1 rounded bg-background/90 backdrop-blur-md text-xs text-foreground whitespace-nowrap opacity-0 group-hover/folder:opacity-100 transition-opacity uppercase font-black tracking-widest border border-border/20 pointer-events-none z-[120]">
+            <div className="absolute top-12 left-1/2 -translate-x-1/2 px-2 py-1 rounded bg-background/90 backdrop-blur-md text-xs text-foreground whitespace-nowrap opacity-0 group-hover/folder:opacity-100 transition-opacity uppercase  tracking-widest border border-border/20 pointer-events-none z-[120]">
               {permissionState === 'granted' ? 'Change Project Folder' : 'Re-authorize Access'}
             </div>
           </button>
@@ -427,76 +486,134 @@ export function Toolbar() {
       </Island>
 
       {/* 3. VIEW ISLAND */}
-      <Island>
-        <div className="flex bg-secondary/30 rounded-lg p-0.5">
-          <ModeButton 
-            active={relationshipMode === 'all'} 
-            onClick={() => setRelationshipMode('all')} 
-            icon={<Share2 size={12} />} 
-            label="All" 
-          />
-          <ModeButton 
-            active={relationshipMode === 'selected'} 
-            onClick={() => setRelationshipMode('selected')} 
-            icon={<Compass size={12} />} 
-            label="Selected" 
-          />
-          <ModeButton 
-            active={relationshipMode === 'trace'} 
-            onClick={() => setRelationshipMode('trace')} 
-            icon={<Anchor size={12} />} 
-            label="Trace" 
-          />
+      <Island className="px-2">
+        {/* Relationship Mode Dropdown */}
+        <div className="relative flex items-center">
+          <button
+            onClick={() => {
+              setShowRelationMenu(!showRelationMenu);
+              setShowEdgeMenu(false);
+              setShowRefreshMenu(false);
+            }}
+            className={`dropdown-trigger p-1.5 px-2.5 rounded-lg flex items-center gap-2 transition-all hover:bg-secondary text-foreground/75 ${
+              showRelationMenu ? 'bg-secondary text-foreground font-semibold' : ''
+            }`}
+          >
+            {relationshipMode === 'all' && <Share2 size={13} />}
+            {relationshipMode === 'selected' && <Compass size={13} />}
+            {relationshipMode === 'trace' && <Anchor size={13} />}
+            <span className="text-xs   uppercase tracking-wider">
+              Relations: {relationshipMode}
+            </span>
+            <ChevronDown size={11} className={`transition-transform duration-300 ${showRelationMenu ? 'rotate-180' : ''}`} />
+          </button>
+
+          {showRelationMenu && (
+            <div className="dropdown-menu absolute top-10 left-0 p-2 bg-card/95 backdrop-blur-3xl border border-border/40 rounded-xl shadow-2xl min-w-[150px] animate-in slide-in-from-top-2 fade-in duration-200 z-[120]">
+              <h3 className="text-[10px] font-black uppercase tracking-widest text-foreground/40 mb-2 ml-2">Show Relations</h3>
+              <div className="flex flex-col gap-1">
+                {(['all', 'selected', 'trace'] as const).map((mode) => (
+                  <button
+                    key={mode}
+                    onClick={() => {
+                      setRelationshipMode(mode);
+                      setShowRelationMenu(false);
+                    }}
+                    className={`px-3 py-1.5 text-xs font-bold rounded-lg text-left transition-colors flex items-center gap-2 ${
+                      relationshipMode === mode 
+                        ? 'bg-primary/10 text-primary' 
+                        : 'hover:bg-secondary text-foreground/60 hover:text-foreground'
+                    }`}
+                  >
+                    {mode === 'all' && <Share2 size={12} />}
+                    {mode === 'selected' && <Compass size={12} />}
+                    {mode === 'trace' && <Anchor size={12} />}
+                    <span className="capitalize">{mode}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="w-px h-3 bg-border/20 mx-1" />
 
-        {/* Edge Styles */}
-        <div className="flex gap-2">
-          <div className="flex bg-secondary/30 rounded-lg p-0.5">
-            <ModeButton 
-              active={edgeHandleType === 'fixed'} 
-              onClick={() => setEdgeHandleType('fixed')} 
-              icon={<Anchor size={12} />} 
-              label="Fixed" 
-            />
-            <ModeButton 
-              active={edgeHandleType === 'smart'} 
-              onClick={() => setEdgeHandleType('smart')} 
-              icon={<Zap size={12} className={edgeHandleType === 'smart' ? 'text-purple-400' : ''} />} 
-              label="Smart" 
-            />
-          </div>
+        {/* Edge Styling Dropdown */}
+        <div className="relative flex items-center">
+          <button
+            onClick={() => {
+              setShowEdgeMenu(!showEdgeMenu);
+              setShowRelationMenu(false);
+              setShowRefreshMenu(false);
+            }}
+            className={`dropdown-trigger p-1.5 px-2.5 rounded-lg flex items-center gap-2 transition-all hover:bg-secondary text-foreground/75 ${
+              showEdgeMenu ? 'bg-secondary text-foreground font-semibold' : ''
+            }`}
+          >
+            {edgePathType === 'organic' && <Share2 size={13} />}
+            {edgePathType === 'circuit' && <Cpu size={13} className="text-emerald-400" />}
+            {edgePathType === 'smart' && <Compass size={13} className="text-blue-400" />}
+            <span className="text-xs   uppercase tracking-wider">
+              Edges: {edgePathType === 'smart' ? 'Avoidance' : edgePathType} ({edgeHandleType})
+            </span>
+            <ChevronDown size={11} className={`transition-transform duration-300 ${showEdgeMenu ? 'rotate-180' : ''}`} />
+          </button>
 
-          <div className="flex bg-secondary/30 rounded-lg p-0.5">
-            <ModeButton 
-              active={edgePathType === 'organic'} 
-              onClick={() => setEdgePathType('organic')} 
-              icon={<Share2 size={12} />} 
-              label="Organic" 
-            />
-            <ModeButton 
-              active={edgePathType === 'circuit'} 
-              onClick={() => setEdgePathType('circuit')} 
-              icon={<Cpu size={12} className={edgePathType === 'circuit' ? 'text-emerald-400' : ''} />} 
-              label="Circuit" 
-            />
-            <ModeButton 
-              active={edgePathType === 'smart'} 
-              onClick={() => setEdgePathType('smart')} 
-              icon={<Compass size={12} className={edgePathType === 'smart' ? 'text-blue-400' : ''} />} 
-              label="Avoidance" 
-            />
-          </div>
+          {showEdgeMenu && (
+            <div className="dropdown-menu absolute top-10 left-0 p-3 bg-card/95 backdrop-blur-3xl border border-border/40 rounded-xl shadow-2xl min-w-[200px] animate-in slide-in-from-top-2 fade-in duration-200 z-[120]">
+              {/* Section 1: Handle Type */}
+              <div className="mb-2.5">
+                <h3 className="text-[9px] font-black uppercase tracking-widest text-foreground/40 mb-1.5 ml-1">Handle Attachment</h3>
+                <div className="flex flex-col gap-1">
+                  {(['fixed', 'smart'] as const).map((type) => (
+                    <button
+                      key={type}
+                      onClick={() => {
+                        setEdgeHandleType(type);
+                      }}
+                      className={`px-2 py-1.5 text-xs font-bold rounded-lg text-left transition-colors flex items-center gap-2 ${
+                        edgeHandleType === type 
+                          ? 'bg-primary/10 text-primary' 
+                          : 'hover:bg-secondary text-foreground/60 hover:text-foreground'
+                      }`}
+                    >
+                      {type === 'fixed' && <Anchor size={11} />}
+                      {type === 'smart' && <Zap size={11} className="text-purple-400" />}
+                      <span className="capitalize">{type} Handles</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="h-px bg-border/20 my-2" />
+
+              {/* Section 2: Path Type */}
+              <div>
+                <h3 className="text-[9px] font-black uppercase tracking-widest text-foreground/40 mb-1.5 ml-1">Routing Path</h3>
+                <div className="flex flex-col gap-1">
+                  {(['organic', 'circuit', 'smart'] as const).map((path) => (
+                    <button
+                      key={path}
+                      onClick={() => {
+                        setEdgePathType(path);
+                      }}
+                      className={`px-2 py-1.5 text-xs font-bold rounded-lg text-left transition-colors flex items-center gap-2 ${
+                        edgePathType === path 
+                          ? 'bg-primary/10 text-primary' 
+                          : 'hover:bg-secondary text-foreground/60 hover:text-foreground'
+                      }`}
+                    >
+                      {path === 'organic' && <Share2 size={11} />}
+                      {path === 'circuit' && <Cpu size={11} className="text-emerald-400" />}
+                      {path === 'smart' && <Compass size={11} className="text-blue-400" />}
+                      <span>{path === 'smart' ? 'Avoidance' : path.charAt(0).toUpperCase() + path.slice(1)}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
-
-        <div className="w-px h-3 bg-border/20 mx-1" />
-
-        <ActionButton
-          onClick={() => setPaletteOpen(!isPaletteOpen)}
-          icon={<ZapOff size={14} className={isPaletteOpen ? 'text-amber-400' : ''} />}
-          label={isPaletteOpen ? "Hide Palette" : "Show Palette"}
-        />
       </Island>
 
       {/* 4. OUTPUT ISLAND */}
@@ -506,20 +623,15 @@ export function Toolbar() {
           icon={<Camera size={14} />}
           label="Capture Canvas"
         />
-        
         <ActionButton
-          onClick={handleGenerateWiki}
-          disabled={!activeGraphId}
-          icon={isGenerating ? <Loader2 size={14} className="animate-spin" /> : <FileText size={14} />}
-          label="Publish Wiki"
-          color="text-emerald-400"
+          onClick={() => setShortcutsHelpOpen(true)}
+          icon={<Keyboard size={14} />}
+          label="Shortcuts"
         />
-        
-        <div className="w-px h-3 bg-border/20 mx-0.5" />
         
         <Link href="/about" className="p-2 hover:bg-secondary rounded-lg transition-all group relative">
           <Info size={14} className="text-foreground/30 group-hover:text-foreground/60" />
-          <div className="absolute top-12 left-1/2 -translate-x-1/2 px-2 py-1 rounded bg-background/90 backdrop-blur-md text-xs text-foreground whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity uppercase font-black tracking-widest border border-border/20 pointer-events-none z-[120]">
+          <div className="absolute top-12 left-1/2 -translate-x-1/2 px-2 py-1 rounded bg-background/90 backdrop-blur-md text-xs text-foreground whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity uppercase  tracking-widest border border-border/20 pointer-events-none z-[120]">
             About Ingestalt
           </div>
         </Link>
@@ -558,6 +670,7 @@ export function Toolbar() {
           }
         }}
       />
+      </div>
     </div>
   );
 }
@@ -594,7 +707,7 @@ function ActionButton({
       </div>
       
       {/* Tooltip */}
-      <div className="absolute top-12 left-1/2 -translate-x-1/2 px-2 py-1 rounded bg-background/90 backdrop-blur-md text-xs text-foreground whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity uppercase font-black tracking-widest border border-border/20 pointer-events-none z-[120]">
+      <div className="absolute top-12 left-1/2 -translate-x-1/2 px-2 py-1 rounded bg-background/90 backdrop-blur-md text-xs text-foreground whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity uppercase  tracking-widest border border-border/20 pointer-events-none z-[120]">
         {label}
       </div>
     </button>
@@ -615,7 +728,7 @@ function ModeButton({ active, onClick, icon, label }: { active: boolean, onClick
       <span className="text-xs font-black uppercase tracking-tighter">{label}</span>
       
       {/* Tooltip for small icon buttons - Adjusted to bottom */}
-      <div className="absolute top-12 left-1/2 -translate-x-1/2 px-2 py-1 rounded bg-background/90 backdrop-blur-md text-xs text-foreground whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity uppercase font-black tracking-widest border border-border/20 pointer-events-none z-[120]">
+      <div className="absolute top-12 left-1/2 -translate-x-1/2 px-2 py-1 rounded bg-background/90 backdrop-blur-md text-xs text-foreground whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity uppercase  tracking-widest border border-border/20 pointer-events-none z-[120]">
         {label} Mode
       </div>
     </button>

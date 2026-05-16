@@ -4,8 +4,8 @@ import React from 'react';
 import { useUIStore } from '@/lib/drdpr-horizon/lib/store/useUIStore';
 import { AppShell } from './AppShell';
 import { SpatialSidebar } from './SpatialSidebar';
-import { SidePull } from '@/lib/drdpr-horizon/components/ui/side-pull';
 import { Toaster } from '@/lib/drdpr-horizon/components/ui/Toaster';
+import { cn } from '@/lib/drdpr-horizon/lib/utils';
 
 /**
  * WorkspaceLayout - Main layout using AppShell with ResizableSidebar
@@ -13,7 +13,7 @@ import { Toaster } from '@/lib/drdpr-horizon/components/ui/Toaster';
  * Replaces RGL with smooth resizable sidebars:
  * - Left: SpatialSidebar (Palette, Perspectives, Entities)
  * - Right: Inspector (opens when node selected)
- * - Top: Toolbar (collapsible SidePull)
+ * - Top: Floating Toolbar (collapsible via show/hide badge)
  * - Auto-switches push/overlay at 75% width
  */
 export function WorkspaceLayout({
@@ -35,19 +35,7 @@ export function WorkspaceLayout({
   const setLeftOpen = useUIStore((state) => state.setLeftOpen);
   
   return (
-    <SidePull
-      side="top"
-      open={isToolbarOpen}
-      onOpenChange={setToolbarOpen}
-      panel={toolbar}
-      mode="push"
-      size={100}
-      showHandle={true}
-      handleFollowsPanel={true}
-      animate={true}
-      className="h-screen w-screen"
-      panelClassName="bg-background"
-    >
+    <div className="relative h-screen w-screen overflow-hidden">
       <AppShell
         toolbar={null}
         leftSidebar={{
@@ -69,10 +57,34 @@ export function WorkspaceLayout({
         onLeftSidebarChange={setLeftOpen}
         onRightSidebarChange={setInspectorOpen}
       >
-        {canvas}
-        {children}
+        <div className="relative w-full h-full overflow-hidden">
+          {canvas}
+          {children}
+
+          {/* Floating Toolbar wrapper */}
+          <div 
+            className={cn(
+              "absolute top-0 left-0 right-0 z-[100] transition-all duration-300 pointer-events-none",
+              isToolbarOpen ? "translate-y-0 opacity-100" : "-translate-y-24 opacity-0"
+            )}
+          >
+            {toolbar}
+          </div>
+
+          {/* Floating Toggle Handle */}
+          <div className="absolute top-0 left-0 right-0 z-[101] flex justify-center pointer-events-none">
+            <button
+              onClick={() => setToolbarOpen(!isToolbarOpen)}
+              className="pointer-events-auto w-32 h-2.5 bg-card/60 backdrop-blur-md hover:bg-card/90 border-x border-b border-border/20 rounded-b-md shadow-sm transition-all focus:outline-none cursor-pointer flex items-center justify-center group"
+              title={isToolbarOpen ? "Hide Toolbar" : "Show Toolbar"}
+            >
+              <div className="w-8 h-0.5 bg-foreground/15 rounded-full group-hover:bg-foreground/35 transition-all duration-300" />
+            </button>
+          </div>
+        </div>
       </AppShell>
+
       <Toaster />
-    </SidePull>
+    </div>
   );
 }

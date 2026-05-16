@@ -12,10 +12,17 @@ components:
   - SchemaPanel
   - GovernanceEditor
   - AITaskPromptBuilder
+  - PayloadInterpretersView
 relations:
-  - targetId: node_ui_state
-    type: reads
-    label: Selected node state
+  - targetId: node_ui_property_interpreters
+    type: contains
+    label: Dynamic property rendering
+  - targetId: node_ui_ai_task_builder
+    type: contains
+    label: AI context generation
+  - targetId: node_ui_relationship_panel
+    type: contains
+    label: Topology management
   - targetId: node_ui_editor
     type: contains
     label: Content editor
@@ -57,6 +64,8 @@ Inspector
 │   │   └── RelationshipPanel
 │   ├── Schema Tab (for database nodes)
 │   │   └── SchemaPanel
+│   ├── Properties Tab
+│   │   └── PayloadInterpretersView (Dynamic)
 │   ├── Governance Tab
 │   │   └── GovernanceEditor
 │   └── AI Tasks Tab
@@ -128,11 +137,11 @@ const debouncedSave = useMemo(
 - Lifecycle policies
 - Compliance requirements
 
-**AI Tasks Tab:**
-- Generate implementation tasks
-- Create test scenarios
-- Generate documentation
-- Suggest refactoring
+**AI Tasks Tab (AITaskPromptBuilder):**
+- **Context Injection**: Selectable layers for content, properties, and topology.
+- **Architectural Field Selection**: Surgical control over sub-properties and table columns.
+- **Heuristic Discovery**: Automatic extraction of schemas from documentation.
+- See [`ui_ai_task_builder`](./ui_ai_task_builder.md) for full architectural details.
 
 ### Inspector States
 

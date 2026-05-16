@@ -308,7 +308,7 @@ export function Inspector() {
             <button 
               onClick={handleManualSave}
               disabled={isSavingManual}
-              className={`flex items-center gap-2 px-4 py-1.5 rounded-lg border transition-all text-[10px] font-black uppercase tracking-widest ${
+              className={`flex items-center gap-2 px-4 py-1.5 rounded-lg border transition-all text-[10px] font-semibold uppercase tracking-widest ${
                 isSavingManual 
                   ? 'bg-blue-600/20 border-blue-500/50 text-blue-400' 
                   : 'bg-blue-600 text-white hover:bg-blue-500 shadow-lg shadow-blue-500/20 border-transparent'
