@@ -15,8 +15,8 @@ import {
   MarkerType,
 } from '@xyflow/react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '@/lib/db';
-import { useUIStore } from '@/lib/store/useUIStore';
+import { db } from '../../lib/db';
+import { useUIStore } from '../../lib/store/useUIStore';
 import { GarnishedNode } from './nodes/GarnishedNode';
 import { FloatingEdge } from './edges/FloatingEdge';
 
@@ -39,20 +39,40 @@ const edgeTypes = {
 
 import { Palette } from './Palette';
 
-import { useSync } from '@/lib/hooks/useSync';
+import { useSync } from '../../lib/hooks/useSync';
 
 export function HorizonCanvas() {
-  const { 
-    setSelectedNodeId, selectedNodeId, 
+  const {
+    setSelectedNodeId, selectedNodeId,
     relationshipMode, setViewport, viewport,
-    autoSaveEnabled
+    autoSaveEnabled, theme, activeGraphId
   } = useUIStore();
   const { screenToFlowPosition } = useReactFlow();
   const { syncNodeToFile } = useSync();
 
-  // 1. Fetch agnostic data
-  const dbNodesData = useLiveQuery(() => db.nodes.toArray(), []);
-  const dbEdgesData = useLiveQuery(() => db.edges.toArray(), []);
+  // Get the active graph to determine its workspaceId
+  const activeGraph = useLiveQuery(async () => {
+    if (!activeGraphId) return null;
+    return await db.graphs.get(activeGraphId);
+  }, [activeGraphId]);
+
+  // Determine the workspace filter: use graph's workspaceId if graph exists, otherwise use activeGraphId directly
+  const workspaceFilter = activeGraph?.workspaceId || activeGraphId;
+
+  // 1. Fetch agnostic data (filtered by active graph's workspace)
+  const dbNodesData = useLiveQuery(() => {
+    if (!workspaceFilter) {
+      return db.nodes.toArray();
+    }
+    return db.nodes.where('workspaceId').equals(workspaceFilter).toArray();
+  }, [workspaceFilter]);
+  
+  const dbEdgesData = useLiveQuery(() => {
+    if (!workspaceFilter) {
+      return db.edges.toArray();
+    }
+    return db.edges.where('workspaceId').equals(workspaceFilter).toArray();
+  }, [workspaceFilter]);
 
   // 2. Dynamic Standards Map
   const activeStandardsMap = useMemo(() => {
@@ -176,13 +196,16 @@ export function HorizonCanvas() {
     if (!source || !target) return;
     const id = `edge_${source}_${target}`;
     if (await db.edges.get(id)) return;
-    await db.edges.add({ id, workspaceId: 'default', sourceId: source, targetId: target, type: 'relates' });
+    
+    // Get workspaceId from active graph's workspace or use activeGraphId directly or 'default'
+    const edgeWorkspaceId = workspaceFilter || 'default';
+    await db.edges.add({ id, workspaceId: edgeWorkspaceId, sourceId: source, targetId: target, type: 'relates' });
     
     // Sync the source node because its YAML 'relations' just changed
     if (autoSaveEnabled) {
       await syncNodeToFile(source);
     }
-  }, [syncNodeToFile, autoSaveEnabled]);
+  }, [syncNodeToFile, autoSaveEnabled, workspaceFilter]);
 
   const onEdgeDoubleClick = useCallback(async (e: any, edge: Edge) => {
     if (confirm('Delete this connection?')) {
@@ -205,6 +228,17 @@ export function HorizonCanvas() {
 
       const type = event.dataTransfer.getData('application/reactflow');
       const configId = event.dataTransfer.getData('application/horizon-config');
+      const existingNodeId = event.dataTransfer.getData('application/reactflow-node-id');
+
+      // Handle dragging existing node from sidebar
+      if (existingNodeId) {
+        const position = screenToFlowPosition({
+          x: event.clientX,
+          y: event.clientY,
+        });
+        await db.nodes.update(existingNodeId, { position });
+        return;
+      }
 
       // check if the dropped element is valid
       if (typeof type === 'undefined' || !type) {
@@ -217,20 +251,34 @@ export function HorizonCanvas() {
       });
 
       const id = `node_${Math.random().toString(36).substr(2, 9)}`;
-      const title = `New ${activeStandardsMap.get(configId)?.title || 'Node'}`;
+      const nodeType = type || activeStandardsMap.get(configId)?.type || 'other';
+      const title = `New ${activeStandardsMap.get(configId)?.title || type.charAt(0).toUpperCase() + type.slice(1)}`;
+
+      // Get workspaceId from active graph's workspace or use activeGraphId directly or 'default'
+      const nodeWorkspaceId = workspaceFilter || 'default';
+
+      // Build payload with special handling for standards nodes
+      const payload: any = {
+        title,
+        type: nodeType,
+        content: `# ${title}\nSpawned from palette.`,
+        tags: []
+      };
+
+      // Initialize standards nodes with empty definitions array and proper styling
+      if (nodeType === 'standards') {
+        payload.definitions = [];
+        payload.icon = 'Settings';
+        payload.color = '#f59e0b'; // amber color to match the palette
+      }
 
       await db.nodes.add({
         id,
         configId,
-        workspaceId: 'default',
+        workspaceId: nodeWorkspaceId,
         position,
         lastModified: Date.now(),
-        payload: {
-          title,
-          type: activeStandardsMap.get(configId)?.type || 'other',
-          content: `# ${title}\nSpawned from palette.`,
-          tags: []
-        }
+        payload
       });
       
       // Export newly spawned node to disk if auto-save is enabled
@@ -240,7 +288,7 @@ export function HorizonCanvas() {
       
       setSelectedNodeId(id);
     },
-    [screenToFlowPosition, activeStandardsMap, setSelectedNodeId, syncNodeToFile, autoSaveEnabled]
+    [screenToFlowPosition, activeStandardsMap, setSelectedNodeId, syncNodeToFile, autoSaveEnabled, workspaceFilter]
   );
 
   const onPaneContextMenu = useCallback((event: React.MouseEvent) => {
@@ -258,6 +306,8 @@ export function HorizonCanvas() {
     });
   }, [screenToFlowPosition]);
 
+  const isDark = theme === 'dark';
+  
   return (
     <div className="w-full h-full relative">
       <Palette />
@@ -270,14 +320,16 @@ export function HorizonCanvas() {
         onPaneContextMenu={onPaneContextMenu}
         onDragOver={onDragOver} onDrop={onDrop}
         nodeTypes={nodeTypes_internal} edgeTypes={edgeTypes}
-        fitView className="bg-neutral-950" defaultViewport={viewport}
+        fitView
+        className="bg-background"
+        defaultViewport={viewport}
+        proOptions={{ hideAttribution: true }}
       >
-        <Background color="#333" variant={BackgroundVariant.Dots} gap={20} size={1} />
-        <Controls className="fill-neutral-400 bg-neutral-900 border-neutral-800" />
-        <MiniMap 
-          className="bg-neutral-900 border border-neutral-800 rounded-lg" 
-          nodeColor={(n) => n.data?.color || '#52525b'}
-          maskColor="rgba(0, 0, 0, 0.7)"
+        <Background
+          color="var(--border)"
+          variant={BackgroundVariant.Dots}
+          gap={20}
+          size={1}
         />
       </ReactFlow>
     </div>

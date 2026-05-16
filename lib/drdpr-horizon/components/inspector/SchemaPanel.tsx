@@ -4,9 +4,9 @@ import React, { useState, useMemo } from 'react';
 import { 
   Sparkles, Cpu, Loader2
 } from 'lucide-react';
-import { db } from '@/lib/db';
+import { db } from '../../lib/db';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { useGenerator } from '@/lib/hooks/useGenerator';
+import { useGenerator } from '../../lib/hooks/useGenerator';
 import { DynamicIcon } from '../DynamicIcon';
 
 // --- Modular Imports ---
@@ -61,7 +61,7 @@ export function SchemaPanel({ node }: { node: any }) {
         <RelationshipPanel node={node} />
 
         <div className="flex-1 overflow-y-auto custom-scrollbar">
-          <div className="bg-neutral-950 p-4 border-b border-neutral-800 space-y-6">
+          <div className="bg-background p-4 border-b border-border space-y-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-neutral-400">
                 <Cpu size={16} className="text-amber-500" />
@@ -71,7 +71,7 @@ export function SchemaPanel({ node }: { node: any }) {
                 <button 
                   disabled={isGenerating} 
                   onClick={() => generateApiFromDb(node, Array.from(selectedColumns))} 
-                  className="flex items-center gap-1.5 text-[10px] bg-blue-600 hover:bg-blue-500 disabled:bg-neutral-800 text-white px-2 py-1 rounded shadow-lg transition-all animate-fade-in font-bold"
+                  className="flex items-center gap-1.5 text-xs bg-blue-600 hover:bg-blue-500 disabled:bg-secondary text-foreground px-2 py-1 rounded shadow-lg transition-all animate-fade-in font-bold"
                 >
                   {isGenerating ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
                   GENERATE API
@@ -85,7 +85,7 @@ export function SchemaPanel({ node }: { node: any }) {
                 if (!fieldData) return null;
                 return (
                   <div key={idx} className="space-y-2">
-                    <div className="flex items-center gap-2 text-[10px] text-neutral-500 uppercase font-black tracking-widest ml-1" style={{ color: field.color }}>
+                    <div className="flex items-center gap-2 text-xs text-neutral-500 uppercase font-black tracking-widest ml-1" style={{ color: field.color }}>
                       <DynamicIcon name={field.icon || 'Box'} size={12} />
                       {field.name}
                     </div>
@@ -107,7 +107,7 @@ export function SchemaPanel({ node }: { node: any }) {
                     {field.type === 'interface_list' && <InterfaceList data={fieldData} />}
                     {field.type === 'code_list' && <CodeList data={fieldData} />}
                     {field.type === 'file_path' && (
-                      <div className="flex items-center gap-2 text-xs font-mono text-neutral-400 bg-neutral-900 p-2 rounded-lg border border-neutral-800">
+                      <div className="flex items-center gap-2 text-xs font-mono text-neutral-400 bg-card p-2 rounded-lg border border-border">
                         <DynamicIcon name="FileCode" size={14} className="text-purple-500" />
                         {fieldData}
                       </div>
@@ -128,7 +128,7 @@ export function SchemaPanel({ node }: { node: any }) {
       <RelationshipPanel node={node} />
       <div className="p-8 text-center space-y-2">
         <div className="text-neutral-600 text-xs italic">No specific standard assigned.</div>
-        <div className="text-[10px] text-neutral-700 font-mono uppercase tracking-widest">{configId}</div>
+        <div className="text-xs text-neutral-700 font-mono uppercase tracking-widest">{configId}</div>
       </div>
     </div>
   );

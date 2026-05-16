@@ -2,7 +2,7 @@
 
 import React, { memo } from 'react';
 import { BaseNode } from './BaseNode';
-import { DynamicIcon } from '@/components/DynamicIcon';
+import { DynamicIcon } from '../../DynamicIcon';
 
 export const GarnishedNode = memo(({ id, data, isStatic }: { id: string, data: any, isStatic?: boolean }) => {
   // These properties are now dynamically injected by the Standards Engine in HorizonCanvas

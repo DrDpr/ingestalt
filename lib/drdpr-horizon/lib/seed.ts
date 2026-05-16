@@ -34,20 +34,18 @@ Calling storage API:
 `
 ];
 
-export async function seedDatabase() {
-  const count = await db.nodes.count();
+export async function seedDatabase(workspaceId?: string) {
+  const targetWorkspace = workspaceId || 'seed-workspace';
   
-  if (count === 0) {
-    console.log('Seeding database with initial agnostic nodes...');
-    
-    const parsedResults = MOCK_DOCS.map((md) => parseMarkdownToNode(md, 'seed-workspace'));
-    
-    const nodes = parsedResults.map(r => r.node);
-    const edges = parsedResults.flatMap(r => r.edges);
+  console.log(`Seeding database with initial agnostic nodes to workspace: ${targetWorkspace}...`);
+  
+  const parsedResults = MOCK_DOCS.map((md) => parseMarkdownToNode(md, targetWorkspace));
+  
+  const nodes = parsedResults.map(r => r.node);
+  const edges = parsedResults.flatMap(r => r.edges);
 
-    await db.nodes.bulkAdd(nodes);
-    await db.edges.bulkAdd(edges);
-    
-    console.log(`Seeding complete: ${nodes.length} nodes and ${edges.length} edges added.`);
-  }
+  await db.nodes.bulkAdd(nodes);
+  await db.edges.bulkAdd(edges);
+  
+  console.log(`Seeding complete: ${nodes.length} nodes and ${edges.length} edges added.`);
 }

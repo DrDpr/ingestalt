@@ -210,7 +210,7 @@ export const SlashCommands = forwardRef<SlashCommandsHandle, SlashCommandsProps>
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
-                    className="rounded-lg border border-neutral-800 bg-neutral-900 shadow-lg p-4 text-center text-neutral-400"
+                    className="rounded-lg border border-border bg-card shadow-lg p-4 text-center text-neutral-400"
                 >
                     <p className="text-sm">No commands found</p>
                 </motion.div>
@@ -223,20 +223,20 @@ export const SlashCommands = forwardRef<SlashCommandsHandle, SlashCommandsProps>
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -10, scale: 0.95 }}
                 transition={{ duration: 0.15 }}
-                className="rounded-lg border border-neutral-800 bg-neutral-900 shadow-2xl overflow-hidden max-h-[400px] w-[320px]"
+                className="rounded-lg border border-border bg-card shadow-2xl overflow-hidden max-h-[400px] w-[320px]"
             >
                 <div className="overflow-y-auto max-h-[400px]">
                     {filteredCommands.map((command, index) => (
                         <button
                             key={command.title}
                             onClick={() => selectItem(index)}
-                            className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors border-b border-neutral-800 last:border-0 ${index === selectedIndex
+                            className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors border-b border-border last:border-0 ${index === selectedIndex
                                     ? 'bg-blue-500/10'
-                                    : 'hover:bg-neutral-800/50'
+                                    : 'hover:bg-secondary/50'
                                 }`}
                         >
                             <div
-                                className={`flex-shrink-0 w-8 h-8 rounded flex items-center justify-center ${index === selectedIndex ? 'bg-blue-500/20 text-blue-400' : 'bg-neutral-800 text-neutral-400'}`}
+                                className={`flex-shrink-0 w-8 h-8 rounded flex items-center justify-center ${index === selectedIndex ? 'bg-blue-500/20 text-blue-400' : 'bg-secondary text-neutral-400'}`}
                             >
                                 {command.icon}
                             </div>

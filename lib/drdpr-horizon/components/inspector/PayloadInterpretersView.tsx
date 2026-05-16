@@ -4,15 +4,15 @@ import React, { useState, useMemo } from 'react';
 import { 
   Sparkles, Cpu, Loader2
 } from 'lucide-react';
-import { db } from '@/lib/db';
+import { db } from '../../lib/db';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { useGenerator } from '@/lib/hooks/useGenerator';
+import { useGenerator } from '../../lib/hooks/useGenerator';
 import { DynamicIcon } from '../DynamicIcon';
-import { useFileSystem } from '@/lib/hooks/useFileSystem';
-import { useSync } from '@/lib/hooks/useSync';
-import { useUIStore } from '@/lib/store/useUIStore';
+import { useFileSystem } from '../../lib/hooks/useFileSystem';
+import { useSync } from '../../lib/hooks/useSync';
+import { useUIStore } from '../../lib/store/useUIStore';
 import { ExternalLink, FolderOpen, Save, Trash2, Plus, ChevronDown } from 'lucide-react';
-import { LocalInput, LocalTextArea } from '@/components/ui/LocalInput';
+import { LocalInput, LocalTextArea } from '../ui/LocalInput';
 
 // --- Modular Imports ---
 import { 
@@ -112,23 +112,23 @@ export function PayloadInterpretersView({ node, hideHeader = false }: { node: an
 
   if (!standardDef || !standardDef.fields) {
     return (
-      <div className="p-8 text-center text-neutral-600 text-xs italic bg-neutral-950 h-full">
+      <div className="p-8 text-center text-neutral-600 text-xs italic bg-background h-full">
         No specific standard assigned for data interpretation.
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col h-full overflow-hidden bg-neutral-950 relative">
+    <div className="flex flex-col h-full overflow-hidden bg-background relative">
       {/* Configuration Overlay */}
       {isConfiguring && (
-        <div className="absolute inset-0 z-50 bg-neutral-950/90 backdrop-blur-sm flex items-center justify-center p-6 animate-fade-in">
+        <div className="absolute inset-0 z-50 bg-background/90 backdrop-blur-sm flex items-center justify-center p-6 animate-fade-in">
           <div className="w-full space-y-4">
             <div className="flex items-center gap-2 text-blue-400 mb-2">
               <FolderOpen size={18} />
               <h3 className="text-sm font-bold uppercase tracking-widest">Setup Local Root</h3>
             </div>
-            <p className="text-[10px] text-neutral-500 leading-relaxed">
+            <p className="text-xs text-neutral-500 leading-relaxed">
               To open files and jump to methods, Horizon needs to know where your project lives on this computer.
             </p>
             <div className="space-y-2">
@@ -137,20 +137,20 @@ export function PayloadInterpretersView({ node, hideHeader = false }: { node: an
                 value={rootInput}
                 onChange={(e) => setRootInput(e.target.value)}
                 placeholder="e.g. D:/Desktop/Horizon/horizon"
-                className="w-full bg-neutral-900 border border-neutral-800 rounded-lg p-3 text-xs font-mono text-white focus:border-blue-500 outline-none transition-colors"
+                className="w-full bg-card border border-border rounded-lg p-3 text-xs font-mono text-foreground focus:border-blue-500 outline-none transition-colors"
                 autoFocus
               />
               <div className="flex gap-2">
                 <button 
                   onClick={handleSaveRoot}
-                  className="flex-1 bg-blue-600 hover:bg-blue-500 text-white py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest flex items-center justify-center gap-2"
+                  className="flex-1 bg-blue-600 hover:bg-blue-500 text-foreground py-2 rounded-lg text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2"
                 >
                   <Save size={14} />
                   Save Configuration
                 </button>
                 <button 
                   onClick={() => setIsConfiguring(false)}
-                  className="px-4 py-2 text-[10px] text-neutral-500 hover:text-white uppercase font-bold"
+                  className="px-4 py-2 text-xs text-neutral-500 hover:text-foreground uppercase font-bold"
                 >
                   Cancel
                 </button>
@@ -161,10 +161,10 @@ export function PayloadInterpretersView({ node, hideHeader = false }: { node: an
       )}
       
       {!hideHeader && (
-        <div className="p-4 border-b border-neutral-800 bg-neutral-900/20 flex items-center justify-between">
+        <div className="p-4 border-b border-border bg-card/20 flex items-center justify-between">
           <div className="flex items-center gap-2 text-neutral-400">
             <Cpu size={16} className="text-amber-500" />
-            <h3 className="text-sm font-semibold uppercase tracking-wider">Properties</h3>
+            <h3 className="text-sm font-semibold uppercase">Properties</h3>
           </div>
         </div>
       )}
@@ -174,7 +174,7 @@ export function PayloadInterpretersView({ node, hideHeader = false }: { node: an
           <button 
             disabled={isGenerating} 
             onClick={() => generateApiFromDb(node, Array.from(selectedColumns))} 
-            className="w-full flex items-center justify-center gap-1.5 text-[10px] bg-blue-600 hover:bg-blue-500 disabled:bg-neutral-800 text-white px-2 py-2 rounded shadow-lg transition-all font-bold sticky top-0 z-10"
+            className="w-full flex items-center justify-center gap-1.5 text-xs bg-blue-600 hover:bg-blue-500 disabled:bg-secondary text-foreground px-2 py-2 rounded shadow-lg transition-all font-bold sticky top-0 z-10"
           >
             {isGenerating ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
             GENERATE API FROM SELECTED
@@ -188,7 +188,7 @@ export function PayloadInterpretersView({ node, hideHeader = false }: { node: an
             
             return (
               <div key={idx} className="group/field relative space-y-2">
-                <div className="flex items-center justify-between gap-2 text-xs text-neutral-500 uppercase font-black tracking-widest ml-1" style={{ color: field.color }}>
+                <div className="flex items-center justify-between gap-2 text-xs text-neutral-500 uppercase font-black ml-1" style={{ color: field.color }}>
                   <div className="flex items-center gap-2">
                     <DynamicIcon name={field.icon || 'Box'} size={13} />
                     {field.name.replace(/_/g, ' ')}
@@ -267,11 +267,11 @@ export function PayloadInterpretersView({ node, hideHeader = false }: { node: an
                       value={fieldData} 
                       onChange={(val) => handleUpdateField(field.name, val)}
                       onBlur={handleUpdateFieldBlur}
-                      className="flex-1 bg-neutral-900 border border-neutral-800 rounded p-2 text-xs font-mono text-neutral-300 focus:border-blue-500 focus:outline-none"
+                      className="flex-1 bg-card border border-border rounded p-2 text-xs font-mono text-neutral-300 focus:border-blue-500 focus:outline-none"
                     />
                     <button 
                       onClick={() => handleAction(() => openInCode(fieldData))}
-                      className="p-2 bg-neutral-800 hover:bg-neutral-700 text-neutral-400 hover:text-white rounded border border-neutral-700 transition-colors flex-shrink-0"
+                      className="p-2 bg-secondary hover:bg-secondary-700 text-neutral-400 hover:text-foreground rounded border border-input transition-colors flex-shrink-0"
                       title="Open in VSCode"
                     >
                       <ExternalLink size={14} />
@@ -286,7 +286,7 @@ export function PayloadInterpretersView({ node, hideHeader = false }: { node: an
                       <div className="space-y-2">
                         <div className="flex flex-wrap gap-1.5">
                           {fieldData.map((item: any, i: number) => (
-                            <div key={i} className="group flex items-center gap-1 bg-neutral-800 border border-neutral-700 rounded-full px-2 py-0.5">
+                            <div key={i} className="group flex items-center gap-1 bg-secondary border border-input rounded-full px-2 py-0.5">
                               <span className="text-xs font-mono text-neutral-300">{String(item)}</span>
                             </div>
                           ))}
@@ -297,7 +297,7 @@ export function PayloadInterpretersView({ node, hideHeader = false }: { node: an
                   // Plain object → pretty JSON read-only
                   if (typeof fieldData === 'object' && fieldData !== null) {
                     return (
-                      <pre className="bg-neutral-900 border border-neutral-800 rounded p-3 text-xs font-mono text-blue-200/70 overflow-x-auto whitespace-pre-wrap">
+                      <pre className="bg-card border border-border rounded p-3 text-xs font-mono text-blue-200/70 overflow-x-auto whitespace-pre-wrap">
                         {JSON.stringify(fieldData, null, 2)}
                       </pre>
                     );
@@ -310,7 +310,7 @@ export function PayloadInterpretersView({ node, hideHeader = false }: { node: an
                         value={strVal}
                         onChange={(val) => handleUpdateField(field.name, val)}
                         onBlur={handleUpdateFieldBlur}
-                        className="w-full bg-neutral-900 border border-neutral-800 rounded p-2 text-xs font-mono text-neutral-300 focus:border-blue-500 focus:outline-none min-h-[80px] resize-y"
+                        className="w-full bg-card border border-border rounded p-2 text-xs font-mono text-neutral-300 focus:border-blue-500 focus:outline-none min-h-[80px] resize-y"
                       />
                     );
                   }
@@ -320,7 +320,7 @@ export function PayloadInterpretersView({ node, hideHeader = false }: { node: an
                       value={strVal}
                       onChange={(val) => handleUpdateField(field.name, val)}
                       onBlur={handleUpdateFieldBlur}
-                      className="w-full bg-neutral-900 border border-neutral-800 rounded p-2 text-xs font-mono text-neutral-300 focus:border-blue-500 focus:outline-none"
+                      className="w-full bg-card border border-border rounded p-2 text-xs font-mono text-neutral-300 focus:border-blue-500 focus:outline-none"
                     />
                   );
                 })()}
@@ -331,8 +331,8 @@ export function PayloadInterpretersView({ node, hideHeader = false }: { node: an
 
         {/* Add Field Section */}
         {missingFields.length > 0 && (
-          <div className="pt-6 border-t border-neutral-900">
-            <div className="text-[10px] text-neutral-600 uppercase font-bold tracking-widest mb-3 flex items-center gap-2">
+          <div className="pt-6 border-t border-border">
+            <div className="text-xs text-neutral-600 uppercase font-bold tracking-widest mb-3 flex items-center gap-2">
               <Plus size={10} />
               Available Attributes
             </div>
@@ -341,14 +341,14 @@ export function PayloadInterpretersView({ node, hideHeader = false }: { node: an
                 <button
                   key={f.name}
                   onClick={() => handleAddField(f.name)}
-                  className="flex items-center gap-3 p-3 bg-neutral-900/40 border border-neutral-800/50 hover:border-blue-500/50 hover:bg-neutral-900 rounded-xl transition-all group"
+                  className="flex items-center gap-3 p-3 bg-card/40 border border-border/50 hover:border-blue-500/50 hover:bg-card rounded-xl transition-all group"
                 >
-                  <div className="w-8 h-8 rounded-lg bg-neutral-800 flex items-center justify-center text-neutral-400 group-hover:text-blue-400 group-hover:bg-blue-500/10 transition-colors">
+                  <div className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center text-neutral-400 group-hover:text-blue-400 group-hover:bg-blue-500/10 transition-colors">
                     <DynamicIcon name={f.icon || 'Plus'} size={14} />
                   </div>
                   <div className="text-left">
-                    <div className="text-xs font-bold text-neutral-300 group-hover:text-white">{f.name}</div>
-                    <div className="text-[9px] text-neutral-600 uppercase tracking-tighter">{f.type.replace('_', ' ')}</div>
+                    <div className="text-xs font-bold text-neutral-300 group-hover:text-foreground">{f.name}</div>
+                    <div className="text-xs text-neutral-600 uppercase tracking-tighter">{f.type.replace('_', ' ')}</div>
                   </div>
                 </button>
               ))}

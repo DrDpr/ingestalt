@@ -4,7 +4,7 @@ import React from 'react';
 import { getBezierPath, getSmoothStepPath, useInternalNode, useStore, EdgeProps, BaseEdge, InternalNode } from '@xyflow/react';
 import { getFloatingEdgeParams } from './utils';
 import { getSmartPath } from './smartPath';
-import { useUIStore } from '@/lib/store/useUIStore';
+import { useUIStore } from '@/lib/drdpr-horizon/lib/store/useUIStore';
 
 export function FloatingEdge({ id, source, target, markerEnd, style, label }: EdgeProps) {
   const sourceNode = useInternalNode(source);

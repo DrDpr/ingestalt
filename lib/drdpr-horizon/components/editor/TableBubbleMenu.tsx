@@ -66,7 +66,7 @@ export function TableBubbleMenu({ editor }: TableBubbleMenuProps) {
         <AnimatePresence>
             {position && (
                 <motion.div
-                    className="absolute z-50 flex items-center gap-1 p-1 bg-neutral-900 rounded-lg shadow-xl border border-neutral-800"
+                    className="absolute z-50 flex items-center gap-1 p-1 bg-card rounded-lg shadow-xl border border-border"
                     style={{
                         left: position.x,
                         top: position.y,
@@ -88,7 +88,7 @@ export function TableBubbleMenu({ editor }: TableBubbleMenuProps) {
                             title="Add Col After"
                             icon={<div className="flex items-center"><Columns size={14} /><Plus size={10} /></div>}
                         />
-                        <div className="w-px h-4 bg-neutral-800 mx-1" />
+                        <div className="w-px h-4 bg-secondary mx-1" />
 
                         <ActionButton
                             onClick={() => editor.chain().focus().addRowBefore().run()}
@@ -101,22 +101,22 @@ export function TableBubbleMenu({ editor }: TableBubbleMenuProps) {
                             icon={<div className="flex items-center flex-col"><Rows size={14} /><Plus size={10} /></div>}
                         />
 
-                        <div className="w-px h-4 bg-neutral-800 mx-1" />
+                        <div className="w-px h-4 bg-secondary mx-1" />
 
                         <ActionButton
                             onClick={() => editor.chain().focus().toggleHeaderRow().run()}
                             title="Toggle Header Row"
-                            className={editor.isActive('tableHeader') ? 'bg-neutral-800 text-neutral-100' : ''}
+                            className={editor.isActive('tableHeader') ? 'bg-secondary text-neutral-100' : ''}
                             icon={<Table size={14} />}
                         />
                         <ActionButton
                             onClick={() => editor.chain().focus().toggleHeaderColumn().run()}
                             title="Toggle Header Column"
-                            className={editor.isActive('tableHeader') ? 'bg-neutral-800 text-neutral-100' : ''}
+                            className={editor.isActive('tableHeader') ? 'bg-secondary text-neutral-100' : ''}
                             icon={<PanelLeft size={14} />}
                         />
 
-                        <div className="w-px h-4 bg-neutral-800 mx-1" />
+                        <div className="w-px h-4 bg-secondary mx-1" />
 
                         <ActionButton
                             onClick={() => editor.chain().focus().deleteColumn().run()}
@@ -147,7 +147,7 @@ function ActionButton({ onClick, icon, title, className = '' }: { onClick: () =>
     return (
         <button
             onClick={onClick}
-            className={`p-1.5 rounded-md transition-colors text-neutral-400 hover:bg-neutral-800 hover:text-neutral-100 ${className}`}
+            className={`p-1.5 rounded-md transition-colors text-neutral-400 hover:bg-secondary hover:text-neutral-100 ${className}`}
             title={title}
         >
             {icon}
@@ -157,7 +157,7 @@ function ActionButton({ onClick, icon, title, className = '' }: { onClick: () =>
 
 function XIcon() {
     return (
-        <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" className="absolute -bottom-1 -right-1 bg-neutral-900 rounded-full">
+        <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" className="absolute -bottom-1 -right-1 bg-card rounded-full">
             <line x1="18" y1="6" x2="6" y2="18"></line>
             <line x1="6" y1="6" x2="18" y2="18"></line>
         </svg>

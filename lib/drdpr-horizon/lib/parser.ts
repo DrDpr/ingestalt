@@ -8,11 +8,19 @@ interface ParsedResult {
 
 /**
  * Parses a raw Markdown string into an Agnostic Node and its associated Edges.
+ * @param forceNewId - If true, always generates a new ID even if one exists in frontmatter
  */
-export function parseMarkdownToNode(rawMarkdown: string, workspaceId: string = 'default'): ParsedResult {
+export function parseMarkdownToNode(
+  rawMarkdown: string,
+  workspaceId: string = 'default',
+  forceNewId: boolean = false
+): ParsedResult {
   const { data, content } = matter(rawMarkdown);
   
-  const id = data.id || `node_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+  // Generate truly unique IDs with better entropy
+  const id = (forceNewId || !data.id)
+    ? `node_${Date.now()}_${Math.random().toString(36).substring(2, 15)}_${Math.random().toString(36).substring(2, 9)}`
+    : data.id;
   const configId = data.configId || data.config_id || (data.type ? `node_standards_${data.type}` : 'node_standards_other');
   
   const node: HorizonNode = {

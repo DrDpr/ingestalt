@@ -75,7 +75,7 @@ export async function getStoredFolderHandle(): Promise<FileSystemDirectoryHandle
  * 2. Falls back to prompting the user to pick a folder
  * 3. Reads all .md files and ingests them into IndexedDB
  */
-export async function ingestFromFileSystem(onProgress?: (msg: string) => void): Promise<number> {
+export async function ingestFromFileSystem(onProgress?: (msg: string) => void): Promise<{ count: number; nodeIds: string[] }> {
   onProgress?.('Checking stored folder handle...');
 
   let handle = await getStoredFolderHandle();
@@ -87,7 +87,7 @@ export async function ingestFromFileSystem(onProgress?: (msg: string) => void): 
 
   if (!handle) {
     onProgress?.('Folder access denied or cancelled.');
-    return 0;
+    return { count: 0, nodeIds: [] };
   }
 
   onProgress?.(`Reading files from "${handle.name}"...`);
@@ -95,16 +95,16 @@ export async function ingestFromFileSystem(onProgress?: (msg: string) => void): 
 
   if (files.length === 0) {
     onProgress?.('No markdown files found in selected folder.');
-    return 0;
+    return { count: 0, nodeIds: [] };
   }
 
   onProgress?.(`Laying out and persisting ${files.length} file(s)...`);
 
   const workspaceId = handle.name;
-  const count = await layoutAndPersist(files, workspaceId);
+  const result = await layoutAndPersist(files, workspaceId);
 
-  onProgress?.(`Done. Ingested ${count} nodes from "${handle.name}".`);
-  return count;
+  onProgress?.(`Done. Ingested ${result.count} nodes from "${handle.name}".`);
+  return result;
 }
 
 /**

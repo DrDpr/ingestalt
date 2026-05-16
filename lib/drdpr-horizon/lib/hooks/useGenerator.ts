@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { db } from '@/lib/db';
+import { db } from '../db';
 
 export function useGenerator() {
   const [isGenerating, setIsGenerating] = useState(false);

@@ -8,7 +8,7 @@ export const OtherNode = memo(({ id, data, isStatic }: { id: string, data: any, 
       id={id} 
       data={data} 
       icon={<FileText size={16} className="text-neutral-400" />}
-      colorClass="border-neutral-500 bg-neutral-900/80 text-neutral-100"
+      colorClass="border-input bg-card/80 text-neutral-100"
       isStatic={isStatic}
     />
   );

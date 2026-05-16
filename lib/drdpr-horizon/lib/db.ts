@@ -30,20 +30,34 @@ export interface HorizonEdge {
   metadata?: Record<string, any>;
 }
 
+export interface HorizonGraph {
+  id: string;
+  workspaceId: string;
+  name: string;
+  description?: string;
+  config?: Record<string, any>;
+}
+
+export interface HorizonConfig {
+  id: string;
+  handle?: FileSystemDirectoryHandle;
+  [key: string]: any;
+}
+
 export class HorizonDatabase extends Dexie {
   nodes!: Table<HorizonNode>;
   edges!: Table<HorizonEdge>;
+  graphs!: Table<HorizonGraph>;
+  config!: Table<HorizonConfig>;
 
   constructor() {
     super('HorizonDB');
     
-    // V3: Indexing payload.type for standards lookup
-    this.version(3).stores({
-      // Indexes: configId for type recognition, workspaceId for scoping, payload.type for fast standard filtering
+    // V4: Adding graphs for multiple views support
+    this.version(4).stores({
       nodes: 'id, configId, workspaceId, lastModified, payload.type',
-      
-      // Compound index [sourceId+targetId] for rapid relationship lookups
       edges: 'id, workspaceId, sourceId, targetId, type, [sourceId+targetId]',
+      graphs: 'id, workspaceId, name',
       config: 'id'
     });
   }

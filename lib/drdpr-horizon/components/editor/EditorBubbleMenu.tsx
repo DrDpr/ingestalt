@@ -82,7 +82,7 @@ export function EditorBubbleMenu({
         <AnimatePresence>
             {position && (
                 <motion.div
-                    className="absolute z-50 flex items-center gap-1 p-1 bg-neutral-900 rounded-lg shadow-xl border border-neutral-800"
+                    className="absolute z-50 flex items-center gap-1 p-1 bg-card rounded-lg shadow-xl border border-border"
                     style={{
                         left: position.x,
                         top: position.y,
@@ -125,7 +125,7 @@ export function EditorBubbleMenu({
                         <Code size={14} />
                     </ButtonStyle>
 
-                    <div className="w-px h-4 bg-neutral-800 mx-1" />
+                    <div className="w-px h-4 bg-secondary mx-1" />
 
                     <div className="flex items-center gap-0.5">
                         <ButtonStyle
@@ -149,7 +149,7 @@ export function EditorBubbleMenu({
                         />
                     </div>
 
-                    <div className="w-px h-4 bg-neutral-800 mx-1" />
+                    <div className="w-px h-4 bg-secondary mx-1" />
 
                     <ButtonStyle
                         onClick={onSetLink}
@@ -178,7 +178,7 @@ function ButtonStyle({
     return (
         <button
             onClick={onClick}
-            className={`p-1.5 rounded-md transition-colors ${isActive ? 'bg-blue-500 text-white' : 'text-neutral-400 hover:bg-neutral-800 hover:text-neutral-100'}`}
+            className={`p-1.5 rounded-md transition-colors ${isActive ? 'bg-blue-500 text-foreground' : 'text-neutral-400 hover:bg-secondary hover:text-neutral-100'}`}
             title={label}
         >
             {children}

@@ -1,16 +1,16 @@
 'use client';
 
 import { Check, Layers, Trash2, Plus, Zap, ExternalLink } from 'lucide-react';
-import { useFileSystem } from '@/lib/hooks/useFileSystem';
+import { useFileSystem } from '../../lib/hooks/useFileSystem';
 import { locateMethodInFile } from '@/app/actions/locate';
-import { LocalInput, LocalTextArea } from '@/components/ui/LocalInput';
+import { LocalInput, LocalTextArea } from '../ui/LocalInput';
 
 export const SchemaTable = ({ data, selectedColumns, onToggle, onUpdate }: { data: any[], selectedColumns?: Set<string>, onToggle?: (name: string) => void, onUpdate?: (newData: any[]) => void }) => {
   const tableData = Array.isArray(data) ? data : [];
   return (
-    <div className="bg-neutral-900 rounded-lg border border-neutral-800 overflow-hidden">
+    <div className="bg-card rounded-lg border border-border overflow-hidden">
       <table className="w-full text-left text-xs">
-        <thead className="bg-neutral-800/50 text-neutral-500 uppercase tracking-tighter">
+        <thead className="bg-secondary/50 text-foreground/50 uppercase tracking-tighter">
           <tr>
             {onToggle && <th className="w-8 p-2"></th>}
             <th className="p-2 font-bold">Field / Column</th>
@@ -27,15 +27,15 @@ export const SchemaTable = ({ data, selectedColumns, onToggle, onUpdate }: { dat
             const isSelected = selectedColumns?.has(name);
 
             return (
-              <tr key={idx} className={`group transition-colors ${isSelected ? 'bg-blue-900/20' : 'hover:bg-neutral-800/30'}`}>
+              <tr key={idx} className={`group transition-colors ${isSelected ? 'bg-blue-900/20' : 'hover:bg-secondary/30'}`}>
                 {onToggle && (
                   <td className="p-2 text-center cursor-pointer" onClick={() => onToggle(name)}>
-                    <div className={`w-3.5 h-3.5 rounded border flex items-center justify-center transition-colors ${isSelected ? 'bg-blue-500 border-blue-500 text-white' : 'border-neutral-600'}`}>
+                    <div className={`w-3.5 h-3.5 rounded border flex items-center justify-center transition-colors ${isSelected ? 'bg-blue-500 border-blue-500 text-foreground' : 'border-input'}`}>
                       {isSelected && <Check size={10} strokeWidth={4} />}
                     </div>
                   </td>
                 )}
-                <td className="p-2 font-mono text-neutral-200 text-xs">
+                <td className="p-2 font-mono text-foreground/80 text-xs">
                   {onUpdate ? (
                     <LocalInput
                       value={name}
@@ -48,7 +48,7 @@ export const SchemaTable = ({ data, selectedColumns, onToggle, onUpdate }: { dat
                     />
                   ) : name}
                 </td>
-                <td className="p-2 font-mono text-neutral-500 text-xs">
+                <td className="p-2 font-mono text-foreground/50 text-xs">
                   {onUpdate ? (
                     <LocalInput
                       value={details}
@@ -70,7 +70,7 @@ export const SchemaTable = ({ data, selectedColumns, onToggle, onUpdate }: { dat
                         newData.splice(idx, 1);
                         onUpdate(newData);
                       }}
-                      className="text-neutral-500 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
+                      className="text-foreground/50 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
                     >
                       <Trash2 size={12} />
                     </button>
@@ -87,7 +87,7 @@ export const SchemaTable = ({ data, selectedColumns, onToggle, onUpdate }: { dat
             const newData = [...tableData, 'new_column (type)'];
             onUpdate(newData);
           }}
-          className="w-full p-2 text-xs font-bold uppercase tracking-widest text-neutral-500 hover:text-blue-400 hover:bg-neutral-800/50 border-t border-neutral-800 transition-colors flex items-center justify-center gap-1"
+          className="w-full p-2 text-xs font-bold uppercase  text-foreground/50 hover:text-blue-400 hover:bg-secondary/50 border-t border-border transition-colors flex items-center justify-center gap-1"
         >
           <Plus size={10} /> Add Column
         </button>
@@ -104,8 +104,8 @@ export const TablesList = ({ data, selectedColumns, onToggle, onUpdate }: { data
         const tableData = table.columns || table.indices || [];
 
         return (
-          <div key={idx} className="bg-neutral-900 border border-neutral-800 rounded-lg overflow-hidden group/table">
-            <div className="bg-neutral-800/50 px-3 py-2 border-b border-neutral-800 flex items-center justify-between">
+          <div key={idx} className="bg-card border border-border rounded-lg overflow-hidden group/table">
+            <div className="bg-secondary/50 px-3 py-2 border-b border-border flex items-center justify-between">
               <div className="flex items-center gap-2 flex-1 mr-2">
                 <Layers size={12} className="text-blue-400" />
                 {onUpdate ? (
@@ -116,10 +116,10 @@ export const TablesList = ({ data, selectedColumns, onToggle, onUpdate }: { data
                       newData[idx] = { ...table, name: val };
                       onUpdate(newData);
                     }}
-                    className="bg-transparent border-none outline-none text-xs font-bold text-neutral-300 font-mono focus:ring-1 focus:ring-blue-500/50 rounded w-full uppercase tracking-widest"
+                    className="bg-transparent border-none outline-none text-xs font-bold text-foreground/60 font-mono focus:ring-1 focus:ring-blue-500/50 rounded w-full uppercase "
                   />
                 ) : (
-                  <span className="text-xs font-bold text-neutral-300 font-mono uppercase tracking-widest">{table.name}</span>
+                  <span className="text-xs font-bold text-foreground/60 font-mono uppercase ">{table.name}</span>
                 )}
               </div>
               {onUpdate && (
@@ -129,7 +129,7 @@ export const TablesList = ({ data, selectedColumns, onToggle, onUpdate }: { data
                     newData.splice(idx, 1);
                     onUpdate(newData);
                   }}
-                  className="text-neutral-500 hover:text-red-400 opacity-0 group-hover/table:opacity-100 transition-opacity"
+                  className="text-foreground/50 hover:text-red-400 opacity-0 group-hover/table:opacity-100 transition-opacity"
                 >
                   <Trash2 size={12} />
                 </button>
@@ -157,7 +157,7 @@ export const TablesList = ({ data, selectedColumns, onToggle, onUpdate }: { data
             const newData = [...tables, { name: 'new_table', columns: [] }];
             onUpdate(newData);
           }}
-          className="w-full p-2 rounded-lg border border-dashed border-neutral-700 text-xs font-bold uppercase tracking-widest text-neutral-500 hover:text-blue-400 hover:border-blue-500/50 transition-colors flex items-center justify-center gap-1"
+          className="w-full p-2 rounded-lg border border-dashed border-input text-xs font-bold uppercase  text-foreground/50 hover:text-blue-400 hover:border-blue-500/50 transition-colors flex items-center justify-center gap-1"
         >
           <Plus size={12} /> Add Table
         </button>
@@ -215,11 +215,11 @@ export const InterfaceList = ({ data, filePath, onAction, onUpdate }: { data: an
                   newData[i] = { ...item, description: val };
                   onUpdate(newData);
                 }}
-                className="bg-transparent border-none outline-none text-xs text-neutral-500 w-full focus:ring-1 focus:ring-green-500/50 rounded"
+                className="bg-transparent border-none outline-none text-xs text-foreground/50 w-full focus:ring-1 focus:ring-green-500/50 rounded"
                 placeholder="Description..."
               />
             ) : (
-              <div className="text-xs text-neutral-500 leading-relaxed group-hover/btn:text-neutral-400 transition-colors">
+              <div className="text-xs text-foreground/50 leading-relaxed group-hover/btn:text-foreground/65 transition-colors">
                 {item.description}
               </div>
             )}
@@ -231,7 +231,7 @@ export const InterfaceList = ({ data, filePath, onAction, onUpdate }: { data: an
                 newData.splice(i, 1);
                 onUpdate(newData);
               }}
-              className="p-2 text-neutral-600 hover:text-red-400 hover:bg-red-500/10 rounded opacity-0 group-hover:opacity-100 transition-all mt-1"
+              className="p-2 text-foreground/70 hover:text-red-400 hover:bg-red-500/10 rounded opacity-0 group-hover:opacity-100 transition-all mt-1"
             >
               <Trash2 size={14} />
             </button>
@@ -244,7 +244,7 @@ export const InterfaceList = ({ data, filePath, onAction, onUpdate }: { data: an
             const newData = [...items, { name: 'newMethod', description: 'Method description' }];
             onUpdate(newData);
           }}
-          className="w-full p-2 rounded-lg border border-dashed border-neutral-700 text-xs font-bold uppercase tracking-widest text-neutral-500 hover:text-green-400 hover:border-green-500/50 transition-colors flex items-center justify-center gap-1"
+          className="w-full p-2 rounded-lg border border-dashed border-input text-xs font-bold uppercase  text-foreground/50 hover:text-green-400 hover:border-green-500/50 transition-colors flex items-center justify-center gap-1"
         >
           <Plus size={12} /> Add Interface Method
         </button>
@@ -258,8 +258,8 @@ export const CodeList = ({ data, onUpdate }: { data: any[], onUpdate?: (newData:
   return (
     <div className="space-y-3">
       {items.map((snip: any, i: number) => (
-        <div key={i} className="bg-neutral-900 border border-neutral-800 rounded-lg overflow-hidden group">
-          <div className="bg-neutral-800/50 px-3 py-1.5 text-xs font-bold text-neutral-500 border-b border-neutral-800 flex justify-between items-center">
+        <div key={i} className="bg-card border border-border rounded-lg overflow-hidden group">
+          <div className="bg-secondary/50 px-3 py-1.5 text-xs font-bold text-foreground/50 border-b border-border flex justify-between items-center">
             {onUpdate ? (
               <LocalInput
                 value={snip.name || ''}
@@ -268,14 +268,14 @@ export const CodeList = ({ data, onUpdate }: { data: any[], onUpdate?: (newData:
                   newData[i] = { ...snip, name: val };
                   onUpdate(newData);
                 }}
-                className="bg-transparent border-none outline-none uppercase tracking-widest text-neutral-400 focus:ring-1 focus:ring-blue-500/50 rounded flex-1 mr-2 text-xs"
+                className="bg-transparent border-none outline-none uppercase  text-foreground/65 focus:ring-1 focus:ring-blue-500/50 rounded flex-1 mr-2 text-xs"
                 placeholder="Snippet Name"
               />
             ) : (
-              <span className="uppercase tracking-widest text-xs">{snip.name || 'Snippet'}</span>
+              <span className="uppercase  text-xs">{snip.name || 'Snippet'}</span>
             )}
             <div className="flex gap-2">
-              <button onClick={() => { navigator.clipboard.writeText(snip.code); alert('Copied!'); }} className="hover:text-white transition-colors text-xs">COPY</button>
+              <button onClick={() => { navigator.clipboard.writeText(snip.code); alert('Copied!'); }} className="hover:text-foreground transition-colors text-xs">COPY</button>
               {onUpdate && (
                 <button
                   onClick={() => {
@@ -311,7 +311,7 @@ export const CodeList = ({ data, onUpdate }: { data: any[], onUpdate?: (newData:
             const newData = [...items, { name: 'Snippet', code: '// code here' }];
             onUpdate(newData);
           }}
-          className="w-full p-2 rounded-lg border border-dashed border-neutral-700 text-xs font-bold uppercase tracking-widest text-neutral-500 hover:text-blue-400 hover:border-blue-500/50 transition-colors flex items-center justify-center gap-1"
+          className="w-full p-2 rounded-lg border border-dashed border-input text-xs font-bold uppercase  text-foreground/50 hover:text-blue-400 hover:border-blue-500/50 transition-colors flex items-center justify-center gap-1"
         >
           <Plus size={12} /> Add Code Snippet
         </button>
@@ -329,7 +329,7 @@ export const UserStoryList = ({ data, onUpdate }: { data: any[], onUpdate?: (new
         const isDone = typeof story === 'string' ? false : !!story.done;
 
         return (
-          <div key={i} className="flex gap-2 items-center group bg-neutral-900/30 p-2.5 rounded border border-neutral-800/50 hover:border-amber-500/30 transition-all">
+          <div key={i} className="flex gap-2 items-center group bg-card/30 p-2.5 rounded border border-border/50 hover:border-amber-500/30 transition-all">
             <button
               onClick={() => {
                 if (!onUpdate) return;
@@ -337,7 +337,7 @@ export const UserStoryList = ({ data, onUpdate }: { data: any[], onUpdate?: (new
                 newData[i] = typeof story === 'string' ? { text: story, done: true } : { ...story, done: !story.done };
                 onUpdate(newData);
               }}
-              className={`w-4 h-4 rounded border flex items-center justify-center transition-colors flex-shrink-0 ${isDone ? 'bg-amber-500 border-amber-500 text-black' : 'border-neutral-600 hover:border-amber-500/50'}`}
+              className={`w-4 h-4 rounded border flex items-center justify-center transition-colors flex-shrink-0 ${isDone ? 'bg-amber-500 border-amber-500 text-black' : 'border-input hover:border-amber-500/50'}`}
             >
               {isDone && <Check size={10} strokeWidth={4} />}
             </button>
@@ -350,11 +350,11 @@ export const UserStoryList = ({ data, onUpdate }: { data: any[], onUpdate?: (new
                     newData[i] = typeof story === 'string' ? val : { ...story, text: val };
                     onUpdate(newData);
                   }}
-                  className={`bg-transparent border-none outline-none text-xs w-full focus:ring-1 focus:ring-amber-500/50 rounded ${isDone ? 'text-neutral-500 line-through' : 'text-neutral-300'}`}
+                  className={`bg-transparent border-none outline-none text-xs w-full focus:ring-1 focus:ring-amber-500/50 rounded ${isDone ? 'text-foreground/50 line-through' : 'text-foreground/60'}`}
                   placeholder="As a user, I want to..."
                 />
               ) : (
-                <span className={`text-xs ${isDone ? 'text-neutral-500 line-through' : 'text-neutral-300'}`}>{text}</span>
+                <span className={`text-xs ${isDone ? 'text-foreground/50 line-through' : 'text-foreground/60'}`}>{text}</span>
               )}
             </div>
             {onUpdate && (
@@ -378,7 +378,7 @@ export const UserStoryList = ({ data, onUpdate }: { data: any[], onUpdate?: (new
             const newData = [...stories, "As a user, I want to..."];
             onUpdate(newData);
           }}
-          className="w-full p-2 text-xs font-bold uppercase tracking-widest text-neutral-500 hover:text-amber-400 hover:bg-neutral-800/50 border border-dashed border-neutral-700 rounded transition-colors flex items-center justify-center gap-1"
+          className="w-full p-2 text-xs font-bold uppercase  text-foreground/50 hover:text-amber-400 hover:bg-secondary/50 border border-dashed border-input rounded transition-colors flex items-center justify-center gap-1"
         >
           <Plus size={10} /> Add User Story
         </button>
@@ -392,14 +392,14 @@ export const ProcessFlowList = ({ data, onUpdate }: { data: any[], onUpdate?: (n
   return (
     <div className="space-y-3 relative">
       {/* Connector Line */}
-      <div className="absolute left-4 top-4 bottom-4 w-[1px] bg-neutral-800 z-0" />
+      <div className="absolute left-4 top-4 bottom-4 w-[1px] bg-secondary z-0" />
 
       {steps.map((step: any, i: number) => (
         <div key={i} className="flex gap-3 items-start group relative z-10">
-          <div className="w-8 h-8 rounded-full bg-neutral-900 border border-neutral-800 flex items-center justify-center text-xs font-bold text-blue-400 shrink-0 group-hover:border-blue-500/50 transition-colors">
+          <div className="w-8 h-8 rounded-full bg-card border border-border flex items-center justify-center text-xs font-bold text-blue-400 shrink-0 group-hover:border-blue-500/50 transition-colors">
             {i + 1}
           </div>
-          <div className="flex-1 bg-neutral-900/50 border border-neutral-800/50 rounded-lg p-3 group-hover:border-blue-500/20 transition-all">
+          <div className="flex-1 bg-card/50 border border-border/50 rounded-lg p-3 group-hover:border-blue-500/20 transition-all">
             {onUpdate ? (
               <div className="space-y-1">
                 <LocalInput
@@ -409,7 +409,7 @@ export const ProcessFlowList = ({ data, onUpdate }: { data: any[], onUpdate?: (n
                     newData[i] = { ...step, action: val };
                     onUpdate(newData);
                   }}
-                  className="bg-transparent border-none outline-none text-sm font-bold text-neutral-200 w-full focus:ring-1 focus:ring-blue-500/50 rounded"
+                  className="bg-transparent border-none outline-none text-sm font-bold text-foreground/80 w-full focus:ring-1 focus:ring-blue-500/50 rounded"
                   placeholder="Action / Step"
                 />
                 <LocalTextArea
@@ -419,14 +419,14 @@ export const ProcessFlowList = ({ data, onUpdate }: { data: any[], onUpdate?: (n
                     newData[i] = { ...step, description: val };
                     onUpdate(newData);
                   }}
-                  className="bg-transparent border-none outline-none text-xs text-neutral-500 w-full focus:ring-1 focus:ring-blue-500/50 rounded min-h-[40px] resize-none"
+                  className="bg-transparent border-none outline-none text-xs text-foreground/50 w-full focus:ring-1 focus:ring-blue-500/50 rounded min-h-[40px] resize-none"
                   placeholder="How it works..."
                 />
               </div>
             ) : (
               <div>
-                <div className="text-sm font-bold text-neutral-200">{step.action}</div>
-                <div className="text-xs text-neutral-500 mt-0.5">{step.description}</div>
+                <div className="text-sm font-bold text-foreground/80">{step.action}</div>
+                <div className="text-xs text-foreground/50 mt-0.5">{step.description}</div>
               </div>
             )}
           </div>
@@ -437,7 +437,7 @@ export const ProcessFlowList = ({ data, onUpdate }: { data: any[], onUpdate?: (n
                 newData.splice(i, 1);
                 onUpdate(newData);
               }}
-              className="opacity-0 group-hover:opacity-100 p-2 text-neutral-600 hover:text-red-400 transition-opacity"
+              className="opacity-0 group-hover:opacity-100 p-2 text-foreground/70 hover:text-red-400 transition-opacity"
             >
               <Trash2 size={12} />
             </button>
@@ -450,7 +450,7 @@ export const ProcessFlowList = ({ data, onUpdate }: { data: any[], onUpdate?: (n
             const newData = [...steps, { action: 'New Step', description: 'Step details' }];
             onUpdate(newData);
           }}
-          className="w-full ml-11 p-2 text-xs font-bold uppercase tracking-widest text-neutral-500 hover:text-blue-400 hover:bg-neutral-800/50 border border-dashed border-neutral-700 rounded transition-colors flex items-center justify-center gap-1"
+          className="w-full ml-11 p-2 text-xs font-bold uppercase  text-foreground/50 hover:text-blue-400 hover:bg-secondary/50 border border-dashed border-input rounded transition-colors flex items-center justify-center gap-1"
         >
           <Plus size={10} /> Add Step
         </button>

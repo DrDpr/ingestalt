@@ -64,7 +64,7 @@ export function PromptModal({ show, title, message, defaultValue = '', options, 
             onClick={e => e.stopPropagation()}
         >
             <div
-                className="w-full max-w-md border-2 border-neutral-800 bg-neutral-900 p-6 shadow-2xl rounded-xl"
+                className="w-full max-w-md border-2 border-border bg-card p-6 shadow-2xl rounded-xl"
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Icon and Title */}
@@ -88,7 +88,7 @@ export function PromptModal({ show, title, message, defaultValue = '', options, 
                             <button
                                 key={option.value}
                                 onClick={() => onConfirm(option.value)}
-                                className="w-full px-4 py-3 text-left border border-neutral-800 rounded-lg hover:bg-neutral-800 transition-colors flex items-center justify-between group"
+                                className="w-full px-4 py-3 text-left border border-border rounded-lg hover:bg-secondary transition-colors flex items-center justify-between group"
                             >
                                 <span className="text-sm font-medium text-neutral-100">{option.label}</span>
                                 <span className="opacity-0 group-hover:opacity-100 transition-opacity text-neutral-400">→</span>
@@ -102,7 +102,7 @@ export function PromptModal({ show, title, message, defaultValue = '', options, 
                         type="text"
                         value={inputValue}
                         onChange={(e) => setInputValue(e.target.value)}
-                        className="w-full px-4 py-3 bg-neutral-950 border border-neutral-800 text-neutral-100 text-sm focus:outline-none focus:border-blue-500 rounded-lg transition-all mb-6"
+                        className="w-full px-4 py-3 bg-background border border-border text-neutral-100 text-sm focus:outline-none focus:border-blue-500 rounded-lg transition-all mb-6"
                         placeholder="Enter text..."
                         onKeyDown={(e) => {
                             if (e.key === 'Enter') {
@@ -118,13 +118,13 @@ export function PromptModal({ show, title, message, defaultValue = '', options, 
                         <Button
                             onClick={onCancel}
                             variant="outline"
-                            className="flex-1 border-neutral-800 bg-neutral-900 text-neutral-100 hover:bg-neutral-800"
+                            className="flex-1 border-border bg-card text-neutral-100 hover:bg-secondary"
                         >
                             Cancel
                         </Button>
                         <Button
                             onClick={handleConfirm}
-                            className="flex-1 bg-blue-600 hover:bg-blue-500 text-white"
+                            className="flex-1 bg-blue-600 hover:bg-blue-500 text-foreground"
                         >
                             Confirm
                         </Button>

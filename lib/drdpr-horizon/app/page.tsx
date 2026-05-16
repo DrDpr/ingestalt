@@ -17,7 +17,7 @@ export default function Home() {
   const inspectorComponent = React.useMemo(() => <Inspector />, []);
 
   return (
-    <main className="w-full h-screen relative bg-neutral-950">
+    <main className="w-full h-screen relative bg-background">
       <div className="pb-2"><Toolbar/></div>
 
       <WorkspaceLayout 

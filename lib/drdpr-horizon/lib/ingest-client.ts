@@ -35,19 +35,51 @@ const TYPE_X_BASE: Record<string, number> = {
  */
 export async function layoutAndPersist(
   fileContents: { content: string; filepath: string }[],
-  workspaceId: string = 'default'
-): Promise<number> {
-  if (fileContents.length === 0) return 0;
+  workspaceId: string = 'default',
+  forceNewIds: boolean = true
+): Promise<{ count: number; nodeIds: string[] }> {
+  if (fileContents.length === 0) return { count: 0, nodeIds: [] };
 
   const parsedResults = fileContents.map((doc) => {
-    const result = parseMarkdownToNode(doc.content, workspaceId);
+    const result = parseMarkdownToNode(doc.content, workspaceId, forceNewIds);
     // Backlink the physical filename so the sync engine writes to the right file
     result.node.payload.filename = doc.filepath;
     return result;
   });
 
   const rawNodes = parsedResults.map(r => r.node);
-  const edges = parsedResults.flatMap(r => r.edges);
+  let edges = parsedResults.flatMap(r => r.edges);
+  const nodeIds = rawNodes.map(n => n.id);
+
+  // If we forced new IDs, we need to remap edge target IDs
+  if (forceNewIds) {
+    // Build a map of old IDs (from markdown) to new IDs (generated)
+    const idMap = new Map<string, string>();
+    parsedResults.forEach(result => {
+      const oldId = result.node.payload.id; // Original ID from markdown frontmatter
+      const newId = result.node.id; // New generated ID
+      if (oldId && oldId !== newId) {
+        idMap.set(oldId, newId);
+      }
+    });
+
+    // Remap edge target IDs
+    edges = edges.map(edge => {
+      const newTargetId = idMap.get(edge.targetId) || edge.targetId;
+      const newSourceId = idMap.get(edge.sourceId) || edge.sourceId;
+      return {
+        ...edge,
+        id: `edge_${newSourceId}_${newTargetId}`,
+        sourceId: newSourceId,
+        targetId: newTargetId
+      };
+    }).filter(edge => {
+      // Only keep edges where both source and target exist in the new node set
+      const sourceExists = nodeIds.includes(edge.sourceId);
+      const targetExists = nodeIds.includes(edge.targetId);
+      return sourceExists && targetExists;
+    });
+  }
 
   const adjacency = new Map<string, string[]>();
   const parentsOf = new Map<string, string[]>();
@@ -116,20 +148,29 @@ export async function layoutAndPersist(
   roots.forEach(root => placeNode(root, 0));
   rawNodes.forEach(node => placeNode(node, 0));
 
-  await db.nodes.bulkPut(Array.from(positionedNodes.values()));
-  await db.edges.bulkPut(edges);
+  // Use bulkAdd to ensure we're creating new records, not updating existing ones
+  // This is crucial for data forking - each ingestion creates independent instances
+  try {
+    await db.nodes.bulkAdd(Array.from(positionedNodes.values()));
+    await db.edges.bulkAdd(edges);
+  } catch (error: any) {
+    // If there are duplicate keys (shouldn't happen with forceNewIds), fall back to bulkPut
+    console.warn('bulkAdd failed, falling back to bulkPut:', error);
+    await db.nodes.bulkPut(Array.from(positionedNodes.values()));
+    await db.edges.bulkPut(edges);
+  }
 
-  return positionedNodes.size;
+  return { count: positionedNodes.size, nodeIds };
 }
 
 /**
  * Server-path ingestion: reads files via Next.js server action, then layouts.
  */
-export async function ingestWorkspace(basePath: string): Promise<number> {
+export async function ingestWorkspace(basePath: string, forceNewIds: boolean = true): Promise<{ count: number; nodeIds: string[] }> {
   try {
     const workspaceId = basePath || 'default';
     const fileContents = await readWorkspaceFiles(basePath);
-    return await layoutAndPersist(fileContents, workspaceId);
+    return await layoutAndPersist(fileContents, workspaceId, forceNewIds);
   } catch (error) {
     console.error('Workspace ingestion failed:', error);
     throw error;

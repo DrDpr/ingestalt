@@ -1,13 +1,13 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { useUIStore } from '@/lib/store/useUIStore';
+import { useUIStore } from '@/lib/drdpr-horizon/lib/store/useUIStore';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '@/lib/db';
+import { db } from '@/lib/drdpr-horizon/lib/db';
 import { X, Eye, Edit2, ChevronDown, ChevronRight, Share2, ShieldAlert, Cpu, FileText, Settings2, HardDrive, Loader2 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
-import { useSync } from '@/lib/hooks/useSync';
-import { LocalInput } from '@/components/ui/LocalInput';
+import { useSync } from '@/lib/drdpr-horizon/lib/hooks/useSync';
+import { LocalInput } from '@/lib/drdpr-horizon/components/ui/LocalInput';
 
 // --- Modular Imports ---
 import { RelationshipPanel } from './RelationshipPanel';
@@ -69,7 +69,7 @@ export function Inspector() {
 
   if (!selectedNodeId || !activeNode) {
     return (
-      <div className="flex items-center justify-center h-full text-neutral-500 font-mono text-[10px] uppercase tracking-widest">
+      <div className="flex items-center justify-center h-full text-foreground/30 font-mono text-xs uppercase ">
         Select a node to inspect
       </div>
     );
@@ -100,18 +100,18 @@ export function Inspector() {
   };
 
   return (
-    <div className="flex flex-col h-full bg-[#080808] text-neutral-200 overflow-hidden">
+    <div className="flex flex-col h-full bg-background text-foreground/60 overflow-hidden">
       {/* Inspector Header */}
-      <div className="flex justify-between items-start p-4 border-b border-neutral-800 bg-neutral-900/50 flex-shrink-0 z-20">
+      <div className="flex justify-between items-start p-4 border-b border-border bg-background/50 flex-shrink-0 z-20">
         <div className="flex-1 min-w-0 mr-4">
           <LocalInput 
             value={payload?.title || ''}
             onChange={(val) => handleTitleChange(val)}
-            className="w-full bg-transparent border-none focus:ring-0 text-sm font-bold text-neutral-100 uppercase tracking-widest placeholder:text-neutral-700"
+            className="w-full bg-transparent border-none focus:ring-0 text-sm font-bold text-foreground/80 uppercase  placeholder:text-foreground/30"
             placeholder="Node Title"
           />
           <div className="flex items-center gap-2 mt-1">
-            <span className="text-[9px] px-1.5 py-0.5 rounded bg-neutral-800 text-neutral-500 font-bold uppercase">
+            <span className="text-xs px-1.5 py-0.5 rounded bg-background text-foreground/50 font-bold uppercase">
               {type}
             </span>
             <LocalInput 
@@ -123,7 +123,7 @@ export function Inspector() {
                 });
                 if (autoSaveEnabled) await syncNodeToFile(selectedNodeId);
               }}
-              className="bg-transparent border-none focus:ring-0 text-[9px] text-neutral-600 font-mono italic outline-none hover:text-neutral-400 transition-colors w-full"
+              className="bg-transparent border-none focus:ring-0 text-xs text-foreground/50 font-mono italic outline-none hover:text-foreground/30 transition-colors w-full"
               placeholder={`${activeNode.id}.md`}
             />
           </div>
@@ -133,10 +133,10 @@ export function Inspector() {
             <button 
               onClick={handleManualSave}
               disabled={isSavingManual}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all text-[10px] font-bold uppercase tracking-widest ${
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all text-xs font-bold uppercase  ${
                 isSavingManual 
                   ? 'bg-blue-600/20 border-blue-500/50 text-blue-400' 
-                  : 'bg-neutral-800 border-neutral-700 text-neutral-400 hover:border-blue-500/50 hover:text-white'
+                  : 'bg-background border-input text-foreground/50 hover:border-blue-500/50 hover:text-foreground'
               }`}
             >
               {isSavingManual ? <Loader2 size={12} className="animate-spin" /> : <HardDrive size={12} />}
@@ -144,23 +144,23 @@ export function Inspector() {
             </button>
           )}
 
-          <div className="flex bg-neutral-800 rounded-lg p-1 mr-2">
+          <div className="flex bg-background rounded-lg p-1 mr-2">
             <button 
               onClick={() => setMode('preview')}
-              className={`p-1.5 rounded-md transition-colors ${mode === 'preview' ? 'bg-neutral-700 text-white' : 'text-neutral-500 hover:text-neutral-300'}`}
+              className={`p-1.5 rounded-md transition-colors ${mode === 'preview' ? 'bg-background text-foreground' : 'text-foreground/50 hover:text-foreground/60'}`}
             >
               <Eye size={14} />
             </button>
             <button 
               onClick={() => setMode('edit')}
-              className={`p-1.5 rounded-md transition-colors ${mode === 'edit' ? 'bg-neutral-700 text-white' : 'text-neutral-500 hover:text-neutral-300'}`}
+              className={`p-1.5 rounded-md transition-colors ${mode === 'edit' ? 'bg-background text-foreground' : 'text-foreground/50 hover:text-foreground/60'}`}
             >
               <Edit2 size={14} />
             </button>
           </div>
           <button 
             onClick={() => setSelectedNodeId(null)}
-            className="p-1 hover:bg-neutral-800 rounded text-neutral-400 hover:text-white transition-colors"
+            className="p-1 hover:bg-background rounded text-foreground/50 hover:text-foreground transition-colors"
           >
             <X size={16} />
           </button>
@@ -194,7 +194,7 @@ export function Inspector() {
             headerAction={
               <button 
                 onClick={(e) => { e.stopPropagation(); setIsEditingGovernance(!isEditingGovernance); }}
-                className={`p-1 rounded-md transition-colors ${isEditingGovernance ? 'bg-amber-600 text-white' : 'hover:bg-neutral-800 text-neutral-500'}`}
+                className={`p-1 rounded-md transition-colors ${isEditingGovernance ? 'bg-amber-600 text-foreground' : 'hover:bg-background text-foreground/50'}`}
               >
                 <Settings2 size={12} />
               </button>
@@ -234,7 +234,7 @@ export function Inspector() {
                 initialContent={payload?.content || ''} 
               />
             ) : (
-              <div className="p-6 overflow-auto prose prose-invert prose-sm max-w-none custom-scrollbar bg-neutral-950">
+              <div className="p-6 overflow-auto prose prose-sm max-w-none custom-scrollbar bg-background">
                 <ReactMarkdown>{payload?.content || ''}</ReactMarkdown>
               </div>
             )}
@@ -259,16 +259,16 @@ interface CollapsibleSectionProps {
 
 function CollapsibleSection({ title, icon, isOpen, onToggle, children, isLast, headerAction }: CollapsibleSectionProps) {
   return (
-    <div className={`border-b border-neutral-800/50 ${isLast ? 'border-b-0' : ''}`}>
-      <div className="flex items-center bg-neutral-900/30 hover:bg-neutral-900/50 transition-colors group">
+    <div className={`border-b border-border/50 ${isLast ? 'border-b-0' : ''}`}>
+      <div className="flex items-center bg-background/30 hover:bg-background/50 transition-colors group">
         <button 
           onClick={onToggle}
           className="flex-1 h-10 flex items-center gap-3 px-4"
         >
-          {isOpen ? <ChevronDown size={14} className="text-neutral-600" /> : <ChevronRight size={14} className="text-neutral-600" />}
+          {isOpen ? <ChevronDown size={14} className="text-foreground/50" /> : <ChevronRight size={14} className="text-foreground/50" />}
           <div className="flex items-center gap-2">
             {icon}
-            <span className={`text-[10px] uppercase tracking-[0.15em] font-black transition-colors ${isOpen ? 'text-neutral-300' : 'text-neutral-500'}`}>
+            <span className={`text-xs font-black uppercase transition-colors ${isOpen ? 'text-foreground/50' : 'text-foreground/50'}`}>
               {title}
             </span>
           </div>
@@ -281,7 +281,7 @@ function CollapsibleSection({ title, icon, isOpen, onToggle, children, isLast, h
       </div>
       
       {isOpen && (
-        <div className="bg-neutral-950 animate-fade-in">
+        <div className="bg-background animate-fade-in">
           {children}
         </div>
       )}

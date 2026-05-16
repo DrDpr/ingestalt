@@ -103,9 +103,12 @@ Seeds an empty database with a few example nodes so the canvas isn't blank on fi
 
 Manages the user's selected root directory handle (`showDirectoryPicker()`). Stores the handle in state so ingest can re-use it.
 
-## `lib/hooks/useSync.ts`
+## `lib/sync/SyncManager.ts`
 
-Auto-save loop: watches for `lastModified` changes (via Dexie `useLiveQuery`) and serializes changed nodes back to the file system. Runs every N seconds.
+The Orchestrator of the local-first loop. It replaces the old "pull-based" hooks with an **Event-Driven loop**:
+- Watches the `EventBus` for `node:*` events.
+- On any update, it fetches the node from Dexie and hands it to the `FSASyncAdapter`.
+- This ensures that file system writes happen immediately after a DB update without UI lag.
 
 ## `lib/hooks/useGenerator.ts`
 
@@ -229,3 +232,36 @@ Top bar that houses:
 | Change edge style default | `useUIStore` initial state: `edgePathType: 'circuit'` |
 | Add AI features | Use `useGenerator.ts` pattern, wire to your AI route |
 | Add new inspector tab | Edit `Inspector.tsx` tabs section |
+
+---
+
+## Standardized State & CRUD Flow
+
+To ensure your hackathon project is stable and survives a browser reload (Ctrl+Shift+R), follow this 3-layer architecture:
+
+| Layer | Technology | Usage | Persistence |
+|---|---|---|---|
+| **Domain** | Dexie (IndexedDB) | Nodes, Edges, Workspace Config | **Permanent** |
+| **Volatile** | Zustand | Sidebars, active panels, search queries | **Ephemeral** |
+| **Visual** | ThemeProvider | Themes, Fonts, Mode settings | **Permanent** (via DB sync) |
+
+### The System Nervous System (EventBus + SyncManager)
+Instead of original Horizon's "pull-based" hook, this pack uses a **Push Architecture**:
+1. **Write**: Use `actions.updateNode` (or similar). This updates the DB and emits a `node:updated` event.
+2. **Listen**: The `SyncManager` listens for `node:updated` on the `EventBus`.
+3. **Persist**: The `SyncManager` calls the `FSASyncAdapter` to write the specific node to the file system immediately.
+
+**Rule**: Never write directly to the DB inside a component. Always use the system events so the SyncManager can capture the change.
+
+---
+
+## The Hackathon Verification Checklist
+
+Before you declare a feature "done," check it against these rules:
+
+- [ ] **Persistence Check**: Does the change survive a hard reload (Ctrl+Shift+R)?
+- [ ] **Zero-Radius**: Is it `rounded-none`?
+- [ ] **Payload Standard**: Is the node content inside `payload`? (Never at the top level).
+- [ ] **Event-Driven**: Does cross-component communication use the `EventBus`?
+- [ ] **Labels**: Are UI labels `uppercase tracking-widest`?
+- [ ] **Mobile-First**: Does it work when you resize the browser to a phone width?

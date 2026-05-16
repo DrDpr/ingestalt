@@ -22,15 +22,15 @@ import { TableCell } from '@tiptap/extension-table-cell';
 import { common, createLowlight } from 'lowlight';
 import TurndownService from 'turndown';
 import { marked } from 'marked'; 
-import { SlashCommandExtension } from '@/components/editor/SlashCommandExtension';
-import { slashCommandSuggestion } from '@/components/editor/slashCommandSuggestion';
-import { EditorBubbleMenu } from '@/components/editor/EditorBubbleMenu';
-import { TableBubbleMenu } from '@/components/editor/TableBubbleMenu';
+import { SlashCommandExtension } from '../editor/SlashCommandExtension';
+import { slashCommandSuggestion } from '../editor/slashCommandSuggestion';
+import { EditorBubbleMenu } from '../editor/EditorBubbleMenu';
+import { TableBubbleMenu } from '../editor/TableBubbleMenu';
 import { Check } from 'lucide-react';
-import { PromptModal } from '@/components/PromptModal';
-import { db } from '@/lib/db';
-import { useSync } from '@/lib/hooks/useSync';
-import { useUIStore } from '@/lib/store/useUIStore';
+import { PromptModal } from '../PromptModal';
+import { db } from '../../lib/db';
+import { useSync } from '../../lib/hooks/useSync';
+import { useUIStore } from '../../lib/store/useUIStore';
 
 const lowlight = createLowlight(common);
 
@@ -211,9 +211,9 @@ export function HorizonEditor({ nodeId, initialContent }: EditorProps) {
   if (!editor) return null;
 
   return (
-    <div className="relative h-full flex flex-col bg-neutral-950">
+    <div className="relative h-full flex flex-col bg-background">
       {isSaving && (
-        <div className="absolute top-2 right-4 z-10 text-[10px] text-neutral-500 uppercase tracking-widest animate-pulse">
+        <div className="absolute top-2 right-4 z-10 text-xs text-neutral-500 uppercase tracking-widest animate-pulse">
           Syncing...
         </div>
       )}
@@ -230,7 +230,7 @@ export function HorizonEditor({ nodeId, initialContent }: EditorProps) {
       <EditorContent editor={editor} className="flex-1 overflow-y-auto custom-scrollbar" />
 
       {showSavedIndicator && (
-        <div className="absolute bottom-4 right-4 z-50 bg-green-500/10 border border-green-500/20 text-green-400 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2 duration-300">
+        <div className="absolute bottom-4 right-4 z-50 bg-green-500/10 border border-green-500/20 text-green-400 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-widest flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2 duration-300">
           <Check size={12} />
           Saved to Disk
         </div>
