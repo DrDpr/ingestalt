@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowRight, Network, FileText, Sparkles, GitBranch, Layers, Zap, Users, Bot, ShieldCheck, Component } from 'lucide-react';
+import { ArrowRight, FileText, Sparkles, GitBranch, Layers, Zap, Users, Bot, ShieldCheck, Component, Network, Info, Terminal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
 
@@ -13,351 +13,304 @@ export default function Page() {
     hidden: { opacity: 0 },
     show: {
       opacity: 1,
-      transition: { staggerChildren: 0.12, delayChildren: 0.1 }
+      transition: { staggerChildren: 0.08 }
     }
   };
 
   const itemVariants = {
-    hidden: { opacity: 0, y: 30 },
+    hidden: { opacity: 0, y: 15 },
     show: { 
       opacity: 1, 
       y: 0, 
       transition: { 
-        duration: 0.8, 
+        duration: 0.5, 
         ease: [0.16, 1, 0.3, 1] as any
       } 
     }
   };
 
   return (
-    <div className="min-h-screen bg-background relative text-foreground font-sans selection:bg-blue-500/30">
-      {/* Animated Premium Background */}
-      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-        {/* Animated Orbs */}
-        <motion.div 
-          animate={{ 
-            scale: [1, 1.2, 1],
-            opacity: [0.4, 0.7, 0.4],
-            x: [0, 150, 0],
-            y: [0, -100, 0]
-          }}
-          transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-blue-500/40 blur-[120px]" 
-        />
-        <motion.div 
-          animate={{ 
-            scale: [1, 1.3, 1],
-            opacity: [0.3, 0.6, 0.3],
-            x: [0, -150, 0],
-            y: [0, 150, 0]
-          }}
-          transition={{ duration: 25, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-          className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] rounded-full bg-purple-500/40 blur-[120px]" 
-        />
-        <motion.div 
-          animate={{ 
-            scale: [1, 1.5, 1],
-            opacity: [0.2, 0.4, 0.2],
-          }}
-          transition={{ duration: 15, repeat: Infinity, ease: "easeInOut", delay: 5 }}
-          className="absolute top-[40%] left-[40%] w-[30%] h-[30%] rounded-full bg-emerald-500/30 blur-[100px]" 
-        />
-        
-        {/* Animated Grid Overlay */}
-        <motion.div 
-          animate={{ backgroundPosition: ["0px 0px", "40px 40px"] }}
-          transition={{ repeat: Infinity, duration: 3, ease: "linear" }}
-          className="absolute inset-0 bg-[linear-gradient(to_right,#80808033_1px,transparent_1px),linear-gradient(to_bottom,#80808033_1px,transparent_1px)] bg-[size:40px_40px]" 
-        />
-        <div className="absolute inset-0 bg-background/20 backdrop-blur-[1px]" />
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/40 to-background/90" />
+    <div className="min-h-screen bg-background relative text-foreground font-mono uppercase selection:bg-foreground/20 text-xs tracking-wider">
+      {/* Stark Technical Grid Background */}
+      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden opacity-[0.03]">
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff_1px,transparent_1px),linear-gradient(to_bottom,#ffffff_1px,transparent_1px)] bg-[size:30px_30px]" />
       </div>
 
-      <div className="relative z-10 flex flex-col min-h-screen">
-        {/* Navigation */}
+      <div className="relative z-10 flex flex-col min-h-screen max-w-6xl mx-auto border-x border-border/10 bg-background/50 backdrop-blur-sm">
+        
+        {/* Navigation Bar */}
         <motion.nav
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
-          className="w-full max-w-6xl mx-auto px-6 py-12 flex justify-between items-center"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5 }}
+          className="w-full px-6 py-6 flex justify-between items-center border-b border-border/10"
         >
-          <div className="flex items-center gap-3 bg-secondary/20 px-5 py-2.5 rounded-full border border-white/5 backdrop-blur-xl shadow-xl">
-            <Image src="/Logo.png" alt="Ingestalt Logo" width={28} height={28} className="object-contain" />
-            <span className="font-bold tracking-tight text-lg">Ingestalt</span>
+          <div className="flex items-center gap-3">
+            <Image 
+              src="/Logo.png" 
+              alt="Ingestalt Logo" 
+              width={20} 
+              height={20} 
+              className="object-contain opacity-50" 
+            />
+            <span className="font-black tracking-widest text-xs">INGESTALT</span>
           </div>
           <div className="flex items-center gap-4">
             <Link href="/about">
-              <Button variant="ghost" className="text-muted-foreground hover:text-foreground rounded-full px-6">
-                About
+              <Button 
+                variant="ghost" 
+                className="font-mono uppercase tracking-widest text-[10px] rounded-none border border-border/5 hover:border-border/20 px-4 py-2 h-auto transition-colors"
+              >
+                ABOUT
               </Button>
             </Link>
             <Link href="/canvas">
-              <Button className="group rounded-full bg-foreground text-background hover:bg-foreground/90 hover:scale-105 transition-all shadow-xl shadow-foreground/10 px-6">
-                Open Canvas
-                <ArrowRight className="ml-2 w-4 h-4 transition-transform group-hover:translate-x-1" />
+              <Button 
+                className="font-mono uppercase tracking-widest text-[10px] rounded-none bg-foreground text-background hover:bg-foreground/90 px-4 py-2 h-auto transition-all shadow-none flex items-center gap-2 group"
+              >
+                OPEN CANVAS
+                <ArrowRight className="w-3 h-3 transition-transform group-hover:translate-x-1" />
               </Button>
             </Link>
           </div>
         </motion.nav>
 
         {/* Hero Section */}
-        <main className="w-full max-w-6xl mx-auto px-6 flex-1 flex flex-col justify-center pb-32">
+        <main className="w-full px-6 md:px-12 py-16 md:py-24 flex-1 flex flex-col justify-center">
           <motion.div 
             variants={containerVariants} 
             initial="hidden" 
             animate="show"
-            className="space-y-24"
+            className="space-y-16"
           >
-            {/* Hero Content */}
-            <div className="text-center space-y-8 relative">
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-blue-500/10 blur-[120px] rounded-full pointer-events-none -z-10" />
+            {/* Hero Main Content */}
+            <div className="space-y-6">
               
-              <motion.div variants={itemVariants} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-500 text-sm font-bold tracking-widest uppercase mb-6 shadow-2xl shadow-blue-500/10 backdrop-blur-md">
-                <Sparkles className="w-4 h-4" />
-                Built for the IBM Bob Hackathon
+              {/* Hackathon Badge */}
+              <motion.div 
+                variants={itemVariants} 
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-none bg-secondary/[0.04] border border-border/10 text-[10px] font-bold tracking-widest text-muted-foreground mb-4"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                BUILT_FOR_THE_IBM_BOB_HACKATHON
               </motion.div>
 
+              {/* Stark Monospaced Title */}
               <motion.h1 
                 variants={itemVariants}
-                className="text-6xl md:text-8xl lg:text-[7rem] font-black tracking-tighter leading-[1.05]"
+                className="text-4xl md:text-6xl lg:text-7xl font-black tracking-widest leading-none uppercase"
               >
-                <span className="block text-foreground/90">Make the</span>
-                <span className="block bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-500 pb-2">
-                  hidden structure
+                <span className="block text-foreground/90">MAKE THE</span>
+                <span className="block text-transparent bg-clip-text bg-gradient-to-r from-foreground to-foreground/60 pb-1">
+                  HIDDEN STRUCTURE
                 </span>
-                <span className="block text-foreground/90">visible</span>
+                <span className="block text-foreground/90">VISIBLE.</span>
               </motion.h1>
 
+              {/* Stark Subtitle Tagline */}
               <motion.p 
                 variants={itemVariants}
-                className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto leading-relaxed font-medium"
+                className="text-xs md:text-sm text-muted-foreground max-w-3xl leading-relaxed tracking-wider uppercase font-medium"
               >
-                A local-first spatial documentation engine for the people building your project. 
-                See the whole, not just the parts.
+                A LOCAL-FIRST SPATIAL DOCUMENTATION ENGINE FOR SOFTWARE ARCHITECTURE. 
+                SEE THE WHOLE SYSTEM, NOT JUST THE SCATTERED FRAGMENTS.
               </motion.p>
 
+              {/* Action Buttons */}
               <motion.div 
                 variants={itemVariants}
-                className="flex flex-col sm:flex-row gap-6 justify-center items-center pt-8"
+                className="flex flex-col sm:flex-row gap-4 pt-4"
               >
                 <Link href="/canvas">
                   <Button 
-                    size="lg" 
-                    className="group relative overflow-hidden rounded-full px-10 py-7 text-lg font-bold bg-blue-600 hover:bg-blue-500 text-white transition-all duration-500 shadow-[0_0_40px_-10px_rgba(37,99,235,0.5)] hover:shadow-[0_0_60px_-15px_rgba(37,99,235,0.7)] hover:scale-105"
+                    className="group rounded-none bg-foreground text-background hover:bg-foreground/90 px-8 py-5 h-auto text-xs font-bold tracking-widest transition-all flex items-center gap-2"
                   >
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]" />
-                    Get Started
-                    <ArrowRight className="ml-3 h-5 w-5 transition-transform group-hover:translate-x-1.5" />
+                    GET STARTED
+                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                   </Button>
                 </Link>
                 
                 <Link href="/about">
                   <Button 
-                    size="lg" 
                     variant="outline"
-                    className="rounded-full px-10 py-7 text-lg font-bold border-white/10 bg-secondary/20 backdrop-blur-md hover:bg-secondary/40 hover:border-white/20 transition-all duration-300 shadow-xl"
+                    className="rounded-none border border-border/10 hover:border-foreground/30 bg-secondary/[0.02] hover:bg-secondary/[0.08] px-8 py-5 h-auto text-xs font-bold tracking-widest transition-all"
                   >
-                    Learn More
+                    LEARN MORE
                   </Button>
                 </Link>
               </motion.div>
             </div>
 
-            {/* Connected Ecosystem Flow */}
-            <motion.div variants={itemVariants} className="relative pt-24">
+            {/* Stark Connected Ecosystem Diagram */}
+            <motion.div variants={itemVariants} className="pt-8">
               <div className="relative">
-                {/* Connection Flow Visualization */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
-                  {/* Connecting Lines (Desktop) */}
-                  <div className="hidden md:block absolute top-1/2 left-[15%] right-[15%] h-[2px] bg-gradient-to-r from-blue-500/20 via-purple-500/40 to-pink-500/20 -translate-y-1/2" />
+                {/* 3-Step Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative">
                   
                   {/* Step 1: Files */}
-                  <motion.div
-                    whileHover={{ y: -10 }}
-                    transition={{ duration: 0.4, ease: "easeOut" }}
-                    className="relative group"
-                  >
-                    <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-blue-600/5 rounded-3xl blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                    <div className="relative p-10 rounded-3xl bg-card/40 backdrop-blur-2xl border border-white/5 group-hover:border-blue-500/30 transition-all duration-500 h-full shadow-2xl shadow-black/20">
-                      <div className="flex flex-col items-center text-center space-y-6">
-                        <div className="p-5 rounded-2xl bg-blue-500/10 text-blue-500 border border-blue-500/20 shadow-inner group-hover:scale-110 transition-transform duration-500">
-                          <FileText className="w-8 h-8" />
-                        </div>
-                        <h3 className="text-2xl font-bold tracking-tight">Your Files</h3>
-                        <p className="text-muted-foreground leading-relaxed">
-                          Start with your existing markdown documentation
-                        </p>
-                        <div className="pt-4">
-                          <div className="inline-flex items-center gap-2 text-xs font-mono px-4 py-2 rounded-full bg-black/20 border border-white/5 text-muted-foreground shadow-inner">
-                            <span className="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.8)]" />
-                            *.md files
-                          </div>
-                        </div>
+                  <div className="relative border border-border/10 p-6 rounded-none bg-secondary/[0.01] pl-8">
+                    <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-foreground/20" />
+                    <div className="flex flex-col space-y-4">
+                      <div className="w-10 h-10 border border-border/10 bg-secondary/[0.03] flex items-center justify-center text-muted-foreground shrink-0 rounded-none">
+                        <FileText className="w-5 h-5" />
+                      </div>
+                      <div className="text-[10px] tracking-widest text-muted-foreground font-black">STEP_01 // SOURCE_DATA</div>
+                      <h3 className="text-xs font-black tracking-widest text-foreground">YOUR FILES</h3>
+                      <p className="text-[10px] text-muted-foreground leading-relaxed">
+                        START WITH YOUR EXISTING MARKDOWN DOCUMENTATION DIRECTLY FROM DISK.
+                      </p>
+                      <div className="pt-2">
+                        <span className="inline-flex items-center gap-1.5 text-[9px] font-mono px-3 py-1 bg-secondary/[0.04] border border-border/10 rounded-none text-muted-foreground">
+                          *.MD_FILES
+                        </span>
                       </div>
                     </div>
-                  </motion.div>
+                  </div>
 
-                  {/* Step 2: Transform */}
-                  <motion.div
-                    whileHover={{ y: -10 }}
-                    transition={{ duration: 0.4, ease: "easeOut" }}
-                    className="relative group"
-                  >
-                    <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 to-purple-600/5 rounded-3xl blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                    <div className="relative p-10 rounded-3xl bg-card/40 backdrop-blur-2xl border border-white/5 group-hover:border-purple-500/30 transition-all duration-500 h-full shadow-2xl shadow-black/20">
-                      <div className="flex flex-col items-center text-center space-y-6">
-                        <div className="p-5 rounded-2xl bg-purple-500/10 text-purple-500 border border-purple-500/20 shadow-inner group-hover:scale-110 transition-transform duration-500">
-                          <Layers className="w-8 h-8" />
-                        </div>
-                        <h3 className="text-2xl font-bold tracking-tight">Spatial Canvas</h3>
-                        <p className="text-muted-foreground leading-relaxed">
-                          Nodes on an infinite canvas with drawable relationships
-                        </p>
-                        <div className="pt-4">
-                          <div className="inline-flex items-center gap-2 text-xs font-mono px-4 py-2 rounded-full bg-black/20 border border-white/5 text-muted-foreground shadow-inner">
-                            <span className="w-2 h-2 rounded-full bg-purple-500 shadow-[0_0_10px_rgba(168,85,247,0.8)]" />
-                            Interactive
-                          </div>
-                        </div>
+                  {/* Step 2: Spatial Canvas */}
+                  <div className="relative border border-border/10 p-6 rounded-none bg-secondary/[0.01] pl-8">
+                    <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-foreground/20" />
+                    <div className="flex flex-col space-y-4">
+                      <div className="w-10 h-10 border border-border/10 bg-secondary/[0.03] flex items-center justify-center text-muted-foreground shrink-0 rounded-none">
+                        <Layers className="w-5 h-5" />
+                      </div>
+                      <div className="text-[10px] tracking-widest text-muted-foreground font-black">STEP_02 // VISUALIZATION</div>
+                      <h3 className="text-xs font-black tracking-widest text-foreground">SPATIAL CANVAS</h3>
+                      <p className="text-[10px] text-muted-foreground leading-relaxed">
+                        NODES ON AN INFINITE INTERACTIVE CANVAS WITH DRAWABLE RELATIONSHIPS.
+                      </p>
+                      <div className="pt-2">
+                        <span className="inline-flex items-center gap-1.5 text-[9px] font-mono px-3 py-1 bg-secondary/[0.04] border border-border/10 rounded-none text-muted-foreground">
+                          SPATIAL_IDE
+                        </span>
                       </div>
                     </div>
-                  </motion.div>
+                  </div>
 
-                  {/* Step 3: Sync */}
-                  <motion.div
-                    whileHover={{ y: -10 }}
-                    transition={{ duration: 0.4, ease: "easeOut" }}
-                    className="relative group"
-                  >
-                    <div className="absolute inset-0 bg-gradient-to-br from-pink-500/20 to-pink-600/5 rounded-3xl blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                    <div className="relative p-10 rounded-3xl bg-card/40 backdrop-blur-2xl border border-white/5 group-hover:border-pink-500/30 transition-all duration-500 h-full shadow-2xl shadow-black/20">
-                      <div className="flex flex-col items-center text-center space-y-6">
-                        <div className="p-5 rounded-2xl bg-pink-500/10 text-pink-500 border border-pink-500/20 shadow-inner group-hover:scale-110 transition-transform duration-500">
-                          <Zap className="w-8 h-8" />
-                        </div>
-                        <h3 className="text-2xl font-bold tracking-tight">Live Sync</h3>
-                        <p className="text-muted-foreground leading-relaxed">
-                          Changes sync back automatically — always up to date
-                        </p>
-                        <div className="pt-4">
-                          <div className="inline-flex items-center gap-2 text-xs font-mono px-4 py-2 rounded-full bg-black/20 border border-white/5 text-muted-foreground shadow-inner">
-                            <span className="w-2 h-2 rounded-full bg-pink-500 animate-pulse shadow-[0_0_10px_rgba(236,72,153,0.8)]" />
-                            Real-time
-                          </div>
-                        </div>
+                  {/* Step 3: Live Sync */}
+                  <div className="relative border border-border/10 p-6 rounded-none bg-secondary/[0.01] pl-8">
+                    <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-foreground/20" />
+                    <div className="flex flex-col space-y-4">
+                      <div className="w-10 h-10 border border-border/10 bg-secondary/[0.03] flex items-center justify-center text-muted-foreground shrink-0 rounded-none">
+                        <Zap className="w-5 h-5" />
+                      </div>
+                      <div className="text-[10px] tracking-widest text-muted-foreground font-black">STEP_03 // PERSISTENCE</div>
+                      <h3 className="text-xs font-black tracking-widest text-foreground">LIVE SYNC</h3>
+                      <p className="text-[10px] text-muted-foreground leading-relaxed">
+                        EDITS SYNC BACK AUTOMATICALLY TO LOCAL MARKDOWN FILES INSTANTLY.
+                      </p>
+                      <div className="pt-2">
+                        <span className="inline-flex items-center gap-1.5 text-[9px] font-mono px-3 py-1 bg-secondary/[0.04] border border-border/10 rounded-none text-muted-foreground">
+                          AUTO_PERSIST
+                        </span>
                       </div>
                     </div>
-                  </motion.div>
+                  </div>
                 </div>
 
-                {/* Local-First Badge */}
+                {/* Local-First Banner */}
                 <motion.div 
                   variants={itemVariants}
-                  className="mt-16 flex justify-center"
+                  className="mt-8 border border-border/10 bg-secondary/[0.01] p-6 rounded-none relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-4"
                 >
-                  <div className="inline-flex items-center gap-4 px-8 py-4 rounded-full bg-card/50 backdrop-blur-2xl border border-white/5 shadow-2xl relative overflow-hidden group hover:border-white/10 transition-colors">
-                    <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-                    <Network className="w-6 h-6 text-blue-400 relative z-10" />
-                    <span className="font-bold text-lg relative z-10">Local-First</span>
-                    <span className="w-1.5 h-1.5 rounded-full bg-white/20 relative z-10" />
-                    <span className="text-muted-foreground font-medium relative z-10">Everything stays on your machine</span>
+                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-emerald-500" />
+                  <div className="flex items-center gap-3">
+                    <Network className="w-5 h-5 text-emerald-500 shrink-0" />
+                    <span className="font-black text-[10px] tracking-widest text-foreground">LOCAL-FIRST // WORKSPACE_SECURE</span>
                   </div>
+                  <span className="text-[10px] text-muted-foreground tracking-widest uppercase">
+                    ALL GRAPH DATA AND ASSETS RESIDE PERMANENTLY ON YOUR MACHINE. NO EXTERNAL DATABASES.
+                  </span>
                 </motion.div>
               </div>
             </motion.div>
 
-            {/* Branding Section */}
-            <motion.div variants={itemVariants} className="relative mt-32">
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-500 rounded-[3rem] blur-3xl opacity-10" />
-              <div className="relative px-12 py-24 md:p-24 rounded-[3rem] bg-secondary/10 backdrop-blur-2xl border border-white/5 shadow-2xl overflow-hidden">
-                <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/10 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2" />
-                
-                <div className="max-w-4xl mx-auto space-y-12 relative z-10 text-center">
-                  <h2 className="text-3xl md:text-5xl font-black leading-tight tracking-tight">
-                    <span className="bg-clip-text text-transparent bg-gradient-to-br from-foreground via-foreground/90 to-foreground/50">
-                      Seeing something as a whole rather than the sum of its parts
-                    </span>
-                    <span className="text-muted-foreground/50 block mt-2 text-2xl md:text-3xl font-medium"> — that's what Ingestalt is all about.</span>
-                  </h2>
-                  
-                  <div className="h-px w-32 bg-gradient-to-r from-transparent via-border to-transparent mx-auto" />
-                  
-                  <p className="text-xl md:text-2xl text-muted-foreground leading-relaxed max-w-3xl mx-auto font-medium">
-                    Ingestalt makes the hidden structure of a project visible for the people building it. 
-                    One node connecting to two others — it's the product's core idea drawn to the simplest.
-                  </p>
-                </div>
-              </div>
+            {/* Editorial Manifesto Quote */}
+            <motion.div 
+              variants={itemVariants}
+              className="border border-border/10 bg-secondary/[0.02] p-8 md:p-12 text-center rounded-none relative overflow-hidden my-12"
+            >
+              <div className="text-[10px] tracking-widest text-muted-foreground mb-4">SYSTEM_STATEMENT</div>
+              <h2 className="text-xl md:text-2xl font-black leading-relaxed tracking-widest uppercase">
+                "SEEING SOMETHING AS A WHOLE RATHER THAN THE SUM OF ITS PARTS — THAT'S WHAT INGESTALT IS ALL ABOUT. ONE NODE CONNECTING TO TWO OTHERS — IT'S THE PRODUCT'S CORE IDEA DRAWN TO THE SIMPLEST."
+              </h2>
             </motion.div>
             
-            {/* Use Cases Section */}
-            <motion.div variants={itemVariants} className="pt-32">
-              <div className="text-center mb-16">
-                <h2 className="text-4xl md:text-5xl font-black tracking-tight mb-6">Who is this for?</h2>
-                <p className="text-muted-foreground text-xl max-w-2xl mx-auto font-medium leading-relaxed">
-                  Ingestalt bridges the gap between how documentation is written and how complex systems are actually understood.
+            {/* Stark Use Cases Section */}
+            <motion.div variants={itemVariants} className="pt-8">
+              <div className="text-center mb-12">
+                <h2 className="text-xl md:text-2xl font-black tracking-widest uppercase mb-4">WHO IS THIS FOR?</h2>
+                <p className="text-muted-foreground text-xs max-w-xl mx-auto uppercase leading-relaxed font-semibold">
+                  INGESTALT BRIDGES THE GAP BETWEEN HOW DOCUMENTATION IS WRITTEN AND HOW COMPLEX ARCHITECTURES ARE VISUALLY COMPREHENDED.
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
                 {/* Use Case 1 */}
-                <motion.div whileHover={{ scale: 1.02 }} transition={{ duration: 0.3 }} className="group p-10 rounded-[2rem] bg-secondary/10 backdrop-blur-xl border border-white/5 hover:border-blue-500/30 transition-all duration-500 shadow-xl hover:shadow-2xl hover:shadow-blue-500/10">
-                  <div className="w-16 h-16 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-blue-500 flex items-center justify-center mb-8 shadow-inner group-hover:scale-110 transition-transform duration-500">
-                    <Users className="w-8 h-8" />
+                <div className="relative border border-border/10 p-6 rounded-none bg-secondary/[0.01] pl-8 group hover:bg-secondary/[0.03] transition-all">
+                  <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-foreground/20" />
+                  <div className="w-10 h-10 rounded-none border border-border/10 bg-secondary/[0.03] flex items-center justify-center text-foreground/60 mb-6 shrink-0">
+                    <Users className="w-5 h-5" />
                   </div>
-                  <h3 className="text-2xl font-bold mb-4 tracking-tight">Developer Onboarding</h3>
-                  <p className="text-muted-foreground text-lg leading-relaxed">
-                    Stop handing new hires a folder of 100 flat markdown files. Give them a navigable map of the codebase where they can visually trace how the database connects to the API and frontend components.
+                  <h3 className="text-xs font-black tracking-widest mb-3 uppercase text-foreground">DEVELOPER ONBOARDING</h3>
+                  <p className="text-[10px] text-muted-foreground leading-relaxed uppercase">
+                    STOP HANDING NEW TEAMMATES FLAT MARKDOWN FOLDERS. PROVIDE A SPATIAL ARCHITECTURAL MAP WHERE THEY CAN VISUALLY TRACE SYSTEM COMPONENTS.
                   </p>
-                </motion.div>
+                </div>
 
                 {/* Use Case 2 */}
-                <motion.div whileHover={{ scale: 1.02 }} transition={{ duration: 0.3 }} className="group p-10 rounded-[2rem] bg-secondary/10 backdrop-blur-xl border border-white/5 hover:border-purple-500/30 transition-all duration-500 shadow-xl hover:shadow-2xl hover:shadow-purple-500/10">
-                  <div className="w-16 h-16 rounded-2xl bg-purple-500/10 border border-purple-500/20 text-purple-500 flex items-center justify-center mb-8 shadow-inner group-hover:scale-110 transition-transform duration-500">
-                    <Bot className="w-8 h-8" />
+                <div className="relative border border-border/10 p-6 rounded-none bg-secondary/[0.01] pl-8 group hover:bg-secondary/[0.03] transition-all">
+                  <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-foreground/20" />
+                  <div className="w-10 h-10 rounded-none border border-border/10 bg-secondary/[0.03] flex items-center justify-center text-foreground/60 mb-6 shrink-0">
+                    <Bot className="w-5 h-5" />
                   </div>
-                  <h3 className="text-2xl font-bold mb-4 tracking-tight">AI Context Mapping</h3>
-                  <p className="text-muted-foreground text-lg leading-relaxed">
-                    AI coding assistants struggle with scattered context. By structuring your documentation as a spatial graph with defined relationships, you give AI agents a much clearer picture of your architecture.
+                  <h3 className="text-xs font-black tracking-widest mb-3 uppercase text-foreground">AI CONTEXT MAPPING</h3>
+                  <p className="text-[10px] text-muted-foreground leading-relaxed uppercase">
+                    AI AGENTS STRUGGLE WITH FLAT FRAGMENTED CONTEXT. BY STRUCTURING WORKSPACES SPATIALLY, YOU GIVE AI PARTNERS AN EXPLICIT SYSTEM TOPOLOGY.
                   </p>
-                </motion.div>
+                </div>
 
                 {/* Use Case 3 */}
-                <motion.div whileHover={{ scale: 1.02 }} transition={{ duration: 0.3 }} className="group p-10 rounded-[2rem] bg-secondary/10 backdrop-blur-xl border border-white/5 hover:border-emerald-500/30 transition-all duration-500 shadow-xl hover:shadow-2xl hover:shadow-emerald-500/10">
-                  <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 flex items-center justify-center mb-8 shadow-inner group-hover:scale-110 transition-transform duration-500">
-                    <GitBranch className="w-8 h-8" />
+                <div className="relative border border-border/10 p-6 rounded-none bg-secondary/[0.01] pl-8 group hover:bg-secondary/[0.03] transition-all">
+                  <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-foreground/20" />
+                  <div className="w-10 h-10 rounded-none border border-border/10 bg-secondary/[0.03] flex items-center justify-center text-foreground/60 mb-6 shrink-0">
+                    <GitBranch className="w-5 h-5" />
                   </div>
-                  <h3 className="text-2xl font-bold mb-4 tracking-tight">Architecture Planning</h3>
-                  <p className="text-muted-foreground text-lg leading-relaxed">
-                    Planning a refactor or a new microservice? Visually map out the proposed changes alongside your existing infrastructure to instantly spot missing dependencies or potential bottlenecks.
+                  <h3 className="text-xs font-black tracking-widest mb-3 uppercase text-foreground">ARCHITECTURE PLANNING</h3>
+                  <p className="text-[10px] text-muted-foreground leading-relaxed uppercase">
+                    PROPOSE CHANGES OR MAP MICROSERVICES DIRECTLY ON AN ACTIVE CANVAS. SPOT STRUCTURAL BOTTLENECKS BEFORE WRITING A SINGLE LINE OF CODE.
                   </p>
-                </motion.div>
+                </div>
 
                 {/* Use Case 4 */}
-                <motion.div whileHover={{ scale: 1.02 }} transition={{ duration: 0.3 }} className="group p-10 rounded-[2rem] bg-secondary/10 backdrop-blur-xl border border-white/5 hover:border-pink-500/30 transition-all duration-500 shadow-xl hover:shadow-2xl hover:shadow-pink-500/10">
-                  <div className="w-16 h-16 rounded-2xl bg-pink-500/10 border border-pink-500/20 text-pink-500 flex items-center justify-center mb-8 shadow-inner group-hover:scale-110 transition-transform duration-500">
-                    <ShieldCheck className="w-8 h-8" />
+                <div className="relative border border-border/10 p-6 rounded-none bg-secondary/[0.01] pl-8 group hover:bg-secondary/[0.03] transition-all">
+                  <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-foreground/20" />
+                  <div className="w-10 h-10 rounded-none border border-border/10 bg-secondary/[0.03] flex items-center justify-center text-foreground/60 mb-6 shrink-0">
+                    <ShieldCheck className="w-5 h-5" />
                   </div>
-                  <h3 className="text-2xl font-bold mb-4 tracking-tight">System Auditing</h3>
-                  <p className="text-muted-foreground text-lg leading-relaxed">
-                    Because Ingestalt syncs directly with your local files, you can quickly visualize what parts of your system are undocumented, orphaned, or completely disconnected from the main architecture.
+                  <h3 className="text-xs font-black tracking-widest mb-3 uppercase text-foreground">SYSTEM AUDITING</h3>
+                  <p className="text-[10px] text-muted-foreground leading-relaxed uppercase">
+                    BECAUSE IT RUNS DIRECTLY FROM LOCAL FILES, VISUALIZE WHICH COMPONENT DIRECTORIES ARE UNDOCUMENTED, ORPHANED, OR DISCONNECTED.
                   </p>
-                </motion.div>
+                </div>
 
                 {/* Use Case 5 */}
-                <motion.div whileHover={{ scale: 1.02 }} transition={{ duration: 0.3 }} className="group p-10 rounded-[2rem] bg-secondary/10 backdrop-blur-xl border border-white/5 hover:border-amber-500/30 transition-all duration-500 shadow-xl hover:shadow-2xl hover:shadow-amber-500/10 md:col-span-2 lg:col-span-2">
-                  <div className="flex flex-col md:flex-row gap-8 items-center md:items-start text-center md:text-left">
-                    <div className="shrink-0 w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-500 flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform duration-500">
-                      <Component className="w-8 h-8" />
+                <div className="relative border border-border/10 p-6 rounded-none bg-secondary/[0.01] pl-8 md:col-span-2 group hover:bg-secondary/[0.03] transition-all">
+                  <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-foreground/20" />
+                  <div className="flex flex-col md:flex-row gap-6 md:items-start">
+                    <div className="w-10 h-10 rounded-none border border-border/10 bg-secondary/[0.03] flex items-center justify-center text-foreground/60 shrink-0">
+                      <Component className="w-5 h-5" />
                     </div>
                     <div>
-                      <h3 className="text-2xl font-bold mb-3 tracking-tight">Isolate Specific Components</h3>
-                      <p className="text-muted-foreground text-lg leading-relaxed">
-                        When systems grow too complex, use Ingestalt to focus on a single component. Instantly filter out the noise and visualize only the immediate upstream dependencies and downstream effects of the specific area you're actively working on.
+                      <h3 className="text-xs font-black tracking-widest mb-2 uppercase text-foreground">ISOLATE CRITICAL COMPONENTS</h3>
+                      <p className="text-[10px] text-muted-foreground leading-relaxed uppercase">
+                        FILTER COMPLEXITY INSTANTLY. ISOLATE A SINGLE MODULE AND VISUALIZE ONLY ITS IMMEDIATE UPSTREAM DEPENDENTS AND DOWNSTREAM API EFFECTS.
                       </p>
                     </div>
                   </div>
-                </motion.div>
+                </div>
+
               </div>
             </motion.div>
 
@@ -365,34 +318,16 @@ export default function Page() {
         </main>
 
         {/* Footer */}
-        <motion.footer
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1, duration: 0.8 }}
-          className="w-full max-w-6xl mx-auto px-6 py-12 border-t border-white/5 mt-12"
-        >
-          <div className="flex flex-col md:flex-row justify-between items-center gap-6 text-sm text-muted-foreground font-medium">
-            <p className="tracking-wide">© 2026 Ingestalt by DLDMasters. Built with IBM Bob.</p>
-            <div className="flex gap-8">
-              <Link href="/about" className="hover:text-foreground transition-colors">
-                About
-              </Link>
-              <Link href="/canvas" className="hover:text-foreground transition-colors">
-                Canvas
-              </Link>
+        <footer className="w-full px-6 py-8 border-t border-border/10 mt-12 bg-secondary/[0.01]">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-[9px] text-muted-foreground font-mono uppercase tracking-widest">
+            <p>© 2026 INGESTALT // BY DLDMASTERS. PARTNERED WITH IBM BOB.</p>
+            <div className="flex gap-6">
+              <span className="text-muted-foreground">ENGINE: SPATIAL_IDE</span>
+              <span className="text-muted-foreground">HOST: LOCALHOST</span>
             </div>
           </div>
-        </motion.footer>
+        </footer>
       </div>
-      
-      {/* Tailwind arbitrary custom animation definitions required for button glow */}
-      <style dangerouslySetInnerHTML={{__html: `
-        @keyframes shimmer {
-          100% { transform: translateX(100%); }
-        }
-      `}} />
     </div>
   );
 }
-
-// Made with Bob

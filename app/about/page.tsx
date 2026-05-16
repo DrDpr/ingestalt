@@ -1,10 +1,9 @@
 'use client';
 
 import React from 'react';
-import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Sparkles, CalendarDays, Bot } from 'lucide-react';
+import { ArrowLeft, CalendarDays, Bot, Terminal, Info, GitBranch, Layers } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
 
@@ -15,196 +14,304 @@ export default function AboutPage() {
     hidden: { opacity: 0 },
     show: {
       opacity: 1,
-      transition: { staggerChildren: 0.15 }
+      transition: { staggerChildren: 0.08 }
     }
   };
 
   const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] } }
+    hidden: { opacity: 0, y: 15 },
+    show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] } }
   };
 
   return (
-    <div className="min-h-screen bg-background relative text-foreground font-sans selection:bg-blue-500/30">
-      {/* Animated Premium Background */}
-      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-        {/* Animated Orbs */}
-        <motion.div 
-          animate={{ 
-            scale: [1, 1.2, 1],
-            opacity: [0.4, 0.7, 0.4],
-            x: [0, 150, 0],
-            y: [0, -100, 0]
-          }}
-          transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-blue-500/40 blur-[120px]" 
-        />
-        <motion.div 
-          animate={{ 
-            scale: [1, 1.3, 1],
-            opacity: [0.3, 0.6, 0.3],
-            x: [0, -150, 0],
-            y: [0, 150, 0]
-          }}
-          transition={{ duration: 25, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-          className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] rounded-full bg-purple-500/40 blur-[120px]" 
-        />
-        <motion.div 
-          animate={{ 
-            scale: [1, 1.5, 1],
-            opacity: [0.2, 0.4, 0.2],
-          }}
-          transition={{ duration: 15, repeat: Infinity, ease: "easeInOut", delay: 5 }}
-          className="absolute top-[40%] left-[40%] w-[30%] h-[30%] rounded-full bg-emerald-500/30 blur-[100px]" 
-        />
-        
-        {/* Animated Grid Overlay */}
-        <motion.div 
-          animate={{ backgroundPosition: ["0px 0px", "40px 40px"] }}
-          transition={{ repeat: Infinity, duration: 3, ease: "linear" }}
-          className="absolute inset-0 bg-[linear-gradient(to_right,#80808033_1px,transparent_1px),linear-gradient(to_bottom,#80808033_1px,transparent_1px)] bg-[size:40px_40px]" 
-        />
-        <div className="absolute inset-0 bg-background/20 backdrop-blur-[1px]" />
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/40 to-background/90" />
+    <div className="min-h-screen bg-background relative text-foreground font-mono uppercase selection:bg-foreground/20 text-xs tracking-wider">
+      {/* Stark Grid Background */}
+      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden opacity-[0.03]">
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff_1px,transparent_1px),linear-gradient(to_bottom,#ffffff_1px,transparent_1px)] bg-[size:30px_30px]" />
       </div>
 
-      <div className="relative z-10 flex flex-col min-h-screen">
-        {/* Navigation */}
+      <div className="relative z-10 flex flex-col min-h-screen max-w-6xl mx-auto border-x border-border/10 bg-background/50 backdrop-blur-sm">
+        
+        {/* Navigation / Header */}
         <motion.nav
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
-          className="w-full max-w-3xl mx-auto px-6 py-12 flex justify-between items-center"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5 }}
+          className="w-full px-6 py-6 flex justify-between items-center border-b border-border/10"
         >
           <Button 
             variant="ghost" 
-            className="text-muted-foreground group-hover:text-foreground pl-2"
+            className="text-muted-foreground hover:text-foreground font-mono uppercase tracking-widest text-xs rounded-none border border-border/5 hover:border-border/20 px-3 py-1.5 h-auto transition-colors"
             onClick={() => router.back()}
           >
-            <ArrowLeft className="mr-2 w-4 h-4 transition-transform group-hover:-translate-x-1" />
-            Back
+            <ArrowLeft className="mr-2 w-3.5 h-3.5" />
+            BACK
           </Button>
-          <div className="flex items-center gap-3 opacity-100">
-            <Image src="/Logo.png" alt="Ingestalt Logo" width={24} height={24} className="object-contain" />
-            <span className="font-semibold tracking-tight text-lg">Ingestalt</span>
+          <div className="flex items-center gap-3">
+            <Image 
+              src="/Logo.png" 
+              alt="Ingestalt Logo" 
+              width={20} 
+              height={20} 
+              className="object-contain opacity-50" 
+            />
+            <span className="font-black tracking-widest text-xs">INGESTALT</span>
           </div>
         </motion.nav>
 
-        {/* Main Content */}
-        <main className="w-full max-w-3xl mx-auto px-6 pb-32">
-
-          <motion.div variants={containerVariants} initial="hidden" animate="show">
-            {/* Header */}
-            <motion.header variants={itemVariants} className="mt-8 mb-20">
-              <h1 className="text-5xl md:text-6xl font-black tracking-tight mb-6 bg-clip-text text-transparent bg-gradient-to-br from-foreground to-foreground/50 leading-tight">
-                About Ingestalt
-              </h1>
-              <p className="text-2xl text-muted-foreground leading-relaxed max-w-2xl font-medium">
-                A local-first spatial documentation engine for software architecture.
-              </p>
-            </motion.header>
-
-            {/* Prose Body */}
-            <article className="prose prose-lg dark:prose-invert prose-p:text-foreground/70 prose-p:leading-loose prose-a:text-blue-500 max-w-none">
-              <motion.p variants={itemVariants}>
-                Most teams have a decent understanding of their own codebase. The problem is that understanding lives in people's heads, not anywhere a new teammate or an AI agent can actually access.
-              </motion.p>
-
-              <motion.p variants={itemVariants}>
-                Documentation exists, but it's flat, scattered, and usually out of date. Nobody reads it, and nobody updates it unless needed. And when you bring an AI into your workflow, it's working from the same disconnected fragments everyone else is ignoring.
-              </motion.p>
-
-              <motion.div variants={itemVariants} className="my-14 relative group">
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-500 rounded-2xl blur-xl opacity-20 group-hover:opacity-30 transition-opacity duration-500" />
-                <div className="relative p-8 rounded-2xl bg-secondary/40 backdrop-blur-xl border border-white/10 dark:border-white/5 flex items-start gap-6 shadow-2xl">
-                  <div className="hidden sm:flex shrink-0 w-12 h-12 rounded-full bg-blue-500/20 items-center justify-center border border-blue-500/30">
-                    <Bot className="text-blue-500" size={24} />
+        {/* Main Content Grid */}
+        <main className="flex-1 p-6 md:p-12">
+          <motion.div 
+            variants={containerVariants} 
+            initial="hidden" 
+            animate="show"
+            className="grid grid-cols-12 gap-8"
+          >
+            {/* Left Column: Metadata Manifesto */}
+            <motion.div 
+              variants={itemVariants}
+              className="col-span-12 md:col-span-4 space-y-6"
+            >
+              <div className="border border-border/10 p-6 rounded-none bg-secondary/[0.01]">
+                <div className="flex items-center gap-2 mb-4 text-muted-foreground pb-2 border-b border-border/10">
+                  <Info size={14} />
+                  <span className="font-bold text-xs tracking-widest">SYSTEM_MANIFEST</span>
+                </div>
+                <div className="space-y-4 text-xs tracking-widest">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">PROJECT:</span>
+                    <span className="font-bold text-foreground">INGESTALT</span>
                   </div>
-                  <p className="text-2xl font-medium m-0 text-foreground leading-snug">
-                    That's why with the help of <strong className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">IBM Bob</strong>, we built Ingestalt.
-                  </p>
-                </div>
-              </motion.div>
-
-              <motion.p variants={itemVariants}>
-                Ingestalt is a spatial graph documentation engine that transforms your existing markdown files into a navigable interactive spatial canvas.
-              </motion.p>
-
-              <motion.p variants={itemVariants}>
-                You point it at a YAML markdown, and your documentation becomes nodes on an infinite canvas, with relationships you can draw between them, schemas that define what each node type means, and an editor for keeping content current and updated.
-              </motion.p>
-
-              <motion.p variants={itemVariants}>
-                The map isn't separate from your repo, so edits sync back to the markdown files automatically, thus it stays alive rather than becoming another process to focus more energy on.
-              </motion.p>
-
-              <motion.p variants={itemVariants}>
-                The way Ingestalt handles different types of information is flexible by design. Instead of the tool deciding what database looks like, you define it yourself!
-              </motion.p>
-
-              <motion.p variants={itemVariants}>
-                Inside the tool, each definition lives in your workspace alongside everything else. This means your project's structure reflects how your team actually thinks about it, not the tool that thinks you should organize things. And because everything syncs back to your files, anyone new coming to the codebase has somewhere real to start!
-              </motion.p>
-            </article>
-
-            {/* Footer / Origin */}
-            <motion.div variants={itemVariants} className="mt-32 relative">
-              <div className="absolute inset-0 bg-secondary/5 rounded-3xl blur-2xl -z-10" />
-              <div className="bg-card/50 backdrop-blur-xl rounded-3xl p-10 border border-border/50 shadow-2xl relative overflow-hidden">
-                {/* Decorative background glow */}
-                <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-
-                <div className="flex items-center gap-3 text-sm font-bold tracking-widest uppercase text-muted-foreground mb-6">
-                  <CalendarDays size={16} />
-                  The Project
-                </div>
-
-                <div className="space-y-6 relative z-10">
-                  <p className="text-foreground/80 leading-relaxed text-lg">
-                    Our team, <strong className="text-foreground font-black">DLDMasters</strong>, built Ingestalt in 48 hours at the IBM Bob Hackathon from May 15 to 17, 2026, with IBM Bob as our development partner for the project.
-                  </p>
-
-                  <div className="h-px w-full bg-border/50 my-8" />
-
-                  <p className="text-foreground/90 leading-relaxed text-2xl font-medium tracking-tight">
-                    The question we kept coming back to was simple: <em className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400 not-italic">Do developers and AI both do better work when they actually see the full picture of a system?</em>
-                  </p>
-
-                  <p className="text-foreground/80 leading-relaxed font-bold mb-12">
-                    We believe it does, and Ingestalt is our answer to that!
-                  </p>
-                </div>
-
-                {/* Team Profiles */}
-                <div className="pt-8 border-t border-border/50 relative z-10">
-                  <h3 className="text-sm font-bold tracking-widest uppercase text-muted-foreground mb-6">The Team</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <a href="https://github.com/DrDpr" target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 p-4 rounded-2xl bg-secondary/30 hover:bg-secondary/60 border border-white/5 hover:border-white/20 transition-all shadow-lg group">
-                      <div className="w-12 h-12 rounded-full bg-background overflow-hidden border-2 border-background shadow-inner">
-                        <img src="https://github.com/DrDpr.png" alt="DrDpr" className="w-full h-full object-cover" />
-                      </div>
-                      <span className="font-bold text-muted-foreground group-hover:text-foreground transition-colors">DrDpr</span>
-                    </a>
-
-                    <a href="https://github.com/julius-salinas" target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 p-4 rounded-2xl bg-secondary/30 hover:bg-secondary/60 border border-white/5 hover:border-white/20 transition-all shadow-lg group">
-                      <div className="w-12 h-12 rounded-full bg-background overflow-hidden border-2 border-background shadow-inner">
-                        <img src="https://github.com/julius-salinas.png" alt="julius-salinas" className="w-full h-full object-cover" />
-                      </div>
-                      <span className="font-bold text-muted-foreground group-hover:text-foreground transition-colors">julius-salinas</span>
-                    </a>
-
-                    <a href="https://github.com/Zadkiel-O" target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 p-4 rounded-2xl bg-secondary/30 hover:bg-secondary/60 border border-white/5 hover:border-white/20 transition-all shadow-lg group">
-                      <div className="w-12 h-12 rounded-full bg-background overflow-hidden border-2 border-background shadow-inner">
-                        <img src="https://github.com/Zadkiel-O.png" alt="Zadkiel-O" className="w-full h-full object-cover" />
-                      </div>
-                      <span className="font-bold text-muted-foreground group-hover:text-foreground transition-colors">Zadkiel-O</span>
-                    </a>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">VERSION:</span>
+                    <span className="font-bold text-foreground">1.0.0_BETA</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">TYPE:</span>
+                    <span className="font-bold text-foreground">SPATIAL_IDE</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">ARCHITECTURE:</span>
+                    <span className="font-bold text-foreground">LOCAL_FIRST</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">AI_PARTNER:</span>
+                    <span className="font-bold text-foreground">IBM_BOB</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">HACKATHON:</span>
+                    <span className="font-bold text-foreground">IBM_BOB_2026</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">STATUS:</span>
+                    <span className="font-bold text-emerald-500">STABLE</span>
                   </div>
                 </div>
               </div>
+
+              {/* Ingestalt Philosophy Callout */}
+              <div className="border border-border/10 p-6 rounded-none bg-secondary/[0.01]">
+                <div className="flex items-center gap-2 mb-4 text-muted-foreground pb-2 border-b border-border/10">
+                  <Terminal size={14} />
+                  <span className="font-bold text-xs tracking-widest">PHILOSOPHY</span>
+                </div>
+                <p className="text-xs leading-relaxed text-muted-foreground tracking-widest uppercase">
+                  "SEEING SOMETHING AS A WHOLE RATHER THAN THE SUM OF ITS PARTS — THAT'S WHAT INGESTALT IS ALL ABOUT. ONE NODE CONNECTING TO TWO OTHERS — IT'S THE PRODUCT'S CORE IDEA DRAWN TO THE SIMPLEST."
+                </p>
+              </div>
+            </motion.div>
+
+            {/* Right Column: Narrative Prose & Spatial Architecture Details */}
+            <motion.div 
+              className="col-span-12 md:col-span-8 space-y-8"
+            >
+              {/* Stark Headline Header */}
+              <motion.header variants={itemVariants} className="pb-6 border-b border-border/10">
+                <h1 className="text-3xl md:text-4xl font-black tracking-widest leading-none mb-3">
+                  ABOUT INGESTALT
+                </h1>
+                <p className="text-xs text-muted-foreground leading-relaxed tracking-widest font-semibold">
+                  A LOCAL-FIRST SPATIAL DOCUMENTATION ENGINE FOR SOFTWARE ARCHITECTURE.
+                </p>
+              </motion.header>
+
+              {/* Prose Content */}
+              <div className="space-y-6 text-foreground/80 leading-relaxed text-xs md:text-sm tracking-wider">
+                <motion.p variants={itemVariants}>
+                  MOST TEAMS HAVE A DECENT UNDERSTANDING OF THEIR OWN CODEBASE. THE PROBLEM IS THAT UNDERSTANDING LIVES IN PEOPLE'S HEADS, NOT ANYWHERE A NEW TEAMMATE OR AN AI AGENT CAN ACTUALLY ACCESS.
+                </motion.p>
+
+                <motion.p variants={itemVariants}>
+                  DOCUMENTATION EXISTS, BUT IT'S FLAT, SCATTERED, AND USUALLY OUT OF DATE. NOBODY READS IT, AND NOBODY UPDATES IT UNLESS NEEDED. AND WHEN YOU BRING AN AI INTO YOUR WORKFLOW, IT'S WORKING FROM THE SAME DISCONNECTED FRAGMENTS EVERYONE ELSE IS IGNORING.
+                </motion.p>
+
+                {/* IBM Bob Callout Block */}
+                <motion.div variants={itemVariants} className="relative border border-border/10 p-6 rounded-none bg-secondary/[0.03] pl-8">
+                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-500" />
+                  <div className="flex items-start gap-4">
+                    <div className="shrink-0 w-8 h-8 rounded-none bg-blue-500/10 items-center justify-center border border-blue-500/20 flex">
+                      <Bot className="text-blue-500" size={16} />
+                    </div>
+                    <div>
+                      <span className="block text-xs tracking-widest text-muted-foreground mb-1">DEVELOPMENT_ORIGIN</span>
+                      <p className="text-xs font-bold leading-normal m-0 text-foreground tracking-widest">
+                        THAT'S WHY WITH THE HELP OF <strong className="text-blue-400 font-extrabold">IBM BOB</strong>, WE BUILT INGESTALT.
+                      </p>
+                    </div>
+                  </div>
+                </motion.div>
+
+                <motion.p variants={itemVariants}>
+                  INGESTALT IS A SPATIAL GRAPH DOCUMENTATION ENGINE THAT TRANSFORMS YOUR EXISTING MARKDOWN FILES INTO A NAVIGABLE INTERACTIVE SPATIAL CANVAS.
+                </motion.p>
+
+                <motion.p variants={itemVariants}>
+                  YOU POINT IT AT A YAML MARKDOWN, AND YOUR DOCUMENTATION BECOMES NODES ON AN INFINITE CANVAS, WITH RELATIONSHIPS YOU CAN DRAW BETWEEN THEM, SCHEMAS THAT DEFINE WHAT EACH NODE TYPE MEANS, AND AN EDITOR FOR KEEPING CONTENT CURRENT AND UPDATED.
+                </motion.p>
+
+                {/* Spatial Grid Features */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
+                  <motion.div variants={itemVariants} className="relative border border-border/10 p-4 rounded-none bg-secondary/[0.01] pl-6">
+                    <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-foreground/30" />
+                    <h3 className="text-xs font-black tracking-widest mb-1.5 flex items-center gap-2">
+                      <Layers size={12} className="text-foreground/60" />
+                      AUTO_SYNC_PIPELINE
+                    </h3>
+                    <p className="text-xs text-muted-foreground leading-relaxed tracking-widest uppercase">
+                      THE MAP ISN'T SEPARATE FROM YOUR REPO. EDITS SYNC BACK TO MARKDOWN FILES AUTOMATICALLY, PREVENTING OBSOLESCENCE.
+                    </p>
+                  </motion.div>
+
+                  <motion.div variants={itemVariants} className="relative border border-border/10 p-4 rounded-none bg-secondary/[0.01] pl-6">
+                    <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-foreground/30" />
+                    <h3 className="text-xs font-black tracking-widest mb-1.5 flex items-center gap-2">
+                      <GitBranch size={12} className="text-foreground/60" />
+                      FLEXIBLE_SCHEMAS
+                    </h3>
+                    <p className="text-xs text-muted-foreground leading-relaxed tracking-widest uppercase">
+                      DEFINE WHAT EACH NODE TYPE MEANS. YOUR WORKSPACE REFLECTS HOW YOUR TEAM THINKS, NOT HOW THE TOOL DICTATES.
+                    </p>
+                  </motion.div>
+                </div>
+
+                <motion.p variants={itemVariants} className="pt-2">
+                  THE WAY INGESTALT HANDLES DIFFERENT TYPES OF INFORMATION IS FLEXIBLE BY DESIGN. INSTEAD OF THE TOOL DECIDING WHAT DATABASE LOOKS LIKE, YOU DEFINE IT YOURSELF!
+                </motion.p>
+
+                <motion.p variants={itemVariants}>
+                  INSIDE THE TOOL, EACH DEFINITION LIVES IN YOUR WORKSPACE ALONGSIDE EVERYTHING ELSE. THIS MEANS YOUR PROJECT'S STRUCTURE REFLECTS HOW YOUR TEAM ACTUALLY THINKS ABOUT IT, NOT THE TOOL THAT THINKS YOU SHOULD ORGANIZE THINGS. AND BECAUSE EVERYTHING SYNCS BACK TO YOUR FILES, ANYONE NEW COMING TO THE CODEBASE HAS SOMEWHERE REAL TO START!
+                </motion.p>
+              </div>
             </motion.div>
           </motion.div>
+
+          {/* Inquiry / Quote Banner */}
+          <motion.div 
+            variants={itemVariants} 
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true }}
+            className="border border-border/10 bg-secondary/[0.02] p-8 text-center my-12 rounded-none relative overflow-hidden"
+          >
+            <div className="text-xs tracking-widest text-muted-foreground mb-4 font-mono">CORE_INQUIRY</div>
+            <p className="text-base md:text-lg font-black tracking-widest text-foreground leading-relaxed uppercase">
+              "DO DEVELOPERS AND AI BOTH DO BETTER WORK WHEN THEY ACTUALLY SEE THE FULL PICTURE OF A SYSTEM?"
+            </p>
+            <div className="mt-4 text-xs font-bold text-foreground/40 tracking-widest">INGESTALT IS OUR ANSWER.</div>
+          </motion.div>
+
+          {/* Hackathon Specs Panel */}
+          <motion.div 
+            variants={itemVariants}
+            className="border border-border/10 bg-secondary/[0.01] p-6 rounded-none relative overflow-hidden mb-12"
+          >
+            <div className="flex items-center gap-2 text-xs font-bold tracking-widest uppercase text-muted-foreground mb-4 pb-2 border-b border-border/10">
+              <CalendarDays size={14} />
+              THE_PROJECT_ORIGIN
+            </div>
+            <p className="text-xs text-foreground/80 leading-relaxed tracking-wider">
+              OUR TEAM, <strong className="text-foreground font-black">DLDMASTERS</strong>, BUILT INGESTALT IN 48 HOURS AT THE IBM BOB HACKATHON FROM MAY 15 TO 17, 2026, WITH IBM BOB AS OUR DEVELOPMENT PARTNER FOR THE PROJECT. WE BELIEVE SPATIAL IDEs ARE THE FUTURE OF COMPLEX SYSTEM DESIGN.
+            </p>
+          </motion.div>
+
+          {/* Team Section */}
+          <motion.div 
+            variants={itemVariants}
+            className="pt-4 border-t border-border/10"
+          >
+            <h3 className="text-xs font-black tracking-widest uppercase text-muted-foreground mb-6">THE_DEVELOPMENT_TEAM</h3>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <a 
+                href="https://github.com/DrDpr" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="flex items-center gap-4 p-4 rounded-none bg-secondary/[0.02] hover:bg-secondary/[0.08] border border-border/10 hover:border-foreground/30 transition-all shadow-none group"
+              >
+                <div className="w-12 h-12 rounded-none bg-background overflow-hidden border border-border/10 relative shrink-0">
+                  <img 
+                    src="https://github.com/DrDpr.png" 
+                    alt="DrDpr" 
+                    className="w-full h-full object-cover rounded-none grayscale group-hover:grayscale-0 transition-all" 
+                  />
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <span className="font-black text-foreground truncate tracking-widest text-xs">DRDPR</span>
+                  <span className="text-xs text-muted-foreground/60 tracking-wider">LEAD_DEVELOPER</span>
+                </div>
+              </a>
+
+              <a 
+                href="https://github.com/julius-salinas" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="flex items-center gap-4 p-4 rounded-none bg-secondary/[0.02] hover:bg-secondary/[0.08] border border-border/10 hover:border-foreground/30 transition-all shadow-none group"
+              >
+                <div className="w-12 h-12 rounded-none bg-background overflow-hidden border border-border/10 relative shrink-0">
+                  <img 
+                    src="https://github.com/julius-salinas.png" 
+                    alt="julius-salinas" 
+                    className="w-full h-full object-cover rounded-none grayscale group-hover:grayscale-0 transition-all" 
+                  />
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <span className="font-black text-foreground truncate tracking-widest text-xs">JULIUS-SALINAS</span>
+                  <span className="text-xs text-muted-foreground/60 tracking-wider">FULLSTACK_ENGINEER</span>
+                </div>
+              </a>
+
+              <a 
+                href="https://github.com/Zadkiel-O" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="flex items-center gap-4 p-4 rounded-none bg-secondary/[0.02] hover:bg-secondary/[0.08] border border-border/10 hover:border-foreground/30 transition-all shadow-none group"
+              >
+                <div className="w-12 h-12 rounded-none bg-background overflow-hidden border border-border/10 relative shrink-0">
+                  <img 
+                    src="https://github.com/Zadkiel-O.png" 
+                    alt="Zadkiel-O" 
+                    className="w-full h-full object-cover rounded-none grayscale group-hover:grayscale-0 transition-all" 
+                  />
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <span className="font-black text-foreground truncate tracking-widest text-xs">ZADKIEL-O</span>
+                  <span className="text-xs text-muted-foreground/60 tracking-wider">INTERFACE_DESIGNER</span>
+                </div>
+              </a>
+            </div>
+          </motion.div>
         </main>
+
+        {/* Footer */}
+        <footer className="w-full px-6 py-8 border-t border-border/10 mt-12 bg-secondary/[0.01]">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-muted-foreground font-mono uppercase tracking-widest">
+            <p>© 2026 INGESTALT // BY DLDMASTERS. PARTNERED WITH IBM BOB.</p>
+            <div className="flex gap-6">
+              <span className="text-muted-foreground">LATENCY: 0MS</span>
+              <span className="text-muted-foreground">SECURE: LOCAL_ONLY</span>
+            </div>
+          </div>
+        </footer>
       </div>
     </div>
   );
