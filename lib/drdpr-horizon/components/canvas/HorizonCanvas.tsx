@@ -13,12 +13,16 @@ import {
   Node,
   BackgroundVariant,
   MarkerType,
+  SelectionMode,
 } from '@xyflow/react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../../lib/db';
 import { useUIStore } from '../../lib/store/useUIStore';
 import { GarnishedNode } from './nodes/GarnishedNode';
 import { FloatingEdge } from './edges/FloatingEdge';
+import { useKeyboardShortcuts } from '../../lib/hooks/useKeyboardShortcuts';
+import { KeyboardShortcutsHelp } from '../KeyboardShortcutsHelp';
+import { useTheme } from 'next-themes';
 
 import '@xyflow/react/dist/style.css';
 
@@ -44,9 +48,12 @@ import { useSync } from '../../lib/hooks/useSync';
 export function HorizonCanvas() {
   const {
     setSelectedNodeId, selectedNodeId,
+    clearSelection,
     relationshipMode, setViewport, viewport,
-    autoSaveEnabled, theme, activeGraphId
+    autoSaveEnabled, theme, activeGraphId,
+    copiedNodeIds, setCopiedNodeIds
   } = useUIStore();
+  const { resolvedTheme } = useTheme();
   const { screenToFlowPosition } = useReactFlow();
   const { syncNodeToFile } = useSync();
 
@@ -185,8 +192,12 @@ export function HorizonCanvas() {
   useEffect(() => { setNodes(nodes_transformed); }, [nodes_transformed, setNodes]);
   useEffect(() => { setEdges(filteredEdges); }, [filteredEdges, setEdges]);
 
-  const onNodeClick = useCallback((e: any, node: Node) => setSelectedNodeId(node.id), [setSelectedNodeId]);
-  const onPaneClick = useCallback(() => setSelectedNodeId(null), [setSelectedNodeId]);
+  // Single node selection
+  const onNodeClick = useCallback((e: React.MouseEvent, node: Node) => {
+    setSelectedNodeId(node.id);
+  }, [setSelectedNodeId]);
+
+  const onPaneClick = useCallback(() => clearSelection(), [clearSelection]);
   const onMoveEnd = useCallback((e: any, vp: any) => setViewport(vp), [setViewport]);
   const onNodeDragStop = useCallback(async (e: any, node: Node) => {
     await db.nodes.update(node.id, { position: node.position });
@@ -307,11 +318,69 @@ export function HorizonCanvas() {
     });
   }, [screenToFlowPosition]);
 
-  const isDark = theme === 'dark';
+  // Keyboard shortcuts handlers
+  const handleDelete = useCallback(async (nodeIds: string[]) => {
+    if (confirm(`Delete ${nodeIds.length} node(s)?`)) {
+      await Promise.all(nodeIds.map(id => db.nodes.delete(id)));
+      clearSelection();
+    }
+  }, [clearSelection]);
+
+  const handleDuplicate = useCallback(async (nodeIds: string[]) => {
+    const nodesToDuplicate = await db.nodes.bulkGet(nodeIds);
+    const newNodes = nodesToDuplicate.filter(Boolean).map(node => ({
+      ...node!,
+      id: `node_${Math.random().toString(36).substr(2, 9)}`,
+      position: { x: node!.position.x + 50, y: node!.position.y + 50 },
+      lastModified: Date.now(),
+    }));
+    await db.nodes.bulkAdd(newNodes);
+    // Select the first duplicated node
+    if (newNodes.length > 0) {
+      setSelectedNodeId(newNodes[0].id);
+    }
+  }, [setSelectedNodeId]);
+
+  const handleCopy = useCallback((nodeIds: string[]) => {
+    setCopiedNodeIds(nodeIds);
+  }, [setCopiedNodeIds]);
+
+  const handlePaste = useCallback(async () => {
+    if (copiedNodeIds.length === 0) return;
+    const nodesToCopy = await db.nodes.bulkGet(copiedNodeIds);
+    const newNodes = nodesToCopy.filter(Boolean).map(node => ({
+      ...node!,
+      id: `node_${Math.random().toString(36).substr(2, 9)}`,
+      position: { x: node!.position.x + 100, y: node!.position.y + 100 },
+      lastModified: Date.now(),
+    }));
+    await db.nodes.bulkAdd(newNodes);
+    // Select the first pasted node
+    if (newNodes.length > 0) {
+      setSelectedNodeId(newNodes[0].id);
+    }
+  }, [copiedNodeIds, setSelectedNodeId]);
+
+  const getAllNodeIds = useCallback(() => {
+    return nodes_transformed.map(n => n.id);
+  }, [nodes_transformed]);
+
+  // Initialize keyboard shortcuts
+  useKeyboardShortcuts({
+    onDelete: handleDelete,
+    onDuplicate: handleDuplicate,
+    onCopy: handleCopy,
+    onPaste: handlePaste,
+    getAllNodeIds,
+  });
+
+  const isDark = resolvedTheme === 'dark';
+  
   
   return (
     <div className="w-full h-full relative">
       <Palette />
+      <KeyboardShortcutsHelp />
       <ReactFlow
         nodes={nodes} edges={edges}
         onNodesChange={onNodesChange} onEdgesChange={onEdgesChange}
@@ -325,12 +394,23 @@ export function HorizonCanvas() {
         className="bg-background"
         defaultViewport={viewport}
         proOptions={{ hideAttribution: true }}
+        panOnDrag={[1, 2]}
+        selectionKeyCode={null}
+        colorMode={resolvedTheme as 'dark' | 'light' | 'system' || 'system'}
       >
         <Background
           color="var(--border)"
           variant={BackgroundVariant.Dots}
           gap={20}
           size={1}
+        />
+        <Controls />
+        <MiniMap
+          nodeColor={(node) => {
+            const nodeData = node.data as any;
+            return nodeData?.color || (isDark ? '#52525b' : '#e4e4e7');
+          }}
+          className="bg-background border border-border"
         />
       </ReactFlow>
     </div>

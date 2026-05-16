@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { RefreshCw, Database, Share2, Anchor, Zap, Cpu, Compass, Trash2, FolderOpen, CheckCircle2, Loader2, Sun, Moon, Eraser } from 'lucide-react';
+import { RefreshCw, Database, Share2, Anchor, Zap, Cpu, Compass, Trash2, FolderOpen, CheckCircle2, Loader2, Sun, Moon, Eraser, Keyboard } from 'lucide-react';
 import { useUIStore } from '@/lib/drdpr-horizon/lib/store/useUIStore';
 import { ingestFromFileSystem, getStoredFolderHandle, connectAndStoreFolder } from '@/lib/drdpr-horizon/lib/ingest-fsa';
 import { db } from '@/lib/drdpr-horizon/lib/db';
@@ -15,7 +15,8 @@ export function Toolbar() {
     edgePathType, setEdgePathType,
     theme, toggleTheme,
     setActiveGraphId,
-    activeGraphId
+    activeGraphId,
+    setShortcutsHelpOpen
   } = useUIStore();
 
   const [connectedFolder, setConnectedFolder] = useState<string | null>(null);
@@ -212,6 +213,13 @@ export function Toolbar() {
           </button>
 
           <div className="h-6 w-[1px] bg-secondary-700 mx-1" />
+          <button
+            onClick={() => setShortcutsHelpOpen(true)}
+            title="Keyboard Shortcuts"
+            className="p-2 hover:bg-secondary text-neutral-400 hover:text-foreground rounded transition-colors"
+          >
+            <Keyboard size={16} />
+          </button>
           <button
             onClick={toggleAppTheme}
             title={`Switch to ${resolvedTheme === 'dark' ? 'light' : 'dark'} mode`}
