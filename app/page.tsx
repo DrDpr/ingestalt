@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowRight, Network, FileText, Sparkles, GitBranch, Layers, Zap, Users, Bot, ShieldCheck } from 'lucide-react';
+import { ArrowRight, Network, FileText, Sparkles, GitBranch, Layers, Zap, Users, Bot, ShieldCheck, Component } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
 
@@ -342,6 +342,21 @@ export default function Page() {
                   <p className="text-muted-foreground text-lg leading-relaxed">
                     Because Ingestalt syncs directly with your local files, you can quickly visualize what parts of your system are undocumented, orphaned, or completely disconnected from the main architecture.
                   </p>
+                </motion.div>
+
+                {/* Use Case 5 */}
+                <motion.div whileHover={{ scale: 1.02 }} transition={{ duration: 0.3 }} className="group p-10 rounded-[2rem] bg-secondary/10 backdrop-blur-xl border border-white/5 hover:border-amber-500/30 transition-all duration-500 shadow-xl hover:shadow-2xl hover:shadow-amber-500/10 md:col-span-2 lg:col-span-2">
+                  <div className="flex flex-col md:flex-row gap-8 items-center md:items-start text-center md:text-left">
+                    <div className="shrink-0 w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-500 flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform duration-500">
+                      <Component className="w-8 h-8" />
+                    </div>
+                    <div>
+                      <h3 className="text-2xl font-bold mb-3 tracking-tight">Isolate Specific Components</h3>
+                      <p className="text-muted-foreground text-lg leading-relaxed">
+                        When systems grow too complex, use Ingestalt to focus on a single component. Instantly filter out the noise and visualize only the immediate upstream dependencies and downstream effects of the specific area you're actively working on.
+                      </p>
+                    </div>
+                  </div>
                 </motion.div>
               </div>
             </motion.div>
