@@ -3,11 +3,14 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { ArrowLeft, Sparkles, CalendarDays, Bot } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
 
 export default function AboutPage() {
+  const router = useRouter();
+
   const containerVariants = {
     hidden: { opacity: 0 },
     show: {
@@ -23,11 +26,46 @@ export default function AboutPage() {
 
   return (
     <div className="min-h-screen bg-background relative text-foreground font-sans selection:bg-blue-500/30">
-      {/* Full Screen Grid Background */}
-      <div className="fixed inset-0 pointer-events-none z-0">
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:32px_32px]" />
-        <div className="absolute inset-0 bg-background/50 backdrop-blur-[1px]" />
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/20 to-background" />
+      {/* Animated Premium Background */}
+      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+        {/* Animated Orbs */}
+        <motion.div 
+          animate={{ 
+            scale: [1, 1.2, 1],
+            opacity: [0.4, 0.7, 0.4],
+            x: [0, 150, 0],
+            y: [0, -100, 0]
+          }}
+          transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-blue-500/40 blur-[120px]" 
+        />
+        <motion.div 
+          animate={{ 
+            scale: [1, 1.3, 1],
+            opacity: [0.3, 0.6, 0.3],
+            x: [0, -150, 0],
+            y: [0, 150, 0]
+          }}
+          transition={{ duration: 25, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+          className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] rounded-full bg-purple-500/40 blur-[120px]" 
+        />
+        <motion.div 
+          animate={{ 
+            scale: [1, 1.5, 1],
+            opacity: [0.2, 0.4, 0.2],
+          }}
+          transition={{ duration: 15, repeat: Infinity, ease: "easeInOut", delay: 5 }}
+          className="absolute top-[40%] left-[40%] w-[30%] h-[30%] rounded-full bg-emerald-500/30 blur-[100px]" 
+        />
+        
+        {/* Animated Grid Overlay */}
+        <motion.div 
+          animate={{ backgroundPosition: ["0px 0px", "40px 40px"] }}
+          transition={{ repeat: Infinity, duration: 3, ease: "linear" }}
+          className="absolute inset-0 bg-[linear-gradient(to_right,#80808033_1px,transparent_1px),linear-gradient(to_bottom,#80808033_1px,transparent_1px)] bg-[size:40px_40px]" 
+        />
+        <div className="absolute inset-0 bg-background/20 backdrop-blur-[1px]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/40 to-background/90" />
       </div>
 
       <div className="relative z-10 flex flex-col min-h-screen">
@@ -38,12 +76,14 @@ export default function AboutPage() {
           transition={{ duration: 0.8, ease: "easeOut" }}
           className="w-full max-w-3xl mx-auto px-6 py-12 flex justify-between items-center"
         >
-          <Link href="/canvas" className="group">
-            <Button variant="ghost" className="text-muted-foreground group-hover:text-foreground pl-2">
-              <ArrowLeft className="mr-2 w-4 h-4 transition-transform group-hover:-translate-x-1" />
-              Back to Workspace
-            </Button>
-          </Link>
+          <Button 
+            variant="ghost" 
+            className="text-muted-foreground group-hover:text-foreground pl-2"
+            onClick={() => router.back()}
+          >
+            <ArrowLeft className="mr-2 w-4 h-4 transition-transform group-hover:-translate-x-1" />
+            Back
+          </Button>
           <div className="flex items-center gap-3 opacity-100">
             <Image src="/Logo.png" alt="Ingestalt Logo" width={24} height={24} className="object-contain" />
             <span className="font-semibold tracking-tight text-lg">Ingestalt</span>
