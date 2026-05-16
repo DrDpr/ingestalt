@@ -416,6 +416,60 @@ export function generateProfessionalWiki(nodes: HorizonNode[], edges: HorizonEdg
       opacity: 0.5;
     }
 
+    /* TOC Sidebar */
+    .toc-sidebar {
+      width: 260px;
+      padding: 4rem 2rem 4rem 1rem;
+      flex-shrink: 0;
+      display: none; /* Hidden by default, shown if headings exist */
+    }
+
+    @media (min-width: 1200px) {
+      .toc-sidebar { display: block; }
+    }
+
+    .toc-sticky {
+      position: sticky;
+      top: 100px;
+      max-height: calc(100vh - 120px);
+      overflow-y: auto;
+    }
+
+    .toc-title {
+      font-size: 0.7rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 1rem;
+      letter-spacing: 0.05em;
+    }
+
+    .toc-link {
+      display: block;
+      color: var(--muted);
+      text-decoration: none;
+      margin-bottom: 0.6rem;
+      transition: all 0.2s;
+      line-height: 1.4;
+      font-size: 0.8rem;
+      border-left: 2px solid transparent;
+      padding-left: 0.75rem;
+    }
+
+    .toc-link:hover {
+      color: var(--accent);
+      border-left-color: var(--border);
+    }
+
+    .toc-link.active {
+      color: var(--accent);
+      font-weight: 600;
+      border-left-color: var(--accent);
+    }
+
+    .toc-level-2 { margin-left: 0; }
+    .toc-level-3 { margin-left: 1rem; font-size: 0.75rem; }
+
     /* Main Content */
     main {
       flex: 1;
@@ -438,21 +492,13 @@ export function generateProfessionalWiki(nodes: HorizonNode[], edges: HorizonEdg
       z-index: 10;
     }
 
-    .theme-toggle {
-      background: none;
-      border: 1px solid var(--border);
-      color: var(--fg);
-      padding: 0.5rem;
-      border-radius: 0.5rem;
-      cursor: pointer;
+    .article-container {
       display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      font-size: 0.8rem;
-    }
-
-    .theme-toggle:hover {
-      background: var(--nav-hover);
+      justify-content: space-between;
+      width: 100%;
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 1rem;
     }
 
     #content-area {
@@ -493,8 +539,8 @@ export function generateProfessionalWiki(nodes: HorizonNode[], edges: HorizonEdg
     }
 
     /* Markdown Styles */
-    .prose h2 { font-size: 1.75rem; margin: 2rem 0 1rem; font-weight: 700; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
-    .prose h3 { font-size: 1.25rem; margin: 1.5rem 0 0.75rem; font-weight: 600; }
+    .prose h2 { font-size: 1.75rem; margin: 2rem 0 1rem; font-weight: 700; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; scroll-margin-top: 80px; }
+    .prose h3 { font-size: 1.25rem; margin: 1.5rem 0 0.75rem; font-weight: 600; scroll-margin-top: 80px; }
     .prose p { margin-bottom: 1.25rem; }
     .prose ul, .prose ol { margin-bottom: 1.25rem; padding-left: 1.5rem; }
     .prose li { margin-bottom: 0.5rem; }
@@ -542,6 +588,39 @@ export function generateProfessionalWiki(nodes: HorizonNode[], edges: HorizonEdg
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
     ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+    /* Mobile Responsiveness */
+    @media (max-width: 768px) {
+      body {
+        flex-direction: column;
+      }
+      aside {
+        width: 100%;
+        height: 35vh;
+        flex-shrink: 0;
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+      }
+      header {
+        padding: 0 1rem;
+        height: 56px;
+      }
+      #path-config {
+        display: none !important;
+      }
+      #content-area {
+        padding: 2rem 1rem;
+      }
+      .toc-sidebar {
+        display: none !important;
+      }
+      .page-header h1 {
+        font-size: 1.8rem;
+      }
+      .relations-grid {
+        grid-template-columns: 1fr;
+      }
+    }
   </style>
 </head>
 <body>
@@ -564,16 +643,40 @@ export function generateProfessionalWiki(nodes: HorizonNode[], edges: HorizonEdg
 
   <main>
     <header>
-      <button class="theme-toggle" id="theme-toggle">
-        <span id="theme-icon">🌙</span>
-        <span id="theme-text">Dark Mode</span>
+      <div id="path-config" style="display: flex; align-items: center; gap: 1rem; margin-right: auto;">
+        <div style="display: flex; align-items: center; color: var(--muted); font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em;">
+          Workspace Root
+        </div>
+        <div style="display: flex; align-items: center; background: var(--code-bg); border: 1px solid var(--border); border-radius: 0.5rem; overflow: hidden; height: 32px;">
+          <div style="padding: 0 0.75rem; color: var(--muted); border-right: 1px solid var(--border); font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; display: flex; align-items: center; height: 100%; opacity: 0.7;">
+            vscode://file/
+          </div>
+          <input type="text" id="base-path-input" placeholder="e.g. d:/Desktop/ingestalt" 
+                 style="font-size: 0.75rem; padding: 0 0.75rem; background: transparent; border: none; color: var(--fg); width: 280px; outline: none; font-family: 'JetBrains Mono', monospace; height: 100%;">
+          <button id="guess-path-btn" title="Guess path from current URL"
+                  style="padding: 0 1rem; background: var(--accent-soft); color: var(--accent); border: none; border-left: 1px solid var(--border); cursor: pointer; font-size: 0.7rem; font-weight: 700; height: 100%; transition: background 0.2s;">
+            AUTO
+          </button>
+        </div>
+      </div>
+      <button class="theme-toggle" id="theme-toggle" style="background: var(--nav-hover); border: 1px solid var(--border); color: var(--fg); padding: 0.5rem; border-radius: 0.5rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.2s; margin-left: auto;">
+        <svg id="theme-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-moon"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
       </button>
     </header>
 
-    <div id="content-area">
-      <div id="page-content" class="prose">
-        <!-- Content will be injected here -->
+    <div class="article-container">
+      <div id="content-area">
+        <div id="page-content">
+          <!-- Content will be injected here -->
+        </div>
       </div>
+      
+      <aside class="toc-sidebar" id="toc-sidebar">
+        <div class="toc-sticky">
+          <div class="toc-title">On this page</div>
+          <div id="toc-links"></div>
+        </div>
+      </aside>
     </div>
   </main>
 
@@ -582,6 +685,41 @@ export function generateProfessionalWiki(nodes: HorizonNode[], edges: HorizonEdg
     const edges = ${serializedEdges};
     const standards = ${serializedStandards};
     let currentNodeId = null;
+    let basePath = localStorage.getItem('horizon-wiki-base-path') || '';
+
+    // Initialize path input
+    const pathInput = document.getElementById('base-path-input');
+    const guessBtn = document.getElementById('guess-path-btn');
+    
+    pathInput.value = basePath;
+    
+    const updatePath = (val) => {
+      basePath = val.replace(/\\\\/g, '/');
+      if (basePath && !basePath.endsWith('/')) basePath += '/';
+      localStorage.setItem('horizon-wiki-base-path', basePath);
+      pathInput.value = basePath;
+      if (currentNodeId) navigateTo(currentNodeId); 
+    };
+
+    pathInput.addEventListener('change', (e) => updatePath(e.target.value));
+    
+    guessBtn.addEventListener('click', () => {
+      let path = window.location.pathname;
+      // Handle Windows format /C:/...
+      if (path.startsWith('/')) path = path.substring(1);
+      
+      // Remove filename
+      const parts = path.split('/');
+      parts.pop();
+      
+      // If we are in a 'docs' or similar subfolder, try to suggest the parent
+      if (parts.length > 0 && ['docs', 'wiki', 'out', 'dist'].includes(parts[parts.length-1].toLowerCase())) {
+        parts.pop();
+      }
+      
+      const guessed = parts.join('/');
+      updatePath(guessed);
+    });
 
     // Initialize marked with highlight.js
     marked.setOptions({
@@ -650,14 +788,62 @@ export function generateProfessionalWiki(nodes: HorizonNode[], edges: HorizonEdg
       }
     }
 
-    // Custom renderer for interlinks
+    // Custom renderer for interlinks and headings
     const renderer = new marked.Renderer();
+    
+    renderer.heading = (arg1, arg2) => {
+      let text, level;
+      if (typeof arg1 === 'object' && arg1 !== null) {
+        text = arg1.text;
+        level = arg1.depth;
+      } else {
+        text = arg1;
+        level = arg2;
+      }
+      const id = (text || '').toString().toLowerCase().replace(/[^\\w]+/g, '-');
+      return \`<h\${level} id="\${id}">\${text}</h\${level}>\`;
+    };
+
     const originalLink = renderer.link.bind(renderer);
-    renderer.link = (href, title, text) => {
+    renderer.link = (arg1, arg2, arg3) => {
+      let href, title, text;
+      if (typeof arg1 === 'object' && arg1 !== null) {
+        ({ href, title, text } = arg1);
+      } else {
+        href = arg1;
+        title = arg2;
+        text = arg3;
+      }
+
       // If href matches a node ID, make it an internal navigation link
       if (nodes.some(n => n.id === href)) {
         return \`<a href="#\${href}" onclick="navigateTo('\${href}'); return false;" title="\${title || ''}">\${text}</a>\`;
       }
+
+      // VS Code Protocol Support for local files
+      const isLocalPath = href.endsWith('.md') || href.endsWith('.ts') || href.endsWith('.tsx') || href.endsWith('.js') || href.endsWith('.jsx') || href.startsWith('../') || href.startsWith('./');
+      if (isLocalPath && !href.startsWith('http')) {
+        if (!basePath) {
+          return \`<a href="#" onclick="alert('Please enter your Project Root path at the top of the page first!\\\\n\\\\nExample: d:/Desktop/ingestalt'); return false;" title="Set Project Root to open in VS Code" style="border-bottom: 1px dashed var(--accent); color: var(--accent); cursor: pointer;">\${text} ⚙️</a>\`;
+        }
+
+        // Clean up relative navigation by resolving ../ and ./
+        const baseParts = basePath.split('/').filter(Boolean);
+        const relParts = href.split('/');
+        const stack = [...baseParts];
+        
+        for (const p of relParts) {
+          if (p === '..') stack.pop();
+          else if (p !== '.' && p !== '') stack.push(p);
+        }
+        
+        // On Windows, ensure we have the drive letter format right, e.g. /d:/...
+        let absoluteHref = stack.join('/');
+        if (!absoluteHref.startsWith('/')) absoluteHref = '/' + absoluteHref;
+        
+        return \`<a href="vscode://file\${absoluteHref}" title="Open in VS Code" style="border-bottom: 1px solid var(--accent); color: var(--accent); cursor: pointer;">\${text} ↗</a>\`;
+      }
+
       // Standard markdown links with target="_blank"
       return \`<a href="\${href}" title="\${title || ''}" target="_blank" rel="noopener noreferrer">\${text}</a>\`;
     };
@@ -666,6 +852,8 @@ export function generateProfessionalWiki(nodes: HorizonNode[], edges: HorizonEdg
       currentNodeId = id;
       const node = nodes.find(n => n.id === id);
       const contentEl = document.getElementById('page-content');
+      const tocArea = document.getElementById('toc-links');
+      const tocSidebar = document.getElementById('toc-sidebar');
       
       if (!node) {
         contentEl.innerHTML = \`
@@ -674,21 +862,26 @@ export function generateProfessionalWiki(nodes: HorizonNode[], edges: HorizonEdg
             <p>Choose a document from the sidebar to start reading.</p>
           </div>
         \`;
+        tocSidebar.style.display = 'none';
         return;
       }
       
       // Pre-process WikiLinks [[ID]] or [[ID|Label]]
-      let content = node.payload?.content || '*No content available.*';
-      content = content.replace(/\\[\\[([^|\\]]+)(?:\\|([^\\]]+))?\\]\\]/g, (match, linkId, label) => {
-        const targetNode = nodes.find(n => n.id === linkId);
-        if (targetNode) {
-          return \`[\${label || targetNode.payload?.title || linkId}](\${linkId})\`;
-        }
-        return match;
-      });
-
-      const htmlContent = marked.parse(content, { renderer });
+      let bodyContent = node.payload?.content || '*No content available.*';
       
+      // De-duplicate title: Remove the first H1 if it exists at the start
+      bodyContent = bodyContent.replace(/^#\\s+.*\\n?/, '');
+
+      // Extract headings for TOC
+      const headings = [];
+      const headingMatches = bodyContent.matchAll(/^#{2,3}\\s+(.*)/gm);
+      for (const match of headingMatches) {
+        const text = match[1];
+        const level = match[0].split(' ')[0].length;
+        const hId = text.toLowerCase().replace(/[^\\w]+/g, '-');
+        headings.push({ level, text, id: hId });
+      }
+
       // Calculate relationships
       const outgoing = edges.filter(e => e.sourceId === id);
       const incoming = edges.filter(e => e.targetId === id);
@@ -705,6 +898,45 @@ export function generateProfessionalWiki(nodes: HorizonNode[], edges: HorizonEdg
       const forwardLinks = relatedNodes(outgoing, false);
       const backLinks = relatedNodes(incoming, true);
 
+      // Render TOC
+      let tocHtml = '';
+      if (headings.length > 0) {
+        tocHtml += headings.map(h => \`
+          <a href="#\${h.id}" class="toc-link toc-level-\${h.level}">\${h.text}</a>
+        \`).join('');
+      }
+
+      const hasRelations = forwardLinks.length > 0 || backLinks.length > 0;
+      if (hasRelations) {
+        tocHtml += \`
+          <div style="margin: 1.5rem 0 0.5rem; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; color: var(--muted); letter-spacing: 0.05em;">Related Links</div>
+        \`;
+        
+        forwardLinks.forEach(rel => {
+          tocHtml += \`<a href="#\${rel.node.id}" onclick="navigateTo('\${rel.node.id}')" class="toc-link" style="font-size: 0.75rem; border-left-color: transparent;">↗ \${rel.node.payload?.title}</a>\`;
+        });
+        backLinks.forEach(rel => {
+          tocHtml += \`<a href="#\${rel.node.id}" onclick="navigateTo('\${rel.node.id}')" class="toc-link" style="font-size: 0.75rem; border-left-color: transparent;">↙ \${rel.node.payload?.title}</a>\`;
+        });
+      }
+
+      if (headings.length > 0 || hasRelations) {
+        tocSidebar.style.display = 'block';
+        tocArea.innerHTML = tocHtml;
+      } else {
+        tocSidebar.style.display = 'none';
+      }
+
+      bodyContent = bodyContent.replace(/\\[\\[([^|\\]]+)(?:\\|([^\\]]+))?\\]\\]/g, (match, linkId, label) => {
+        const targetNode = nodes.find(n => n.id === linkId);
+        if (targetNode) {
+          return \`[\${label || targetNode.payload?.title || linkId}](\${linkId})\`;
+        }
+        return match;
+      });
+
+      const htmlContent = marked.parse(bodyContent, { renderer });
+      
       // Find standard definition
       let standardDef = null;
       for (const s of standards) {
@@ -712,6 +944,17 @@ export function generateProfessionalWiki(nodes: HorizonNode[], edges: HorizonEdg
         if (def) { standardDef = def; break; }
         if (s.id === node.configId) { standardDef = s.payload; break; }
       }
+
+      const propertyFields = standardDef && standardDef.fields ? 
+        standardDef.fields.map(f => renderField(f, (node.payload || {})[f.name])).filter(h => h).join('') :
+        Object.entries(node.payload || {})
+          .filter(([k]) => !['title', 'content', 'type', 'tags', 'definitions'].includes(k))
+          .map(([k, v]) => \`
+            <div class="property-row">
+              <span class="property-label">\${k.toUpperCase()}</span>
+              <span class="property-value">\${typeof v === 'object' ? JSON.stringify(v) : v}</span>
+            </div>
+          \`).join('');
 
       function renderField(field, data) {
         if (data === undefined || data === null) return '';
@@ -740,7 +983,9 @@ export function generateProfessionalWiki(nodes: HorizonNode[], edges: HorizonEdg
           });
         } else if (field.type === 'interface_list') {
           (Array.isArray(data) ? data : []).forEach(item => {
-            html += \`<div class="wiki-list-item"><div class="wiki-list-item-title font-mono">\${item.name}()</div><div class="wiki-list-item-desc">\${item.description}</div></div>\`;
+            const name = typeof item === 'string' ? item : (item.name || 'unknown');
+            const desc = typeof item === 'string' ? '' : (item.description || '');
+            html += \`<div class="wiki-list-item"><div class="wiki-list-item-title font-mono">\${name}()</div>\${desc ? \`<div class="wiki-list-item-desc">\${desc}</div>\` : ''}</div>\`;
           });
         } else if (field.type === 'code_list') {
           (Array.isArray(data) ? data : []).forEach(snip => {
@@ -825,34 +1070,15 @@ export function generateProfessionalWiki(nodes: HorizonNode[], edges: HorizonEdg
           </div>
         </div>
 
-        <div class="properties-box">
-          <div class="field-header">SYSTEM CORE</div>
-          <div class="property-row">
-            <span class="property-label">NODE_ID</span>
-            <span class="property-value font-mono">\${node.id}</span>
-          </div>
-          <div class="property-row">
-            <span class="property-label">NODE_TYPE</span>
-            <span class="property-value font-mono uppercase">\${node.payload?.type || 'unknown'}</span>
-          </div>
-          
-          <div style="margin-top: 2rem;"></div>
-
-          \${standardDef && standardDef.fields ? 
-            standardDef.fields.map(f => renderField(f, node.payload[f.name])).join('') :
-            Object.entries(node.payload || {})
-              .filter(([k]) => !['title', 'content', 'type', 'tags', 'definitions'].includes(k))
-              .map(([k, v]) => \`
-                <div class="property-row">
-                  <span class="property-label">\${k.toUpperCase()}</span>
-                  <span class="property-value">\${typeof v === 'object' ? JSON.stringify(v) : v}</span>
-                </div>
-              \`).join('')
-          }
-        </div>
-
         <div class="prose">
           \${htmlContent}
+        </div>
+
+        \${propertyFields ? \`<div class="properties-box" style="margin-top: 3rem;">\${propertyFields}</div>\` : ''}
+
+        <div style="margin-top: 4rem; padding-top: 1rem; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; opacity: 0.4; font-size: 0.7rem; font-family: 'JetBrains Mono', monospace;">
+          <span>ID: \${node.id}</span>
+          <span>CONFIG: \${node.configId}</span>
         </div>
 
         \${node.payload?.type === 'standards' ? renderGovernanceManifest(node.payload?.definitions) : ''}
@@ -903,15 +1129,14 @@ export function generateProfessionalWiki(nodes: HorizonNode[], edges: HorizonEdg
     const hljsTheme = document.getElementById('hljs-theme');
 
     themeToggle.addEventListener('click', () => {
+      const icon = document.getElementById('theme-icon');
       if (html.classList.contains('dark')) {
         html.classList.remove('dark');
-        document.getElementById('theme-icon').innerText = '☀️';
-        document.getElementById('theme-text').innerText = 'Light Mode';
+        icon.innerHTML = '<circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>';
         hljsTheme.href = 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css';
       } else {
         html.classList.add('dark');
-        document.getElementById('theme-icon').innerText = '🌙';
-        document.getElementById('theme-text').innerText = 'Dark Mode';
+        icon.innerHTML = '<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>';
         hljsTheme.href = 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css';
       }
     });
