@@ -1,0 +1,1281 @@
+{
+  "version": "1.0",
+  "graph": {
+    "id": "graph_1778930723495",
+    "name": "_ingestalt",
+    "description": "Ingested from _ingestalt",
+    "workspaceId": "workspace__ingestalt_1778930723495",
+    "snapshot": {
+      "nodes": [
+        {
+          "id": "node_1778930723590_kt4jq1etdn8_1037a4a",
+          "position": {
+            "x": 250,
+            "y": 230
+          }
+        },
+        {
+          "id": "node_1778930723590_liwho0weuk_kl5xrz6",
+          "position": {
+            "x": 310,
+            "y": 330
+          }
+        },
+        {
+          "id": "node_1778930723591_0papxb4wrtq_ksypynt",
+          "position": {
+            "x": 1000,
+            "y": 930
+          }
+        },
+        {
+          "id": "node_1778930723591_1s1jzp3yvcw_qjh4tpj",
+          "position": {
+            "x": 750,
+            "y": 50
+          }
+        },
+        {
+          "id": "node_1778930723591_cleuwir4m0r_qfynxoh",
+          "position": {
+            "x": 930,
+            "y": 130
+          }
+        },
+        {
+          "id": "node_1778930723591_idwafsn15bg_ezz564x",
+          "position": {
+            "x": -250,
+            "y": 50
+          }
+        },
+        {
+          "id": "node_1778930723591_jix5advi2_g5jlr90",
+          "position": {
+            "x": 120,
+            "y": 130
+          }
+        },
+        {
+          "id": "node_1778930723591_s0c3kkdm5w_j7ya3ta",
+          "position": {
+            "x": 310,
+            "y": 50
+          }
+        },
+        {
+          "id": "node_1778930723592_77bf9krlf2m_o4lfy0a",
+          "position": {
+            "x": 1170,
+            "y": 630
+          }
+        },
+        {
+          "id": "node_1778930723592_k4byg8aiq9_xp3ez25",
+          "position": {
+            "x": 1170,
+            "y": 530
+          }
+        },
+        {
+          "id": "node_1778930723592_o0hao70qmeh_secdqdl",
+          "position": {
+            "x": 1110,
+            "y": 430
+          }
+        },
+        {
+          "id": "node_1778930723592_qe2kir45ldj_nsjidk0",
+          "position": {
+            "x": 1050,
+            "y": 330
+          }
+        },
+        {
+          "id": "node_1778930723593_7i6azv87q88_v55jetu",
+          "position": {
+            "x": 990,
+            "y": 230
+          }
+        },
+        {
+          "id": "node_1778930723593_86xskx0yp8l_9r6s4s2",
+          "position": {
+            "x": 1050,
+            "y": 830
+          }
+        },
+        {
+          "id": "node_1778930723593_8xqaq6s57i7_pih1486",
+          "position": {
+            "x": 1240,
+            "y": 130
+          }
+        },
+        {
+          "id": "node_1778930723593_rp29rho80r8_teha6qn",
+          "position": {
+            "x": 1110,
+            "y": 730
+          }
+        },
+        {
+          "id": "node_1778930723593_rpbh1xdyd8_qpzczea",
+          "position": {
+            "x": 750,
+            "y": 310
+          }
+        }
+      ],
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "zoom": 1
+      },
+      "timestamp": 1778930727902
+    }
+  },
+  "nodes": [
+    {
+      "id": "node_1778930723590_kt4jq1etdn8_1037a4a",
+      "configId": "node_standards_api",
+      "workspaceId": "workspace__ingestalt_1778930723495",
+      "position": {
+        "x": 250,
+        "y": 230
+      },
+      "lastModified": 1778930723590,
+      "payload": {
+        "title": "Database Seeding",
+        "content": "# Database Seeding\r\n\r\n## Purpose\r\nProvides mock data and utilities for seeding the IndexedDB database with sample nodes and edges for development and testing purposes.\r\n\r\n## Key Files\r\n- [`lib/drdpr-horizon/lib/seed.ts`](../lib/drdpr-horizon/lib/seed.ts) - Seeding implementation\r\n\r\n## Architecture\r\n\r\n### Core Function: `seedDatabase()`\r\n\r\n**Signature:**\r\n```typescript\r\nasync function seedDatabase(workspaceId?: string): Promise<void>\r\n```\r\n\r\n**Process:**\r\n1. Defines mock Markdown documents with frontmatter\r\n2. Parses each document using `parseMarkdownToNode()`\r\n3. Extracts nodes and edges from parsed results\r\n4. Bulk inserts into IndexedDB using `bulkAdd()`\r\n5. Logs completion status\r\n\r\n### Mock Data Structure\r\n\r\n**Example Mock Document:**\r\n```markdown\r\n---\r\nid: node_db_users\r\ntitle: Users Table\r\ntype: database\r\ntags: [core, auth, backend]\r\ncolumns:\r\n  - name: id (uuid, pk)\r\n  - name: email (string, unique)\r\n  - name: created_at (timestamp)\r\nrelations: []\r\n---\r\n# Developer Notes\r\nEnsure RLS policies block public read access to the email column.\r\n```\r\n\r\n### Seed Data Categories\r\n1. **Database Nodes** - Table schemas with columns\r\n2. **API Nodes** - Endpoint definitions with relations\r\n3. **UI Nodes** - Component documentation\r\n4. **Standards Nodes** - Implementation patterns\r\n\r\n### Workspace Targeting\r\n```typescript\r\nconst targetWorkspace = workspaceId || 'seed-workspace';\r\n```\r\n- Defaults to `'seed-workspace'` if not specified\r\n- Allows seeding into specific workspaces\r\n- Prevents pollution of production workspaces\r\n\r\n## Dependencies\r\n- [`lib/db.ts`](../lib/drdpr-horizon/lib/db.ts) - Database operations\r\n- [`lib/parser.ts`](../lib/drdpr-horizon/lib/parser.ts) - Markdown parsing\r\n\r\n## Relations\r\n- **Calls:** [`api_parser`](./api_parser.md) - Parses mock markdown\r\n- **Writes to:** [`db_horizon`](./db_horizon.md) - Populates database\r\n- **Used by:** Development and testing workflows\r\n\r\n## Key Concepts\r\n\r\n### Mock Data Design\r\nMock documents demonstrate:\r\n- Proper frontmatter structure\r\n- Relationship definitions\r\n- Domain-specific fields (columns, endpoints, etc.)\r\n- Content formatting standards\r\n\r\n### Bulk Operations\r\n```typescript\r\nawait db.nodes.bulkAdd(nodes);\r\nawait db.edges.bulkAdd(edges);\r\n```\r\n- More efficient than individual inserts\r\n- Atomic operation (all or nothing)\r\n- Faster for large datasets\r\n\r\n### Development Workflow\r\n1. Clear existing seed workspace: `db.nodes.where('workspaceId').equals('seed-workspace').delete()`\r\n2. Run seed function: `seedDatabase('seed-workspace')`\r\n3. Verify in canvas or inspector\r\n4. Iterate on mock data structure\r\n\r\n### Testing Use Cases\r\n- UI component development\r\n- Relationship visualization testing\r\n- Search and filter functionality\r\n- Export/import validation\r\n- Performance testing with realistic data\r\n\r\n### Extensibility\r\nAdd new mock documents to `MOCK_DOCS` array:\r\n```typescript\r\nconst MOCK_DOCS = [\r\n  `---\r\n  id: node_new_example\r\n  title: New Example\r\n  type: custom\r\n  ---\r\n  Content here...`,\r\n  // ... more mocks\r\n];",
+        "tags": [
+          "seed",
+          "mock-data",
+          "development",
+          "testing"
+        ],
+        "type": "api",
+        "id": "node_api_seed",
+        "configId": "node_standards_api",
+        "icon": "Network",
+        "color": "#22c55e",
+        "methods": [
+          "seedDatabase"
+        ],
+        "relations": [
+          {
+            "targetId": "node_api_parser",
+            "type": "calls",
+            "label": "Parses mock markdown"
+          },
+          {
+            "targetId": "node_db_horizon",
+            "type": "writes",
+            "label": "Populates database"
+          }
+        ],
+        "filename": "api_seed.md"
+      }
+    },
+    {
+      "id": "node_1778930723590_liwho0weuk_kl5xrz6",
+      "configId": "node_standards_api",
+      "workspaceId": "workspace__ingestalt_1778930723495",
+      "position": {
+        "x": 310,
+        "y": 330
+      },
+      "lastModified": 1778930723590,
+      "payload": {
+        "title": "Ingest Client",
+        "content": "# Ingest Client\r\n\r\n## Purpose\r\nProvides client-side file ingestion using the File System Access API, allowing users to select directories and import Markdown files directly into the local IndexedDB database.\r\n\r\n## Key Files\r\n- [`lib/drdpr-horizon/lib/ingest-client.ts`](../lib/drdpr-horizon/lib/ingest-client.ts) - Client-side ingestion\r\n- [`lib/drdpr-horizon/lib/ingest-fsa.ts`](../lib/drdpr-horizon/lib/ingest-fsa.ts) - File System Access API wrapper\r\n\r\n## Architecture\r\n\r\n### Core Function: `ingestFromFSA()`\r\n\r\n**Signature:**\r\n```typescript\r\nasync function ingestFromFSA(\r\n  directoryHandle: FileSystemDirectoryHandle,\r\n  workspaceId: string\r\n): Promise<void>\r\n```\r\n\r\n**Process:**\r\n1. Recursively traverses directory using FSA\r\n2. Filters for `.md` files\r\n3. Reads file content as text\r\n4. Parses each file using `parseMarkdownToNode()`\r\n5. Bulk inserts nodes and edges into IndexedDB\r\n6. Updates UI state with directory handle for persistence\r\n\r\n### File System Access API Integration\r\n\r\n**Directory Selection:**\r\n```typescript\r\nconst handle = await window.showDirectoryPicker({\r\n  mode: 'read',\r\n  startIn: 'documents'\r\n});\r\n```\r\n\r\n**Recursive Traversal:**\r\n```typescript\r\nasync function traverseDirectory(\r\n  dirHandle: FileSystemDirectoryHandle,\r\n  path: string = ''\r\n) {\r\n  for await (const entry of dirHandle.values()) {\r\n    if (entry.kind === 'directory') {\r\n      await traverseDirectory(entry, `${path}/${entry.name}`);\r\n    } else if (entry.kind === 'file' && entry.name.endsWith('.md')) {\r\n      const file = await entry.getFile();\r\n      const content = await file.text();\r\n      // Process file\r\n    }\r\n  }\r\n}\r\n```\r\n\r\n### Batch Processing\r\n- Collects all nodes and edges before database write\r\n- Uses `bulkAdd()` for efficient IndexedDB insertion\r\n- Provides progress feedback during ingestion\r\n\r\n## Dependencies\r\n- File System Access API (browser native)\r\n- [`lib/parser.ts`](../lib/drdpr-horizon/lib/parser.ts) - Markdown parsing\r\n- [`lib/db.ts`](../lib/drdpr-horizon/lib/db.ts) - Database operations\r\n- [`lib/store/useUIStore.ts`](../lib/drdpr-horizon/lib/store/useUIStore.ts) - State management\r\n\r\n## Relations\r\n- **Calls:** [`api_parser`](./api_parser.md) - Parses markdown content\r\n- **Writes to:** [`db_horizon`](./db_horizon.md) - Stores nodes and edges\r\n- **Updates:** [`ui_state`](./ui_state.md) - Persists directory handle\r\n- **Alternative to:** [`api_actions`](./api_actions.md) - Server-side approach\r\n\r\n## Key Concepts\r\n\r\n### File System Access API\r\nModern browser API that allows web apps to read/write local files with user permission. Provides:\r\n- Directory picker dialog\r\n- Recursive directory traversal\r\n- File reading without upload\r\n- Permission persistence across sessions\r\n\r\n### Local-First Architecture\r\n- All data stored in browser's IndexedDB\r\n- No server required for core functionality\r\n- Works offline after initial load\r\n- User maintains full control of data\r\n\r\n### Permission Model\r\n```typescript\r\n// Request permission\r\nconst handle = await window.showDirectoryPicker();\r\n\r\n// Permission persists in handle\r\n// Can be stored in IndexedDB for future sessions\r\nawait handle.requestPermission({ mode: 'read' });\r\n```\r\n\r\n### Browser Compatibility\r\n- Chrome/Edge: Full support\r\n- Safari: Partial support (iOS 15.2+)\r\n- Firefox: Not supported (use server actions fallback)\r\n\r\n### Workspace Isolation\r\nEach ingestion creates nodes in a specific workspace, allowing multiple projects to coexist in the same database without conflicts.",
+        "tags": [
+          "ingestion",
+          "file-system-access",
+          "client-side",
+          "indexeddb"
+        ],
+        "type": "api",
+        "id": "node_api_ingest",
+        "configId": "node_standards_api",
+        "icon": "Network",
+        "color": "#22c55e",
+        "methods": [
+          "ingestFromFSA",
+          "traverseDirectory"
+        ],
+        "relations": [
+          {
+            "targetId": "node_api_parser",
+            "type": "calls",
+            "label": "Parses markdown files"
+          },
+          {
+            "targetId": "node_db_horizon",
+            "type": "writes",
+            "label": "Stores parsed nodes"
+          },
+          {
+            "targetId": "node_ui_state",
+            "type": "updates",
+            "label": "Updates directory handle"
+          }
+        ],
+        "filename": "api_ingest.md"
+      }
+    },
+    {
+      "id": "node_1778930723591_0papxb4wrtq_ksypynt",
+      "configId": "node_standards_other",
+      "workspaceId": "workspace__ingestalt_1778930723495",
+      "position": {
+        "x": 1000,
+        "y": 930
+      },
+      "lastModified": 1778930723591,
+      "payload": {
+        "title": "Untitled Node",
+        "content": "id: node_api_actions\r\nconfigId: node_standards_api\r\ntitle: Server Actions\r\ntype: api\r\nicon: Network\r\ncolor: '#22c55e'\r\ntags: [server-actions, nextjs, file-system, ingestion]\r\nmethods:\r\n  - readWorkspaceFiles\r\nrelations:\r\n  - targetId: node_api_parser\r\n    type: calls\r\n    label: Parses markdown files\r\n  - targetId: node_api_ingest\r\n    type: alternative-to\r\n    label: Server-side alternative to FSA\r\n\r\n# Server Actions\r\n\r\n## Purpose\r\nProvides server-side file system access for reading Markdown files when the File System Access API is unavailable (e.g., non-Chromium browsers or server-side rendering).\r\n\r\n## Key Files\r\n- [`app/actions/ingest.ts`](../app/actions/ingest.ts) - Server action implementation\r\n- [`app/actions/locate.ts`](../app/actions/locate.ts) - File location utilities\r\n\r\n## Architecture\r\n\r\n### Core Function: `readWorkspaceFiles()`\r\n\r\n**Signature:**\r\n```typescript\r\nasync function readWorkspaceFiles(\r\n  basePath: string\r\n): Promise<{ content: string; filepath: string }[]>\r\n```\r\n\r\n**Process:**\r\n1. Recursively traverses directory tree from `basePath`\r\n2. Filters for `.md` files only\r\n3. Skips hidden directories (`.git`, `.vscode`) and `node_modules`\r\n4. Reads file content using Node.js `fs/promises`\r\n5. Returns array of file objects with content and relative paths\r\n\r\n### Directory Traversal Strategy\r\n```typescript\r\nasync function readDir(dirPath: string, relativePath: string = '') {\r\n  const entries = await fs.readdir(dirPath, { withFileTypes: true });\r\n  \r\n  for (const entry of entries) {\r\n    if (entry.isDirectory() && !shouldSkip(entry.name)) {\r\n      await readDir(fullPath, relPath); // Recursive\r\n    } else if (entry.isFile() && entry.name.endsWith('.md')) {\r\n      // Process markdown file\r\n    }\r\n  }\r\n}\r\n```\r\n\r\n### Skip Logic\r\n- Directories starting with `.` (hidden)\r\n- `node_modules` directory\r\n- Preserves relative paths for workspace context\r\n\r\n## Dependencies\r\n- `fs/promises` - Node.js file system API\r\n- Next.js Server Actions (`'use server'` directive)\r\n\r\n## Relations\r\n- **Calls:** [`api_parser`](./api_parser.md) - Parses read markdown content\r\n- **Alternative to:** [`api_ingest`](./api_ingest.md) - Client-side FSA approach\r\n- **Used by:** [`app_routes`](./app_routes.md) - Ingestion page/route\r\n\r\n## Key Concepts\r\n\r\n### Server Actions\r\nNext.js Server Actions allow secure server-side operations to be called from client components without creating API routes.\r\n\r\n### Fallback Strategy\r\nWhen File System Access API is not available:\r\n1. User provides workspace path\r\n2. Server action reads files from server file system\r\n3. Returns content to client for processing\r\n4. Client parses and stores in IndexedDB\r\n\r\n### Security Considerations\r\n- Server actions run in Node.js environment with full file system access\r\n- Should validate and sanitize `basePath` parameter\r\n- Consider implementing path traversal protection\r\n- Limit to specific allowed directories in production",
+        "tags": [],
+        "type": "other",
+        "filename": "api_actions.md"
+      }
+    },
+    {
+      "id": "node_1778930723591_1s1jzp3yvcw_qjh4tpj",
+      "configId": "node_standards_frontend",
+      "workspaceId": "workspace__ingestalt_1778930723495",
+      "position": {
+        "x": 750,
+        "y": 50
+      },
+      "lastModified": 1778930723591,
+      "payload": {
+        "title": "Application Routes",
+        "content": "# Application Routes\r\n\r\n## Purpose\r\nDefines the Next.js App Router structure and page components for the Ingestalt application.\r\n\r\n## Key Files\r\n- [`app/layout.tsx`](../app/layout.tsx) - Root layout\r\n- [`app/page.tsx`](../app/page.tsx) - Home page\r\n- [`app/canvas/page.tsx`](../app/canvas/page.tsx) - Canvas workspace\r\n- [`app/globals.css`](../app/globals.css) - Global styles\r\n\r\n## Architecture\r\n\r\n### Route Structure\r\n\r\n```\r\napp/\r\n├── layout.tsx          # Root layout (providers, theme)\r\n├── page.tsx            # Home/landing page\r\n├── globals.css         # Global styles\r\n└── canvas/\r\n    └── page.tsx        # Main canvas workspace\r\n```\r\n\r\n### Root Layout\r\n\r\n**Component:**\r\n```typescript\r\nexport default function RootLayout({\r\n  children,\r\n}: {\r\n  children: React.ReactNode;\r\n}) {\r\n  return (\r\n    <html lang=\"en\" suppressHydrationWarning>\r\n      <body>\r\n        <ThemeProvider\r\n          attribute=\"class\"\r\n          defaultTheme=\"system\"\r\n          enableSystem\r\n          disableTransitionOnChange\r\n        >\r\n          {children}\r\n        </ThemeProvider>\r\n      </body>\r\n    </html>\r\n  );\r\n}\r\n```\r\n\r\n**Features:**\r\n- Theme provider setup\r\n- Global styles\r\n- Font configuration\r\n- Metadata configuration\r\n\r\n### Home Page (`/`)\r\n\r\n**Component:**\r\n```typescript\r\nexport default function HomePage() {\r\n  return (\r\n    <main className=\"home-page\">\r\n      <section className=\"hero\">\r\n        <h1>Ingestalt</h1>\r\n        <p>Local-first spatial documentation engine</p>\r\n        <Link href=\"/canvas\">\r\n          <button>Open Canvas</button>\r\n        </Link>\r\n      </section>\r\n      \r\n      <section className=\"features\">\r\n        <FeatureCard\r\n          title=\"Local-First\"\r\n          description=\"All data stored in your browser\"\r\n        />\r\n        <FeatureCard\r\n          title=\"Spatial\"\r\n          description=\"Visual architecture mapping\"\r\n        />\r\n        <FeatureCard\r\n          title=\"Markdown\"\r\n          description=\"Familiar documentation format\"\r\n        />\r\n      </section>\r\n    </main>\r\n  );\r\n}\r\n```\r\n\r\n**Purpose:**\r\n- Landing page\r\n- Feature showcase\r\n- Quick start guide\r\n- Navigation to canvas\r\n\r\n### Canvas Page (`/canvas`)\r\n\r\n**Component:**\r\n```typescript\r\nexport default function CanvasPage() {\r\n  return (\r\n    <WorkspaceLayout>\r\n      <AppShell />\r\n    </WorkspaceLayout>\r\n  );\r\n}\r\n```\r\n\r\n**Features:**\r\n- Main application workspace\r\n- Full-screen canvas\r\n- Inspector panel\r\n- Toolbar and sidebars\r\n\r\n### Metadata Configuration\r\n\r\n**Root Metadata:**\r\n```typescript\r\nexport const metadata: Metadata = {\r\n  title: 'Ingestalt - Spatial Documentation Engine',\r\n  description: 'Local-first spatial documentation for developers and AI agents',\r\n  icons: {\r\n    icon: '/favicon.ico',\r\n  },\r\n};\r\n```\r\n\r\n**Dynamic Metadata:**\r\n```typescript\r\nexport async function generateMetadata({ params }): Promise<Metadata> {\r\n  return {\r\n    title: `${params.workspace} - Ingestalt`,\r\n  };\r\n}\r\n```\r\n\r\n### Server Actions\r\n\r\n**Ingestion Action:**\r\n```typescript\r\n// app/actions/ingest.ts\r\n'use server';\r\n\r\nexport async function readWorkspaceFiles(basePath: string) {\r\n  // Server-side file reading\r\n}\r\n```\r\n\r\n**Location Action:**\r\n```typescript\r\n// app/actions/locate.ts\r\n'use server';\r\n\r\nexport async function locateFile(filename: string) {\r\n  // File location utilities\r\n}\r\n```\r\n\r\n## Dependencies\r\n- Next.js 14+ (App Router)\r\n- React 18+\r\n- [`components/theme-provider.tsx`](../components/theme-provider.tsx) - Theme management\r\n\r\n## Relations\r\n- **Contains:** [`ui_canvas`](./ui_canvas.md) - Canvas workspace\r\n- **Uses:** [`api_ingest`](./api_ingest.md) - File ingestion\r\n- **Uses:** [`ui_layout`](./ui_layout.md) - Layout components\r\n\r\n## Key Concepts\r\n\r\n### App Router\r\nNext.js App Router features:\r\n- File-based routing\r\n- Server components by default\r\n- Streaming and suspense\r\n- Nested layouts\r\n- Server actions\r\n\r\n### Client vs Server Components\r\n- **Server:** Layout, metadata, data fetching\r\n- **Client:** Interactive UI, state management, browser APIs\r\n\r\n### Route Groups\r\nOrganize routes without affecting URL:\r\n```\r\napp/\r\n├── (marketing)/\r\n│   ├── page.tsx        # /\r\n│   └── about/\r\n│       └── page.tsx    # /about\r\n└── (app)/\r\n    └── canvas/\r\n        └── page.tsx    # /canvas\r\n```\r\n\r\n### Loading States\r\n```typescript\r\n// app/canvas/loading.tsx\r\nexport default function Loading() {\r\n  return <Spinner />;\r\n}\r\n```\r\n\r\n### Error Boundaries\r\n```typescript\r\n// app/canvas/error.tsx\r\n'use client';\r\n\r\nexport default function Error({ error, reset }) {\r\n  return (\r\n    <div>\r\n      <h2>Something went wrong!</h2>\r\n      <button onClick={reset}>Try again</button>\r\n    </div>\r\n  );\r\n}\r\n```\r\n\r\n### Not Found Pages\r\n```typescript\r\n// app/canvas/not-found.tsx\r\nexport default function NotFound() {\r\n  return <h2>Workspace not found</h2>;\r\n}\r\n```\r\n\r\n### Future Routes\r\nPlanned routes:\r\n- `/workspace/[id]` - Specific workspace\r\n- `/settings` - Application settings\r\n- `/export` - Export workspace\r\n- `/import` - Import workspace\r\n- `/docs` - Documentation",
+        "tags": [
+          "nextjs",
+          "routing",
+          "pages",
+          "app-router"
+        ],
+        "type": "frontend",
+        "id": "node_app_routes",
+        "configId": "node_standards_frontend",
+        "icon": "Layout",
+        "color": "#a855f7",
+        "relations": [
+          {
+            "targetId": "node_ui_canvas",
+            "type": "contains",
+            "label": "Canvas page"
+          },
+          {
+            "targetId": "node_api_ingest",
+            "type": "uses",
+            "label": "Ingestion functionality"
+          }
+        ],
+        "filename": "app_routes.md"
+      }
+    },
+    {
+      "id": "node_1778930723591_cleuwir4m0r_qfynxoh",
+      "configId": "node_standards_frontend",
+      "workspaceId": "workspace__ingestalt_1778930723495",
+      "position": {
+        "x": 930,
+        "y": 130
+      },
+      "lastModified": 1778930723591,
+      "payload": {
+        "title": "Horizon Canvas",
+        "content": "# Horizon Canvas\r\n\r\n## Purpose\r\nMain spatial canvas component that renders the interactive node graph using React Flow, providing visualization, navigation, and interaction for the architectural documentation.\r\n\r\n## Key Files\r\n- [`lib/drdpr-horizon/components/canvas/HorizonCanvas.tsx`](../lib/drdpr-horizon/components/canvas/HorizonCanvas.tsx) - Main canvas component\r\n- [`lib/drdpr-horizon/components/canvas/Palette.tsx`](../lib/drdpr-horizon/components/canvas/Palette.tsx) - Node creation palette\r\n- [`lib/drdpr-horizon/components/canvas/BatchActionToolbar.tsx`](../lib/drdpr-horizon/components/canvas/BatchActionToolbar.tsx) - Multi-select actions\r\n- [`lib/drdpr-horizon/components/canvas/edges/FloatingEdge.tsx`](../lib/drdpr-horizon/components/canvas/edges/FloatingEdge.tsx) - Custom edge component\r\n- [`lib/drdpr-horizon/components/canvas/edges/smartPath.ts`](../lib/drdpr-horizon/components/canvas/edges/smartPath.ts) - Edge path algorithms\r\n\r\n## Architecture\r\n\r\n### Component Hierarchy\r\n```\r\nHorizonCanvas\r\n├── ReactFlow\r\n│   ├── Background\r\n│   ├── Controls\r\n│   ├── MiniMap\r\n│   ├── Nodes (GarnishedNode)\r\n│   └── Edges (FloatingEdge)\r\n├── Palette\r\n├── BatchActionToolbar\r\n└── KeyboardShortcutsHelp\r\n```\r\n\r\n### React Flow Integration\r\n\r\n**Node Types Mapping:**\r\n```typescript\r\nconst nodeTypes = {\r\n  database: GarnishedNode,\r\n  api: GarnishedNode,\r\n  frontend: GarnishedNode,\r\n  hook: GarnishedNode,\r\n  other: GarnishedNode,\r\n  standards: GarnishedNode,\r\n  horizonDoc: GarnishedNode,\r\n  'ai-task': GarnishedNode,\r\n};\r\n```\r\n\r\n**Edge Types:**\r\n```typescript\r\nconst edgeTypes = {\r\n  floating: FloatingEdge,\r\n};\r\n```\r\n\r\n### Data Flow\r\n\r\n**Loading from Database:**\r\n```typescript\r\nconst dbNodes = useLiveQuery(() => \r\n  db.nodes.where('workspaceId').equals(currentWorkspace).toArray()\r\n);\r\n\r\nconst dbEdges = useLiveQuery(() =>\r\n  db.edges.where('workspaceId').equals(currentWorkspace).toArray()\r\n);\r\n```\r\n\r\n**Transformation to React Flow:**\r\n```typescript\r\nconst nodes = dbNodes.map(node => ({\r\n  id: node.id,\r\n  type: node.payload.type,\r\n  position: node.position,\r\n  data: node.payload,\r\n}));\r\n\r\nconst edges = dbEdges.map(edge => ({\r\n  id: edge.id,\r\n  source: edge.sourceId,\r\n  target: edge.targetId,\r\n  type: 'floating',\r\n  data: edge.payload,\r\n}));\r\n```\r\n\r\n### Event Handlers\r\n\r\n**Node Selection:**\r\n```typescript\r\nonNodeClick={(event, node) => {\r\n  if (event.shiftKey) {\r\n    toggleNodeSelection(node.id);\r\n  } else {\r\n    setSelectedNodeId(node.id);\r\n  }\r\n}}\r\n```\r\n\r\n**Node Drag:**\r\n```typescript\r\nonNodeDragStop={(event, node) => {\r\n  // Update position in database\r\n  db.nodes.update(node.id, {\r\n    position: node.position,\r\n    lastModified: Date.now(),\r\n  });\r\n}}\r\n```\r\n\r\n**Viewport Changes:**\r\n```typescript\r\nonViewportChange={(viewport) => {\r\n  setViewport(viewport);\r\n}}\r\n```\r\n\r\n**Pane Click:**\r\n```typescript\r\nonPaneClick={() => {\r\n  clearSelection();\r\n  setIsInspectorOpen(false);\r\n}}\r\n```\r\n\r\n### Canvas Features\r\n\r\n**Background:**\r\n- Dot pattern grid\r\n- Configurable color based on theme\r\n- Helps with spatial orientation\r\n\r\n**Controls:**\r\n- Zoom in/out buttons\r\n- Fit view button\r\n- Lock/unlock interaction\r\n\r\n**MiniMap:**\r\n- Overview of entire canvas\r\n- Shows viewport position\r\n- Click to navigate\r\n\r\n**Selection Modes:**\r\n- Single click - Select one node\r\n- Shift + click - Multi-select\r\n- Box selection - Drag to select multiple\r\n- Pane click - Clear selection\r\n\r\n## Dependencies\r\n- `@xyflow/react` - React Flow library\r\n- `dexie-react-hooks` - Live database queries\r\n- [`lib/db.ts`](../lib/drdpr-horizon/lib/db.ts) - Database access\r\n- [`lib/store/useUIStore.ts`](../lib/drdpr-horizon/lib/store/useUIStore.ts) - UI state\r\n- [`lib/hooks/useKeyboardShortcuts.ts`](../lib/drdpr-horizon/lib/hooks/useKeyboardShortcuts.ts) - Keyboard shortcuts\r\n\r\n## Relations\r\n- **Reads from:** [`db_horizon`](./db_horizon.md) - Loads nodes and edges\r\n- **Reads from:** [`ui_state`](./ui_state.md) - Selection and viewport\r\n- **Contains:** [`ui_node_horizon`](./ui_node_horizon.md) - Node components\r\n- **Contains:** Palette - Node creation\r\n- **Contains:** BatchActionToolbar - Multi-select actions\r\n\r\n## Key Concepts\r\n\r\n### Spatial Documentation\r\nThe canvas provides a 2D spatial representation of architectural components, allowing developers to:\r\n- See relationships visually\r\n- Organize by domain or layer\r\n- Navigate large codebases spatially\r\n- Understand system structure at a glance\r\n\r\n### Live Queries\r\nUses Dexie's `useLiveQuery` for reactive updates:\r\n- Automatically re-renders when database changes\r\n- No manual subscription management\r\n- Efficient change detection\r\n\r\n### Viewport Persistence\r\nCanvas position and zoom are persisted in UI store:\r\n- Restores view on page reload\r\n- Maintains context across sessions\r\n- Per-workspace viewport state\r\n\r\n### Performance Optimization\r\n- Only renders visible nodes (React Flow virtualization)\r\n- Debounced position updates\r\n- Memoized node/edge transformations\r\n- Efficient edge path calculations\r\n\r\n### Keyboard Shortcuts\r\n- `Cmd/Ctrl + A` - Select all nodes\r\n- `Cmd/Ctrl + C` - Copy selected nodes\r\n- `Cmd/Ctrl + V` - Paste nodes\r\n- `Delete/Backspace` - Delete selected nodes\r\n- `Cmd/Ctrl + Z` - Undo (if implemented)\r\n- `Cmd/Ctrl + F` - Focus search\r\n- `?` - Show keyboard shortcuts help\r\n\r\n### Edge Rendering Modes\r\n- **Floating edges** - Dynamic connection points\r\n- **Smart paths** - Avoid node overlaps\r\n- **Organic curves** - Smooth bezier paths\r\n- **Circuit paths** - Right-angle connections",
+        "tags": [
+          "canvas",
+          "react-flow",
+          "visualization",
+          "spatial"
+        ],
+        "type": "frontend",
+        "id": "node_ui_canvas",
+        "configId": "node_standards_frontend",
+        "icon": "Layout",
+        "color": "#a855f7",
+        "components": [
+          "HorizonCanvas",
+          "Palette",
+          "BatchActionToolbar",
+          "FloatingEdge"
+        ],
+        "relations": [
+          {
+            "targetId": "node_ui_state",
+            "type": "reads",
+            "label": "Selection and viewport state"
+          },
+          {
+            "targetId": "node_ui_node_horizon",
+            "type": "contains",
+            "label": "Renders node components"
+          },
+          {
+            "targetId": "node_db_horizon",
+            "type": "reads",
+            "label": "Loads nodes and edges"
+          }
+        ],
+        "filename": "ui_canvas.md"
+      }
+    },
+    {
+      "id": "node_1778930723591_idwafsn15bg_ezz564x",
+      "configId": "node_standards_standards",
+      "workspaceId": "workspace__ingestalt_1778930723495",
+      "position": {
+        "x": -250,
+        "y": 50
+      },
+      "lastModified": 1778930723591,
+      "payload": {
+        "title": "Core Standards",
+        "content": "# Core Standards\r\n\r\n## Purpose\r\nDefines the core standards, conventions, and patterns used throughout the Ingestalt system for consistency and maintainability.\r\n\r\n## Key Files\r\n- This documentation file serves as the central reference for standards\r\n- Standards are implemented across all components\r\n\r\n## Architecture\r\n\r\n### Node Type Standards\r\n\r\n**Supported Node Types:**\r\n```typescript\r\ntype NodeType = \r\n  | 'database'    // Database tables, schemas\r\n  | 'api'         // API endpoints, services\r\n  | 'frontend'    // UI components, pages\r\n  | 'hook'        // React hooks, utilities\r\n  | 'other'       // Generic documentation\r\n  | 'standards'   // Standard definitions\r\n  | 'horizonDoc'  // Horizon documentation\r\n  | 'ai-task';    // AI-generated tasks\r\n```\r\n\r\n**Type Characteristics:**\r\n\r\n| Type | Color | Icon | Use Case |\r\n|------|-------|------|----------|\r\n| database | Blue/Cyan | Database | Tables, schemas, queries |\r\n| api | Green | Server | Endpoints, services, APIs |\r\n| frontend | Purple/Pink | Component | UI components, pages |\r\n| hook | Orange | Code | React hooks, utilities |\r\n| other | Gray | Document | Generic documentation |\r\n| standards | Yellow | Star | Standards, patterns |\r\n| horizonDoc | Indigo | Book | System documentation |\r\n| ai-task | Violet | Sparkles | AI-generated tasks |\r\n\r\n### Frontmatter Schema\r\n\r\n**Required Fields:**\r\n```yaml\r\n---\r\nid: node_unique_id          # Unique identifier\r\ntitle: Node Title           # Human-readable name\r\ntype: database              # Node type (see above)\r\n---\r\n```\r\n\r\n**Optional Fields:**\r\n```yaml\r\n---\r\ntags: [tag1, tag2]         # Searchable tags\r\nposition:                   # Canvas position\r\n  x: 100\r\n  y: 200\r\nrelations:                  # Edges to other nodes\r\n  - targetId: node_other_id\r\n    type: reads\r\n    label: Optional description\r\nconfigId: node_standards_database  # Config reference\r\n---\r\n```\r\n\r\n### Relationship Types\r\n\r\n**Standard Relationship Types:**\r\n```typescript\r\ntype RelationType =\r\n  | 'reads'           // Reads data from\r\n  | 'writes'          // Writes data to\r\n  | 'calls'           // Invokes/calls\r\n  | 'implements'      // Implements interface/standard\r\n  | 'extends'         // Extends/inherits from\r\n  | 'uses'            // Uses/depends on\r\n  | 'contains'        // Contains/includes\r\n  | 'references'      // References/links to\r\n  | 'alternative-to'  // Alternative implementation\r\n  | 'used-by';        // Used by (inverse)\r\n```\r\n\r\n**Relationship Semantics:**\r\n- **reads:** Data flow (source reads from target)\r\n- **writes:** Data flow (source writes to target)\r\n- **calls:** Control flow (source invokes target)\r\n- **implements:** Conformance (source implements target standard)\r\n- **extends:** Inheritance (source extends target)\r\n- **uses:** Dependency (source depends on target)\r\n- **contains:** Composition (source contains target)\r\n\r\n### Naming Conventions\r\n\r\n**Node IDs:**\r\n```\r\nFormat: node_{type}_{name}\r\nExamples:\r\n  - node_db_users\r\n  - node_api_getUser\r\n  - node_ui_canvas\r\n  - node_standards_core\r\n```\r\n\r\n**Edge IDs:**\r\n```\r\nFormat: edge_{sourceId}_{targetId}\r\nExample: edge_node_api_getUser_node_db_users\r\n```\r\n\r\n**Workspace IDs:**\r\n```\r\nFormat: workspace_{name}\r\nExample: workspace_ingestalt\r\n```\r\n\r\n### File Organization\r\n\r\n**Project Structure:**\r\n```\r\nproject/\r\n├── _ingestalt/              # Architecture docs\r\n│   ├── api_*.md            # API documentation\r\n│   ├── ui_*.md             # UI documentation\r\n│   ├── db_*.md             # Database documentation\r\n│   └── standards_*.md      # Standards documentation\r\n├── docs/                    # User documentation\r\n├── src/                     # Source code\r\n└── README.md               # Project overview\r\n```\r\n\r\n**Documentation Naming:**\r\n```\r\nFormat: {category}_{name}.md\r\nExamples:\r\n  - api_parser.md\r\n  - ui_canvas.md\r\n  - db_horizon.md\r\n  - standards_core.md\r\n```\r\n\r\n### Code Standards\r\n\r\n**TypeScript:**\r\n- Strict mode enabled\r\n- Explicit return types for functions\r\n- Interface over type for objects\r\n- Descriptive variable names\r\n\r\n**React:**\r\n- Functional components\r\n- Hooks for state management\r\n- Props interfaces defined\r\n- Memoization for performance\r\n\r\n**Styling:**\r\n- Tailwind CSS utility classes\r\n- Component-scoped styles\r\n- Consistent spacing scale\r\n- Theme variables for colors\r\n\r\n### Database Standards\r\n\r\n**Node Structure:**\r\n```typescript\r\ninterface HorizonNode {\r\n  id: string;              // Required: Unique ID\r\n  configId: string;        // Required: Type reference\r\n  workspaceId: string;     // Required: Workspace\r\n  position: Position;      // Required: Canvas position\r\n  lastModified: number;    // Required: Timestamp\r\n  payload: {\r\n    title: string;         // Required: Display name\r\n    content: string;       // Required: Markdown content\r\n    tags: string[];        // Required: Empty array if none\r\n    type: string;          // Required: Node type\r\n    [key: string]: any;    // Optional: Domain fields\r\n  };\r\n}\r\n```\r\n\r\n**Edge Structure:**\r\n```typescript\r\ninterface HorizonEdge {\r\n  id: string;              // Required: Unique ID\r\n  workspaceId: string;     // Required: Workspace\r\n  sourceId: string;        // Required: Source node\r\n  targetId: string;        // Required: Target node\r\n  lastModified: number;    // Required: Timestamp\r\n  payload: {\r\n    type: string;          // Required: Relationship type\r\n    label?: string;        // Optional: Display label\r\n    [key: string]: any;    // Optional: Domain fields\r\n  };\r\n}\r\n```\r\n\r\n### UI Standards\r\n\r\n**Component Structure:**\r\n```typescript\r\n// 1. Imports\r\nimport { useState } from 'react';\r\nimport { ComponentProps } from './types';\r\n\r\n// 2. Types/Interfaces\r\ninterface Props {\r\n  // ...\r\n}\r\n\r\n// 3. Component\r\nexport function Component({ prop1, prop2 }: Props) {\r\n  // 4. Hooks\r\n  const [state, setState] = useState();\r\n  \r\n  // 5. Handlers\r\n  const handleClick = () => {\r\n    // ...\r\n  };\r\n  \r\n  // 6. Render\r\n  return (\r\n    <div>\r\n      {/* ... */}\r\n    </div>\r\n  );\r\n}\r\n```\r\n\r\n**Accessibility:**\r\n- Semantic HTML\r\n- ARIA labels where needed\r\n- Keyboard navigation\r\n- Focus management\r\n- Screen reader support\r\n\r\n### Error Handling\r\n\r\n**Standard Pattern:**\r\n```typescript\r\ntry {\r\n  await operation();\r\n} catch (error) {\r\n  console.error('[Context] Error message:', error);\r\n  // Show user-friendly error\r\n  showToast('Operation failed. Please try again.');\r\n}\r\n```\r\n\r\n**Error Logging:**\r\n- Prefix with context: `[Parser]`, `[Canvas]`, etc.\r\n- Include relevant details\r\n- Don't expose sensitive data\r\n- Provide actionable messages\r\n\r\n## Dependencies\r\n- None (this is the foundational standard)\r\n\r\n## Relations\r\n- **Implemented by:** All components\r\n- **Referenced by:** [`api_parser`](./api_parser.md) - Node structure\r\n- **Referenced by:** [`ui_node_horizon`](./ui_node_horizon.md) - Node types\r\n\r\n## Key Concepts\r\n\r\n### Consistency\r\nStandards ensure consistency across:\r\n- Code structure\r\n- Naming conventions\r\n- Data models\r\n- UI patterns\r\n- Error handling\r\n\r\n### Extensibility\r\nStandards designed for extension:\r\n- New node types can be added\r\n- New relationship types supported\r\n- Custom fields in payload\r\n- Plugin architecture (future)\r\n\r\n### Documentation-First\r\nArchitecture documented before implementation:\r\n- Clear specifications\r\n- Shared understanding\r\n- Easier onboarding\r\n- Better maintenance\r\n\r\n### Type Safety\r\nTypeScript for type safety:\r\n- Compile-time checks\r\n- IDE autocomplete\r\n- Refactoring support\r\n- Self-documenting code\r\n\r\n### Local-First Principles\r\n- Data stored locally\r\n- Offline functionality\r\n- User owns data\r\n- No server dependency\r\n- Privacy by default",
+        "tags": [
+          "standards",
+          "conventions",
+          "architecture",
+          "patterns"
+        ],
+        "type": "standards",
+        "id": "node_standards_core",
+        "configId": "node_standards_standards",
+        "definitions": [
+          {
+            "id": "node_standards_database",
+            "type": "database",
+            "icon": "Database",
+            "color": "#3b82f6",
+            "fields": [
+              {
+                "name": "filepath",
+                "type": "file_path"
+              },
+              {
+                "name": "tables",
+                "type": "tables_list"
+              }
+            ]
+          },
+          {
+            "id": "node_standards_api",
+            "type": "api",
+            "icon": "Network",
+            "color": "#22c55e",
+            "fields": [
+              {
+                "name": "methods",
+                "type": "interface_list"
+              },
+              {
+                "name": "endpoints",
+                "type": "endpoint_list"
+              }
+            ]
+          },
+          {
+            "id": "node_standards_frontend",
+            "type": "frontend",
+            "icon": "Layout",
+            "color": "#a855f7",
+            "fields": [
+              {
+                "name": "filepath",
+                "type": "file_path"
+              },
+              {
+                "name": "components",
+                "type": "component_list"
+              }
+            ]
+          },
+          {
+            "id": "node_standards_hook",
+            "type": "hook",
+            "icon": "Zap",
+            "color": "#f59e0b",
+            "fields": [
+              {
+                "name": "filepath",
+                "type": "file_path"
+              },
+              {
+                "name": "methods",
+                "type": "interface_list"
+              }
+            ]
+          },
+          {
+            "id": "node_standards_state",
+            "type": "state",
+            "icon": "Activity",
+            "color": "#ec4899",
+            "fields": [
+              {
+                "name": "store_key",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "id": "node_standards_standards",
+            "type": "standards",
+            "icon": "Star",
+            "color": "#fbbf24",
+            "fields": [
+              {
+                "name": "principles",
+                "type": "list"
+              }
+            ]
+          },
+          {
+            "id": "node_standards_other",
+            "type": "other",
+            "icon": "FileText",
+            "color": "#94a3b8"
+          },
+          {
+            "id": "node_standards_horizon_doc",
+            "type": "horizonDoc",
+            "icon": "Book",
+            "color": "#6366f1"
+          },
+          {
+            "id": "node_standards_ai_task",
+            "type": "ai-task",
+            "icon": "Sparkles",
+            "color": "#8b5cf6"
+          }
+        ],
+        "relations": [
+          {
+            "targetId": "node_api_parser",
+            "type": "implemented-by",
+            "label": "Node structure standards"
+          },
+          {
+            "targetId": "node_ui_node_horizon",
+            "type": "implemented-by",
+            "label": "Node type standards"
+          }
+        ],
+        "filename": "standards_core.md"
+      }
+    },
+    {
+      "id": "node_1778930723591_jix5advi2_g5jlr90",
+      "configId": "node_standards_database",
+      "workspaceId": "workspace__ingestalt_1778930723495",
+      "position": {
+        "x": 120,
+        "y": 130
+      },
+      "lastModified": 1778930723591,
+      "payload": {
+        "title": "Horizon Database",
+        "content": "# Horizon Database\r\n\r\n## Purpose\r\nLocal-first IndexedDB database using Dexie.js for storing nodes, edges, and workspace data with reactive queries and offline support.\r\n\r\n## Key Files\r\n- [`lib/drdpr-horizon/lib/db.ts`](../lib/drdpr-horizon/lib/db.ts) - Database schema and operations\r\n\r\n## Architecture\r\n\r\n### Database Schema\r\n\r\n**Tables:**\r\n```typescript\r\nclass HorizonDB extends Dexie {\r\n  nodes!: Table<HorizonNode>;\r\n  edges!: Table<HorizonEdge>;\r\n  workspaces!: Table<Workspace>;\r\n  \r\n  constructor() {\r\n    super('HorizonDB');\r\n    \r\n    this.version(1).stores({\r\n      nodes: 'id, workspaceId, configId, lastModified, [workspaceId+configId]',\r\n      edges: 'id, workspaceId, sourceId, targetId, [workspaceId+sourceId], [workspaceId+targetId]',\r\n      workspaces: 'id, name, lastModified',\r\n    });\r\n  }\r\n}\r\n```\r\n\r\n### Data Models\r\n\r\n**HorizonNode:**\r\n```typescript\r\ninterface HorizonNode {\r\n  id: string;                    // Unique identifier\r\n  configId: string;              // References node type standard\r\n  workspaceId: string;           // Workspace isolation\r\n  position: { x: number; y: number }; // Canvas position\r\n  lastModified: number;          // Timestamp\r\n  payload: {\r\n    title: string;\r\n    content: string;\r\n    tags: string[];\r\n    type: string;\r\n    [key: string]: any;          // Domain-specific fields\r\n  };\r\n}\r\n```\r\n\r\n**HorizonEdge:**\r\n```typescript\r\ninterface HorizonEdge {\r\n  id: string;                    // Unique identifier\r\n  workspaceId: string;           // Workspace isolation\r\n  sourceId: string;              // Source node ID\r\n  targetId: string;              // Target node ID\r\n  lastModified: number;          // Timestamp\r\n  payload: {\r\n    type: string;                // Relationship type\r\n    label?: string;              // Optional label\r\n    [key: string]: any;          // Domain-specific fields\r\n  };\r\n}\r\n```\r\n\r\n**Workspace:**\r\n```typescript\r\ninterface Workspace {\r\n  id: string;\r\n  name: string;\r\n  description?: string;\r\n  lastModified: number;\r\n  settings?: {\r\n    defaultView?: string;\r\n    theme?: string;\r\n    [key: string]: any;\r\n  };\r\n}\r\n```\r\n\r\n### Indexes\r\n\r\n**Node Indexes:**\r\n- Primary: `id`\r\n- Workspace: `workspaceId`\r\n- Config: `configId`\r\n- Composite: `[workspaceId+configId]`\r\n- Modified: `lastModified`\r\n\r\n**Edge Indexes:**\r\n- Primary: `id`\r\n- Workspace: `workspaceId`\r\n- Source: `sourceId`\r\n- Target: `targetId`\r\n- Composite: `[workspaceId+sourceId]`, `[workspaceId+targetId]`\r\n\r\n### Query Patterns\r\n\r\n**Get All Nodes in Workspace:**\r\n```typescript\r\nconst nodes = await db.nodes\r\n  .where('workspaceId')\r\n  .equals(workspaceId)\r\n  .toArray();\r\n```\r\n\r\n**Get Node by ID:**\r\n```typescript\r\nconst node = await db.nodes.get(nodeId);\r\n```\r\n\r\n**Get Edges for Node:**\r\n```typescript\r\nconst outgoingEdges = await db.edges\r\n  .where('sourceId')\r\n  .equals(nodeId)\r\n  .toArray();\r\n\r\nconst incomingEdges = await db.edges\r\n  .where('targetId')\r\n  .equals(nodeId)\r\n  .toArray();\r\n```\r\n\r\n**Search Nodes:**\r\n```typescript\r\nconst results = await db.nodes\r\n  .where('workspaceId')\r\n  .equals(workspaceId)\r\n  .filter(node => \r\n    node.payload.title.toLowerCase().includes(query.toLowerCase()) ||\r\n    node.payload.content.toLowerCase().includes(query.toLowerCase())\r\n  )\r\n  .toArray();\r\n```\r\n\r\n**Live Queries (React):**\r\n```typescript\r\nconst nodes = useLiveQuery(\r\n  () => db.nodes.where('workspaceId').equals(workspaceId).toArray(),\r\n  [workspaceId]\r\n);\r\n```\r\n\r\n### CRUD Operations\r\n\r\n**Create:**\r\n```typescript\r\nawait db.nodes.add({\r\n  id: generateId(),\r\n  workspaceId,\r\n  configId,\r\n  position: { x: 0, y: 0 },\r\n  lastModified: Date.now(),\r\n  payload: { title, content, tags, type },\r\n});\r\n```\r\n\r\n**Read:**\r\n```typescript\r\nconst node = await db.nodes.get(nodeId);\r\n```\r\n\r\n**Update:**\r\n```typescript\r\nawait db.nodes.update(nodeId, {\r\n  payload: { ...node.payload, title: newTitle },\r\n  lastModified: Date.now(),\r\n});\r\n```\r\n\r\n**Delete:**\r\n```typescript\r\nawait db.nodes.delete(nodeId);\r\n```\r\n\r\n**Bulk Operations:**\r\n```typescript\r\nawait db.nodes.bulkAdd(nodes);\r\nawait db.nodes.bulkUpdate(updates);\r\nawait db.nodes.bulkDelete(ids);\r\n```\r\n\r\n## Dependencies\r\n- `dexie` - IndexedDB wrapper\r\n- `dexie-react-hooks` - React integration\r\n\r\n## Relations\r\n- **Written by:** [`api_parser`](./api_parser.md) - Stores parsed nodes\r\n- **Written by:** [`api_seed`](./api_seed.md) - Seed data\r\n- **Read by:** [`ui_canvas`](./ui_canvas.md) - Display nodes\r\n- **Read/Write by:** [`ui_inspector`](./ui_inspector.md) - Edit nodes\r\n\r\n## Key Concepts\r\n\r\n### Local-First Architecture\r\nAll data stored locally in browser's IndexedDB:\r\n- No server required for core functionality\r\n- Works offline\r\n- Fast queries\r\n- User owns their data\r\n\r\n### Workspace Isolation\r\nMultiple workspaces in single database:\r\n- Separate projects\r\n- No data mixing\r\n- Easy switching\r\n- Independent settings\r\n\r\n### Reactive Queries\r\nDexie's live queries automatically update components:\r\n- No manual subscriptions\r\n- Efficient change detection\r\n- Real-time UI updates\r\n\r\n### Agnostic Schema\r\nFlexible payload structure:\r\n- Domain-specific fields in payload\r\n- No rigid schema\r\n- Easy to extend\r\n- Type-safe with TypeScript\r\n\r\n### Performance\r\n- Indexed queries for fast lookups\r\n- Bulk operations for efficiency\r\n- Lazy loading\r\n- Query optimization\r\n\r\n### Data Migration\r\nVersion management for schema changes:\r\n```typescript\r\nthis.version(2).stores({\r\n  nodes: 'id, workspaceId, configId, lastModified, [workspaceId+configId]',\r\n  // ... updated schema\r\n}).upgrade(tx => {\r\n  // Migration logic\r\n});\r\n```\r\n\r\n### Export/Import\r\n- Export workspace to JSON\r\n- Import from JSON\r\n- Backup and restore\r\n- Share workspaces",
+        "tags": [
+          "indexeddb",
+          "dexie",
+          "storage",
+          "local-first"
+        ],
+        "type": "database",
+        "id": "node_db_horizon",
+        "configId": "node_standards_database",
+        "icon": "Database",
+        "color": "#3b82f6",
+        "tables": [
+          "nodes",
+          "edges",
+          "workspaces"
+        ],
+        "relations": [
+          {
+            "targetId": "node_api_parser",
+            "type": "written-by",
+            "label": "Receives parsed nodes"
+          },
+          {
+            "targetId": "node_ui_canvas",
+            "type": "read-by",
+            "label": "Loads nodes for display"
+          },
+          {
+            "targetId": "node_ui_inspector",
+            "type": "read-write-by",
+            "label": "Node editing"
+          }
+        ],
+        "filename": "db_horizon.md"
+      }
+    },
+    {
+      "id": "node_1778930723591_s0c3kkdm5w_j7ya3ta",
+      "configId": "node_standards_api",
+      "workspaceId": "workspace__ingestalt_1778930723495",
+      "position": {
+        "x": 310,
+        "y": 50
+      },
+      "lastModified": 1778930723591,
+      "payload": {
+        "title": "Markdown Parser",
+        "content": "# Markdown Parser\r\n\r\n## Purpose\r\nParses raw Markdown files with YAML frontmatter into structured `HorizonNode` and `HorizonEdge` objects for the Ingestalt system.\r\n\r\n## Key Files\r\n- [`lib/drdpr-horizon/lib/parser.ts`](../lib/drdpr-horizon/lib/parser.ts) - Main parser implementation\r\n\r\n## Architecture\r\n\r\n### Core Function: `parseMarkdownToNode()`\r\n\r\n**Signature:**\r\n```typescript\r\nparseMarkdownToNode(\r\n  rawMarkdown: string,\r\n  workspaceId: string = 'default',\r\n  forceNewId: boolean = false\r\n): ParsedResult\r\n```\r\n\r\n**Process:**\r\n1. Uses `gray-matter` to extract YAML frontmatter and content\r\n2. Generates unique node ID (or uses existing from frontmatter)\r\n3. Constructs `HorizonNode` with:\r\n   - `id` - Unique identifier with high entropy\r\n   - `configId` - References node type standards\r\n   - `workspaceId` - Workspace isolation\r\n   - `position` - Canvas coordinates\r\n   - `payload` - All domain-specific data\r\n4. Extracts `relations` array from frontmatter to create `HorizonEdge` objects\r\n\r\n### ID Generation Strategy\r\n```typescript\r\n`node_${Date.now()}_${Math.random().toString(36).substring(2, 15)}_${Math.random().toString(36).substring(2, 9)}`\r\n```\r\n- Timestamp for temporal ordering\r\n- Double random strings for collision resistance\r\n- Prefix for type identification\r\n\r\n### Edge Extraction\r\n- Reads `relations` array from frontmatter\r\n- Each relation becomes an `HorizonEdge` with:\r\n  - `sourceId` - Current node\r\n  - `targetId` - Referenced node\r\n  - `type` - Relationship type (reads, writes, implements, etc.)\r\n\r\n## Dependencies\r\n- `gray-matter` - YAML frontmatter parsing\r\n- [`lib/db.ts`](../lib/drdpr-horizon/lib/db.ts) - Type definitions\r\n\r\n## Relations\r\n- **Writes to:** [`db_horizon`](./db_horizon.md) - Stores parsed nodes and edges\r\n- **Used by:** [`api_ingest`](./api_ingest.md) - Ingestion pipeline\r\n- **Used by:** [`api_seed`](./api_seed.md) - Database seeding\r\n- **Implements:** [`standards_core`](./standards_core.md) - Node structure standards\r\n\r\n## Key Concepts\r\n\r\n### Agnostic Node Structure\r\nThe parser creates domain-agnostic nodes where all domain-specific fields are stored in the `payload` object, allowing flexibility for different node types (database, API, UI, etc.).\r\n\r\n### Workspace Isolation\r\nEvery node belongs to a workspace, enabling multi-project support within a single database.\r\n\r\n### Frontmatter Schema\r\n```yaml\r\n---\r\nid: node_unique_id          # Optional, auto-generated if missing\r\ntitle: Node Title           # Required\r\ntype: database|api|frontend # Node type\r\ntags: [tag1, tag2]         # Optional tags\r\nposition:                   # Canvas position\r\n  x: 100\r\n  y: 200\r\nrelations:                  # Edges to other nodes\r\n  - targetId: node_other_id\r\n    type: reads\r\n    label: Optional label\r\n---",
+        "tags": [
+          "parser",
+          "markdown",
+          "frontmatter",
+          "core"
+        ],
+        "type": "api",
+        "id": "node_api_parser",
+        "configId": "node_standards_api",
+        "icon": "Network",
+        "color": "#22c55e",
+        "methods": [
+          "parseMarkdownToNode"
+        ],
+        "relations": [
+          {
+            "targetId": "node_db_horizon",
+            "type": "writes",
+            "label": "Creates nodes and edges"
+          },
+          {
+            "targetId": "node_standards_core",
+            "type": "implements",
+            "label": "Follows node structure standards"
+          }
+        ],
+        "filename": "api_parser.md"
+      }
+    },
+    {
+      "id": "node_1778930723592_77bf9krlf2m_o4lfy0a",
+      "configId": "node_standards_frontend",
+      "workspaceId": "workspace__ingestalt_1778930723495",
+      "position": {
+        "x": 1170,
+        "y": 630
+      },
+      "lastModified": 1778930723592,
+      "payload": {
+        "title": "Editor Bubble Menus",
+        "content": "# Editor Bubble Menus\r\n\r\n## Purpose\r\nContext-sensitive floating toolbars that appear when text is selected or when editing specific elements like tables, providing quick access to formatting and editing options.\r\n\r\n## Key Files\r\n- [`lib/drdpr-horizon/components/editor/EditorBubbleMenu.tsx`](../lib/drdpr-horizon/components/editor/EditorBubbleMenu.tsx) - Text selection menu\r\n- [`lib/drdpr-horizon/components/editor/TableBubbleMenu.tsx`](../lib/drdpr-horizon/components/editor/TableBubbleMenu.tsx) - Table editing menu\r\n\r\n## Architecture\r\n\r\n### EditorBubbleMenu (Text Selection)\r\n\r\n**Component Structure:**\r\n```typescript\r\nexport function EditorBubbleMenu({ editor }: Props) {\r\n  if (!editor) return null;\r\n  \r\n  return (\r\n    <BubbleMenu\r\n      editor={editor}\r\n      tippyOptions={{\r\n        duration: 100,\r\n        placement: 'top',\r\n      }}\r\n      shouldShow={({ editor, state }) => {\r\n        const { selection } = state;\r\n        const { empty } = selection;\r\n        \r\n        // Don't show if selection is empty\r\n        if (empty) return false;\r\n        \r\n        // Don't show in code blocks\r\n        if (editor.isActive('codeBlock')) return false;\r\n        \r\n        return true;\r\n      }}\r\n    >\r\n      <div className=\"bubble-menu\">\r\n        <ToolbarButton\r\n          onClick={() => editor.chain().focus().toggleBold().run()}\r\n          active={editor.isActive('bold')}\r\n          icon=\"Bold\"\r\n          tooltip=\"Bold (Cmd+B)\"\r\n        />\r\n        <ToolbarButton\r\n          onClick={() => editor.chain().focus().toggleItalic().run()}\r\n          active={editor.isActive('italic')}\r\n          icon=\"Italic\"\r\n          tooltip=\"Italic (Cmd+I)\"\r\n        />\r\n        <ToolbarButton\r\n          onClick={() => editor.chain().focus().toggleStrike().run()}\r\n          active={editor.isActive('strike')}\r\n          icon=\"Strikethrough\"\r\n          tooltip=\"Strikethrough\"\r\n        />\r\n        <ToolbarButton\r\n          onClick={() => editor.chain().focus().toggleCode().run()}\r\n          active={editor.isActive('code')}\r\n          icon=\"Code\"\r\n          tooltip=\"Code (Cmd+E)\"\r\n        />\r\n        \r\n        <Separator />\r\n        \r\n        <HeadingDropdown editor={editor} />\r\n        \r\n        <Separator />\r\n        \r\n        <LinkButton editor={editor} />\r\n        \r\n        <Separator />\r\n        \r\n        <ToolbarButton\r\n          onClick={() => editor.chain().focus().unsetAllMarks().run()}\r\n          icon=\"RemoveFormatting\"\r\n          tooltip=\"Clear formatting\"\r\n        />\r\n      </div>\r\n    </BubbleMenu>\r\n  );\r\n}\r\n```\r\n\r\n**Toolbar Buttons:**\r\n```typescript\r\ninterface ToolbarButtonProps {\r\n  onClick: () => void;\r\n  active?: boolean;\r\n  icon: string;\r\n  tooltip: string;\r\n  disabled?: boolean;\r\n}\r\n\r\nfunction ToolbarButton({ onClick, active, icon, tooltip, disabled }: ToolbarButtonProps) {\r\n  return (\r\n    <button\r\n      onClick={onClick}\r\n      disabled={disabled}\r\n      className={cn('toolbar-button', { active, disabled })}\r\n      title={tooltip}\r\n    >\r\n      <DynamicIcon name={icon} size={16} />\r\n    </button>\r\n  );\r\n}\r\n```\r\n\r\n**Heading Dropdown:**\r\n```typescript\r\nfunction HeadingDropdown({ editor }: { editor: Editor }) {\r\n  const [open, setOpen] = useState(false);\r\n  \r\n  const currentLevel = [1, 2, 3, 4].find(level =>\r\n    editor.isActive('heading', { level })\r\n  );\r\n  \r\n  return (\r\n    <Popover open={open} onOpenChange={setOpen}>\r\n      <PopoverTrigger asChild>\r\n        <button className=\"toolbar-button\">\r\n          <DynamicIcon name={`Heading${currentLevel || ''}`} />\r\n        </button>\r\n      </PopoverTrigger>\r\n      <PopoverContent>\r\n        {[1, 2, 3, 4].map(level => (\r\n          <button\r\n            key={level}\r\n            onClick={() => {\r\n              editor.chain().focus().setHeading({ level }).run();\r\n              setOpen(false);\r\n            }}\r\n            className={cn('dropdown-item', {\r\n              active: editor.isActive('heading', { level }),\r\n            })}\r\n          >\r\n            <DynamicIcon name={`Heading${level}`} />\r\n            Heading {level}\r\n          </button>\r\n        ))}\r\n        <button\r\n          onClick={() => {\r\n            editor.chain().focus().setParagraph().run();\r\n            setOpen(false);\r\n          }}\r\n          className={cn('dropdown-item', {\r\n            active: editor.isActive('paragraph'),\r\n          })}\r\n        >\r\n          <DynamicIcon name=\"Paragraph\" />\r\n          Paragraph\r\n        </button>\r\n      </PopoverContent>\r\n    </Popover>\r\n  );\r\n}\r\n```\r\n\r\n**Link Button:**\r\n```typescript\r\nfunction LinkButton({ editor }: { editor: Editor }) {\r\n  const [url, setUrl] = useState('');\r\n  const [open, setOpen] = useState(false);\r\n  \r\n  const setLink = () => {\r\n    if (url) {\r\n      editor.chain().focus().setLink({ href: url }).run();\r\n    } else {\r\n      editor.chain().focus().unsetLink().run();\r\n    }\r\n    setOpen(false);\r\n    setUrl('');\r\n  };\r\n  \r\n  return (\r\n    <Popover open={open} onOpenChange={setOpen}>\r\n      <PopoverTrigger asChild>\r\n        <button\r\n          className={cn('toolbar-button', {\r\n            active: editor.isActive('link'),\r\n          })}\r\n        >\r\n          <DynamicIcon name=\"Link\" />\r\n        </button>\r\n      </PopoverTrigger>\r\n      <PopoverContent>\r\n        <div className=\"link-input\">\r\n          <input\r\n            type=\"url\"\r\n            placeholder=\"Enter URL\"\r\n            value={url}\r\n            onChange={(e) => setUrl(e.target.value)}\r\n            onKeyDown={(e) => {\r\n              if (e.key === 'Enter') setLink();\r\n            }}\r\n          />\r\n          <button onClick={setLink}>Set Link</button>\r\n          {editor.isActive('link') && (\r\n            <button onClick={() => editor.chain().focus().unsetLink().run()}>\r\n              Remove Link\r\n            </button>\r\n          )}\r\n        </div>\r\n      </PopoverContent>\r\n    </Popover>\r\n  );\r\n}\r\n```\r\n\r\n### TableBubbleMenu\r\n\r\n**Component Structure:**\r\n```typescript\r\nexport function TableBubbleMenu({ editor }: Props) {\r\n  if (!editor) return null;\r\n  \r\n  return (\r\n    <BubbleMenu\r\n      editor={editor}\r\n      tippyOptions={{\r\n        duration: 100,\r\n        placement: 'top',\r\n      }}\r\n      shouldShow={({ editor }) => editor.isActive('table')}\r\n    >\r\n      <div className=\"bubble-menu table-menu\">\r\n        <ToolbarButton\r\n          onClick={() => editor.chain().focus().addRowBefore().run()}\r\n          icon=\"ArrowUp\"\r\n          tooltip=\"Add row above\"\r\n        />\r\n        <ToolbarButton\r\n          onClick={() => editor.chain().focus().addRowAfter().run()}\r\n          icon=\"ArrowDown\"\r\n          tooltip=\"Add row below\"\r\n        />\r\n        <ToolbarButton\r\n          onClick={() => editor.chain().focus().deleteRow().run()}\r\n          icon=\"Trash\"\r\n          tooltip=\"Delete row\"\r\n        />\r\n        \r\n        <Separator />\r\n        \r\n        <ToolbarButton\r\n          onClick={() => editor.chain().focus().addColumnBefore().run()}\r\n          icon=\"ArrowLeft\"\r\n          tooltip=\"Add column left\"\r\n        />\r\n        <ToolbarButton\r\n          onClick={() => editor.chain().focus().addColumnAfter().run()}\r\n          icon=\"ArrowRight\"\r\n          tooltip=\"Add column right\"\r\n        />\r\n        <ToolbarButton\r\n          onClick={() => editor.chain().focus().deleteColumn().run()}\r\n          icon=\"Trash\"\r\n          tooltip=\"Delete column\"\r\n        />\r\n        \r\n        <Separator />\r\n        \r\n        <ToolbarButton\r\n          onClick={() => editor.chain().focus().mergeCells().run()}\r\n          icon=\"Merge\"\r\n          tooltip=\"Merge cells\"\r\n          disabled={!editor.can().mergeCells()}\r\n        />\r\n        <ToolbarButton\r\n          onClick={() => editor.chain().focus().splitCell().run()}\r\n          icon=\"Split\"\r\n          tooltip=\"Split cell\"\r\n          disabled={!editor.can().splitCell()}\r\n        />\r\n        \r\n        <Separator />\r\n        \r\n        <ToolbarButton\r\n          onClick={() => editor.chain().focus().toggleHeaderRow().run()}\r\n          icon=\"Header\"\r\n          tooltip=\"Toggle header row\"\r\n          active={editor.isActive('tableHeader')}\r\n        />\r\n        \r\n        <Separator />\r\n        \r\n        <ToolbarButton\r\n          onClick={() => editor.chain().focus().deleteTable().run()}\r\n          icon=\"Trash2\"\r\n          tooltip=\"Delete table\"\r\n        />\r\n      </div>\r\n    </BubbleMenu>\r\n  );\r\n}\r\n```\r\n\r\n### Positioning Logic\r\n\r\n**TipTap BubbleMenu:**\r\nUses Tippy.js for positioning:\r\n- Appears above/below selection\r\n- Adjusts to viewport boundaries\r\n- Follows selection during scrolling\r\n- Hides when selection is cleared\r\n\r\n**Custom Positioning:**\r\n```typescript\r\ntippyOptions={{\r\n  duration: 100,\r\n  placement: 'top',\r\n  offset: [0, 8],\r\n  popperOptions: {\r\n    modifiers: [\r\n      {\r\n        name: 'flip',\r\n        options: {\r\n          fallbackPlacements: ['bottom', 'top'],\r\n        },\r\n      },\r\n      {\r\n        name: 'preventOverflow',\r\n        options: {\r\n          boundary: 'viewport',\r\n        },\r\n      },\r\n    ],\r\n  },\r\n}}\r\n```\r\n\r\n## Dependencies\r\n- `@tiptap/react` - BubbleMenu component\r\n- `tippy.js` - Positioning engine\r\n- [`components/DynamicIcon.tsx`](../lib/drdpr-horizon/components/DynamicIcon.tsx) - Icons\r\n- [`components/ui/popover.tsx`](../lib/drdpr-horizon/components/ui/popover.tsx) - Dropdowns\r\n\r\n## Relations\r\n- **Used by:** [`ui_editor`](./ui_editor.md) - Context menus\r\n\r\n## Key Concepts\r\n\r\n### Context-Sensitive Display\r\nMenus only appear when relevant:\r\n- Text menu: When text is selected\r\n- Table menu: When cursor is in table\r\n- Link menu: When link is selected\r\n- Code menu: When in code block (future)\r\n\r\n### Active State Indicators\r\nButtons show active state:\r\n```typescript\r\nactive={editor.isActive('bold')}\r\n```\r\nHelps users understand current formatting.\r\n\r\n### Keyboard Shortcuts\r\nAll menu actions have keyboard shortcuts:\r\n- Displayed in tooltips\r\n- Work even when menu is hidden\r\n- Consistent with standard editors\r\n\r\n### Disabled States\r\nSome actions are conditionally disabled:\r\n```typescript\r\ndisabled={!editor.can().mergeCells()}\r\n```\r\nPrevents invalid operations.\r\n\r\n### Smooth Transitions\r\n- Fade in/out animations\r\n- Position transitions\r\n- Debounced updates\r\n\r\n### Accessibility\r\n- Keyboard navigation within menu\r\n- ARIA labels\r\n- Focus management\r\n- Screen reader announcements\r\n\r\n### Performance\r\n- Memoized components\r\n- Debounced position updates\r\n- Lazy rendering\r\n- Efficient re-renders only on state change",
+        "tags": [
+          "editor",
+          "menus",
+          "toolbar",
+          "tiptap"
+        ],
+        "type": "frontend",
+        "id": "node_ui_editor_menus",
+        "configId": "node_standards_frontend",
+        "icon": "Layout",
+        "color": "#a855f7",
+        "relations": [
+          {
+            "targetId": "node_ui_editor",
+            "type": "used-by",
+            "label": "Context menus in editor"
+          }
+        ],
+        "filename": "ui_editor_menus.md"
+      }
+    },
+    {
+      "id": "node_1778930723592_k4byg8aiq9_xp3ez25",
+      "configId": "node_standards_frontend",
+      "workspaceId": "workspace__ingestalt_1778930723495",
+      "position": {
+        "x": 1170,
+        "y": 530
+      },
+      "lastModified": 1778930723592,
+      "payload": {
+        "title": "Editor Slash Commands",
+        "content": "# Editor Slash Commands\r\n\r\n## Purpose\r\nProvides a command palette interface triggered by typing `/` in the editor, allowing quick insertion of blocks and formatting without using toolbar buttons.\r\n\r\n## Key Files\r\n- [`lib/drdpr-horizon/components/editor/SlashCommandExtension.ts`](../lib/drdpr-horizon/components/editor/SlashCommandExtension.ts) - TipTap extension\r\n- [`lib/drdpr-horizon/components/editor/SlashCommands.tsx`](../lib/drdpr-horizon/components/editor/SlashCommands.tsx) - Command palette UI\r\n- [`lib/drdpr-horizon/components/editor/slashCommandSuggestion.tsx`](../lib/drdpr-horizon/components/editor/slashCommandSuggestion.tsx) - Suggestion logic\r\n\r\n## Architecture\r\n\r\n### Extension Structure\r\n\r\n**TipTap Extension:**\r\n```typescript\r\nexport const SlashCommandExtension = Extension.create({\r\n  name: 'slashCommand',\r\n  \r\n  addProseMirrorPlugins() {\r\n    return [\r\n      Suggestion({\r\n        editor: this.editor,\r\n        char: '/',\r\n        command: ({ editor, range, props }) => {\r\n          props.command({ editor, range });\r\n        },\r\n        items: ({ query }) => {\r\n          return commands.filter(item =>\r\n            item.title.toLowerCase().includes(query.toLowerCase())\r\n          );\r\n        },\r\n        render: () => {\r\n          let component: ReactRenderer;\r\n          let popup: Instance[];\r\n          \r\n          return {\r\n            onStart: (props) => {\r\n              component = new ReactRenderer(SlashCommands, {\r\n                props,\r\n                editor: props.editor,\r\n              });\r\n              \r\n              popup = tippy('body', {\r\n                getReferenceClientRect: props.clientRect,\r\n                appendTo: () => document.body,\r\n                content: component.element,\r\n                showOnCreate: true,\r\n                interactive: true,\r\n                trigger: 'manual',\r\n                placement: 'bottom-start',\r\n              });\r\n            },\r\n            onUpdate: (props) => {\r\n              component.updateProps(props);\r\n              popup[0].setProps({\r\n                getReferenceClientRect: props.clientRect,\r\n              });\r\n            },\r\n            onExit: () => {\r\n              popup[0].destroy();\r\n              component.destroy();\r\n            },\r\n          };\r\n        },\r\n      }),\r\n    ];\r\n  },\r\n});\r\n```\r\n\r\n### Command Definitions\r\n\r\n**Command Structure:**\r\n```typescript\r\ninterface Command {\r\n  title: string;\r\n  description?: string;\r\n  icon?: string;\r\n  command: (props: CommandProps) => void;\r\n  category?: string;\r\n}\r\n\r\ninterface CommandProps {\r\n  editor: Editor;\r\n  range: Range;\r\n}\r\n```\r\n\r\n**Available Commands:**\r\n```typescript\r\nconst commands: Command[] = [\r\n  // Text Blocks\r\n  {\r\n    title: 'Heading 1',\r\n    description: 'Large section heading',\r\n    icon: 'Heading1',\r\n    category: 'Text',\r\n    command: ({ editor, range }) => {\r\n      editor.chain().focus().deleteRange(range).setHeading({ level: 1 }).run();\r\n    },\r\n  },\r\n  {\r\n    title: 'Heading 2',\r\n    description: 'Medium section heading',\r\n    icon: 'Heading2',\r\n    category: 'Text',\r\n    command: ({ editor, range }) => {\r\n      editor.chain().focus().deleteRange(range).setHeading({ level: 2 }).run();\r\n    },\r\n  },\r\n  {\r\n    title: 'Paragraph',\r\n    description: 'Regular text',\r\n    icon: 'Paragraph',\r\n    category: 'Text',\r\n    command: ({ editor, range }) => {\r\n      editor.chain().focus().deleteRange(range).setParagraph().run();\r\n    },\r\n  },\r\n  \r\n  // Lists\r\n  {\r\n    title: 'Bullet List',\r\n    description: 'Unordered list',\r\n    icon: 'List',\r\n    category: 'Lists',\r\n    command: ({ editor, range }) => {\r\n      editor.chain().focus().deleteRange(range).toggleBulletList().run();\r\n    },\r\n  },\r\n  {\r\n    title: 'Numbered List',\r\n    description: 'Ordered list',\r\n    icon: 'ListOrdered',\r\n    category: 'Lists',\r\n    command: ({ editor, range }) => {\r\n      editor.chain().focus().deleteRange(range).toggleOrderedList().run();\r\n    },\r\n  },\r\n  {\r\n    title: 'Task List',\r\n    description: 'Checklist',\r\n    icon: 'CheckSquare',\r\n    category: 'Lists',\r\n    command: ({ editor, range }) => {\r\n      editor.chain().focus().deleteRange(range).toggleTaskList().run();\r\n    },\r\n  },\r\n  \r\n  // Code\r\n  {\r\n    title: 'Code Block',\r\n    description: 'Code with syntax highlighting',\r\n    icon: 'Code',\r\n    category: 'Code',\r\n    command: ({ editor, range }) => {\r\n      editor.chain().focus().deleteRange(range).setCodeBlock().run();\r\n    },\r\n  },\r\n  \r\n  // Advanced\r\n  {\r\n    title: 'Table',\r\n    description: 'Insert a table',\r\n    icon: 'Table',\r\n    category: 'Advanced',\r\n    command: ({ editor, range }) => {\r\n      editor.chain().focus().deleteRange(range)\r\n        .insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();\r\n    },\r\n  },\r\n  {\r\n    title: 'Blockquote',\r\n    description: 'Quote or callout',\r\n    icon: 'Quote',\r\n    category: 'Advanced',\r\n    command: ({ editor, range }) => {\r\n      editor.chain().focus().deleteRange(range).toggleBlockquote().run();\r\n    },\r\n  },\r\n  {\r\n    title: 'Horizontal Rule',\r\n    description: 'Divider line',\r\n    icon: 'Minus',\r\n    category: 'Advanced',\r\n    command: ({ editor, range }) => {\r\n      editor.chain().focus().deleteRange(range).setHorizontalRule().run();\r\n    },\r\n  },\r\n];\r\n```\r\n\r\n### UI Component\r\n\r\n**SlashCommands Component:**\r\n```typescript\r\nexport function SlashCommands({ items, command }: Props) {\r\n  const [selectedIndex, setSelectedIndex] = useState(0);\r\n  \r\n  const selectItem = (index: number) => {\r\n    const item = items[index];\r\n    if (item) {\r\n      command(item);\r\n    }\r\n  };\r\n  \r\n  useEffect(() => {\r\n    const handleKeyDown = (event: KeyboardEvent) => {\r\n      if (event.key === 'ArrowUp') {\r\n        setSelectedIndex((prev) => (prev + items.length - 1) % items.length);\r\n        return true;\r\n      }\r\n      if (event.key === 'ArrowDown') {\r\n        setSelectedIndex((prev) => (prev + 1) % items.length);\r\n        return true;\r\n      }\r\n      if (event.key === 'Enter') {\r\n        selectItem(selectedIndex);\r\n        return true;\r\n      }\r\n      return false;\r\n    };\r\n    \r\n    document.addEventListener('keydown', handleKeyDown);\r\n    return () => document.removeEventListener('keydown', handleKeyDown);\r\n  }, [selectedIndex, items]);\r\n  \r\n  return (\r\n    <div className=\"slash-commands\">\r\n      {items.map((item, index) => (\r\n        <button\r\n          key={index}\r\n          className={cn('command-item', {\r\n            'selected': index === selectedIndex,\r\n          })}\r\n          onClick={() => selectItem(index)}\r\n        >\r\n          <DynamicIcon name={item.icon} />\r\n          <div>\r\n            <div className=\"title\">{item.title}</div>\r\n            {item.description && (\r\n              <div className=\"description\">{item.description}</div>\r\n            )}\r\n          </div>\r\n        </button>\r\n      ))}\r\n    </div>\r\n  );\r\n}\r\n```\r\n\r\n### Filtering Logic\r\n\r\n**Query Matching:**\r\n```typescript\r\nfunction filterCommands(query: string): Command[] {\r\n  const lowerQuery = query.toLowerCase();\r\n  \r\n  return commands.filter(cmd => {\r\n    // Match title\r\n    if (cmd.title.toLowerCase().includes(lowerQuery)) {\r\n      return true;\r\n    }\r\n    \r\n    // Match description\r\n    if (cmd.description?.toLowerCase().includes(lowerQuery)) {\r\n      return true;\r\n    }\r\n    \r\n    // Match category\r\n    if (cmd.category?.toLowerCase().includes(lowerQuery)) {\r\n      return true;\r\n    }\r\n    \r\n    return false;\r\n  });\r\n}\r\n```\r\n\r\n**Fuzzy Matching (Optional):**\r\n```typescript\r\nimport Fuse from 'fuse.js';\r\n\r\nconst fuse = new Fuse(commands, {\r\n  keys: ['title', 'description', 'category'],\r\n  threshold: 0.3,\r\n});\r\n\r\nfunction fuzzyFilterCommands(query: string): Command[] {\r\n  if (!query) return commands;\r\n  return fuse.search(query).map(result => result.item);\r\n}\r\n```\r\n\r\n## Dependencies\r\n- `@tiptap/suggestion` - Suggestion plugin\r\n- `tippy.js` - Tooltip positioning\r\n- `@tiptap/react` - React renderer\r\n\r\n## Relations\r\n- **Used by:** [`ui_editor`](./ui_editor.md) - Command palette\r\n- **Extends:** TipTap editor functionality\r\n\r\n## Key Concepts\r\n\r\n### Suggestion Plugin\r\nTipTap's suggestion plugin provides:\r\n- Character trigger detection (`/`)\r\n- Query extraction\r\n- Popup positioning\r\n- Keyboard navigation\r\n- Command execution\r\n\r\n### Command Categories\r\nCommands are organized into categories:\r\n- **Text** - Headings, paragraphs\r\n- **Lists** - Bullet, numbered, task lists\r\n- **Code** - Code blocks, inline code\r\n- **Advanced** - Tables, blockquotes, rules\r\n- **Media** - Images, videos (future)\r\n\r\n### Keyboard Navigation\r\n- `↑` / `↓` - Navigate commands\r\n- `Enter` - Execute selected command\r\n- `Esc` - Close palette\r\n- Continue typing to filter\r\n\r\n### Range Deletion\r\nBefore inserting new block, delete the trigger:\r\n```typescript\r\neditor.chain().focus().deleteRange(range).setHeading({ level: 1 }).run();\r\n```\r\nThis removes the `/` character and any query text.\r\n\r\n### Popup Positioning\r\nUses Tippy.js for smart positioning:\r\n- Appears below cursor\r\n- Adjusts if near viewport edge\r\n- Follows cursor during typing\r\n- Dismisses on click outside\r\n\r\n### Extensibility\r\nAdd new commands by extending the array:\r\n```typescript\r\ncommands.push({\r\n  title: 'Custom Block',\r\n  description: 'My custom block type',\r\n  icon: 'Star',\r\n  category: 'Custom',\r\n  command: ({ editor, range }) => {\r\n    // Custom logic\r\n  },\r\n});\r\n```\r\n\r\n### Future Enhancements\r\n- AI-powered command suggestions\r\n- Recent commands history\r\n- Custom user commands\r\n- Command aliases\r\n- Context-aware commands (based on node type)",
+        "tags": [
+          "editor",
+          "commands",
+          "slash-commands",
+          "tiptap"
+        ],
+        "type": "frontend",
+        "id": "node_ui_editor_commands",
+        "configId": "node_standards_frontend",
+        "icon": "Layout",
+        "color": "#a855f7",
+        "relations": [
+          {
+            "targetId": "node_ui_editor",
+            "type": "used-by",
+            "label": "Command palette in editor"
+          }
+        ],
+        "filename": "ui_editor_commands.md"
+      }
+    },
+    {
+      "id": "node_1778930723592_o0hao70qmeh_secdqdl",
+      "configId": "node_standards_frontend",
+      "workspaceId": "workspace__ingestalt_1778930723495",
+      "position": {
+        "x": 1110,
+        "y": 430
+      },
+      "lastModified": 1778930723592,
+      "payload": {
+        "title": "Content Editor",
+        "content": "# Content Editor\r\n\r\n## Purpose\r\nRich text editor component for editing node content with Markdown support, slash commands, and formatting tools.\r\n\r\n## Key Files\r\n- [`lib/drdpr-horizon/components/inspector/Editor.tsx`](../lib/drdpr-horizon/components/inspector/Editor.tsx) - Main editor component\r\n- [`lib/drdpr-horizon/components/editor/EditorBubbleMenu.tsx`](../lib/drdpr-horizon/components/editor/EditorBubbleMenu.tsx) - Selection toolbar\r\n- [`lib/drdpr-horizon/components/editor/TableBubbleMenu.tsx`](../lib/drdpr-horizon/components/editor/TableBubbleMenu.tsx) - Table editing toolbar\r\n- [`lib/drdpr-horizon/components/editor/SlashCommandExtension.ts`](../lib/drdpr-horizon/components/editor/SlashCommandExtension.ts) - Slash command extension\r\n- [`lib/drdpr-horizon/components/editor/SlashCommands.tsx`](../lib/drdpr-horizon/components/editor/SlashCommands.tsx) - Command palette UI\r\n- [`lib/drdpr-horizon/components/editor/slashCommandSuggestion.tsx`](../lib/drdpr-horizon/components/editor/slashCommandSuggestion.tsx) - Command suggestions\r\n\r\n## Architecture\r\n\r\n### TipTap Configuration\r\n\r\n**Extensions:**\r\n```typescript\r\nconst extensions = [\r\n  StarterKit.configure({\r\n    heading: { levels: [1, 2, 3, 4] },\r\n    codeBlock: { HTMLAttributes: { class: 'code-block' } },\r\n  }),\r\n  Placeholder.configure({\r\n    placeholder: 'Start typing or use / for commands...',\r\n  }),\r\n  Link.configure({\r\n    openOnClick: false,\r\n    HTMLAttributes: { class: 'link' },\r\n  }),\r\n  Table.configure({\r\n    resizable: true,\r\n  }),\r\n  TableRow,\r\n  TableCell,\r\n  TableHeader,\r\n  SlashCommandExtension,\r\n  // ... more extensions\r\n];\r\n```\r\n\r\n**Editor Instance:**\r\n```typescript\r\nconst editor = useEditor({\r\n  extensions,\r\n  content: initialContent,\r\n  onUpdate: ({ editor }) => {\r\n    const markdown = editor.storage.markdown.getMarkdown();\r\n    onContentChange(markdown);\r\n  },\r\n  editorProps: {\r\n    attributes: {\r\n      class: 'prose prose-sm max-w-none',\r\n    },\r\n  },\r\n});\r\n```\r\n\r\n### Content Format\r\n\r\n**Storage Format (Markdown):**\r\n```markdown\r\n# Heading 1\r\n\r\nThis is **bold** and *italic* text.\r\n\r\n- List item 1\r\n- List item 2\r\n\r\n```typescript\r\nconst example = 'code block';\r\n```\r\n\r\n[Link text](https://example.com)\r\n```\r\n\r\n**Editor Format (ProseMirror JSON):**\r\n```json\r\n{\r\n  \"type\": \"doc\",\r\n  \"content\": [\r\n    {\r\n      \"type\": \"heading\",\r\n      \"attrs\": { \"level\": 1 },\r\n      \"content\": [{ \"type\": \"text\", \"text\": \"Heading 1\" }]\r\n    }\r\n  ]\r\n}\r\n```\r\n\r\n### Formatting Features\r\n\r\n**Text Formatting:**\r\n- Bold (`Cmd/Ctrl + B`)\r\n- Italic (`Cmd/Ctrl + I`)\r\n- Strikethrough\r\n- Code (`Cmd/Ctrl + E`)\r\n- Underline\r\n\r\n**Block Formatting:**\r\n- Headings (H1-H4)\r\n- Paragraphs\r\n- Blockquotes\r\n- Code blocks with syntax highlighting\r\n- Horizontal rules\r\n\r\n**Lists:**\r\n- Bullet lists\r\n- Numbered lists\r\n- Task lists (checkboxes)\r\n- Nested lists\r\n\r\n**Tables:**\r\n- Insert table\r\n- Add/remove rows\r\n- Add/remove columns\r\n- Merge cells\r\n- Table headers\r\n\r\n**Links:**\r\n- Insert link (`Cmd/Ctrl + K`)\r\n- Edit link\r\n- Remove link\r\n- Open link in new tab\r\n\r\n### Slash Commands\r\n\r\n**Trigger:**\r\nType `/` to open command palette\r\n\r\n**Available Commands:**\r\n```typescript\r\nconst commands = [\r\n  {\r\n    title: 'Heading 1',\r\n    command: ({ editor, range }) => {\r\n      editor.chain().focus().deleteRange(range).setHeading({ level: 1 }).run();\r\n    },\r\n  },\r\n  {\r\n    title: 'Code Block',\r\n    command: ({ editor, range }) => {\r\n      editor.chain().focus().deleteRange(range).setCodeBlock().run();\r\n    },\r\n  },\r\n  {\r\n    title: 'Table',\r\n    command: ({ editor, range }) => {\r\n      editor.chain().focus().deleteRange(range)\r\n        .insertTable({ rows: 3, cols: 3 }).run();\r\n    },\r\n  },\r\n  // ... more commands\r\n];\r\n```\r\n\r\n**Command Categories:**\r\n- **Basic Blocks:** Paragraph, headings, blockquote\r\n- **Lists:** Bullet, numbered, task list\r\n- **Code:** Inline code, code block\r\n- **Media:** Image, video, embed\r\n- **Advanced:** Table, horizontal rule, callout\r\n\r\n### Bubble Menus\r\n\r\n**Selection Menu (EditorBubbleMenu):**\r\nAppears when text is selected:\r\n- Bold, italic, strikethrough\r\n- Code, link\r\n- Heading levels\r\n- Clear formatting\r\n\r\n**Table Menu (TableBubbleMenu):**\r\nAppears when cursor is in table:\r\n- Add row above/below\r\n- Add column left/right\r\n- Delete row/column\r\n- Merge cells\r\n- Toggle header row\r\n\r\n### Auto-save\r\n\r\n**Debounced Save:**\r\n```typescript\r\nconst debouncedSave = useMemo(\r\n  () => debounce((content: string) => {\r\n    onSave(content);\r\n  }, 500),\r\n  [onSave]\r\n);\r\n\r\nuseEffect(() => {\r\n  if (editor) {\r\n    editor.on('update', ({ editor }) => {\r\n      const markdown = editor.storage.markdown.getMarkdown();\r\n      debouncedSave(markdown);\r\n    });\r\n  }\r\n}, [editor, debouncedSave]);\r\n```\r\n\r\n**Save Indicator:**\r\n- Saving... (during debounce)\r\n- Saved (after successful save)\r\n- Error (if save fails)\r\n\r\n## Dependencies\r\n- `@tiptap/react` - Editor framework\r\n- `@tiptap/starter-kit` - Basic extensions\r\n- `@tiptap/extension-table` - Table support\r\n- `@tiptap/extension-link` - Link support\r\n- `@tiptap/extension-placeholder` - Placeholder text\r\n- `tiptap-markdown` - Markdown serialization\r\n\r\n## Relations\r\n- **Used by:** [`ui_inspector`](./ui_inspector.md) - Content editing\r\n- **Contains:** [`ui_editor_commands`](./ui_editor_commands.md) - Slash commands\r\n- **Contains:** [`ui_editor_menus`](./ui_editor_menus.md) - Bubble menus\r\n\r\n## Key Concepts\r\n\r\n### Markdown-First\r\n- Content stored as Markdown in database\r\n- Converted to ProseMirror JSON for editing\r\n- Converted back to Markdown on save\r\n- Preserves formatting and structure\r\n\r\n### Collaborative Editing (Future)\r\nTipTap supports collaborative editing via Y.js:\r\n- Real-time multi-user editing\r\n- Conflict-free replicated data types (CRDTs)\r\n- Cursor presence\r\n- Change tracking\r\n\r\n### Syntax Highlighting\r\nCode blocks support syntax highlighting for:\r\n- JavaScript/TypeScript\r\n- Python\r\n- SQL\r\n- JSON\r\n- Markdown\r\n- And more...\r\n\r\n### Keyboard Shortcuts\r\n- `Cmd/Ctrl + B` - Bold\r\n- `Cmd/Ctrl + I` - Italic\r\n- `Cmd/Ctrl + E` - Inline code\r\n- `Cmd/Ctrl + K` - Insert link\r\n- `Cmd/Ctrl + Shift + 7` - Ordered list\r\n- `Cmd/Ctrl + Shift + 8` - Bullet list\r\n- `Cmd/Ctrl + Shift + 9` - Task list\r\n- `Cmd/Ctrl + Alt + 1-4` - Headings\r\n- `Cmd/Ctrl + Enter` - Hard break\r\n- `Cmd/Ctrl + Z` - Undo\r\n- `Cmd/Ctrl + Shift + Z` - Redo\r\n\r\n### Accessibility\r\n- Keyboard navigation\r\n- Screen reader support\r\n- Focus management\r\n- ARIA labels\r\n- Semantic HTML output\r\n\r\n### Performance\r\n- Lazy loading of extensions\r\n- Debounced updates\r\n- Virtual scrolling for large documents\r\n- Efficient re-rendering",
+        "tags": [
+          "editor",
+          "tiptap",
+          "markdown",
+          "rich-text"
+        ],
+        "type": "frontend",
+        "id": "node_ui_editor",
+        "configId": "node_standards_frontend",
+        "icon": "Layout",
+        "color": "#a855f7",
+        "components": [
+          "Editor",
+          "EditorBubbleMenu",
+          "TableBubbleMenu",
+          "SlashCommands"
+        ],
+        "relations": [
+          {
+            "targetId": "node_ui_inspector",
+            "type": "used-by",
+            "label": "Embedded in inspector"
+          },
+          {
+            "targetId": "node_ui_editor_commands",
+            "type": "contains",
+            "label": "Slash commands"
+          },
+          {
+            "targetId": "node_ui_editor_menus",
+            "type": "contains",
+            "label": "Bubble menus"
+          }
+        ],
+        "filename": "ui_editor.md"
+      }
+    },
+    {
+      "id": "node_1778930723592_qe2kir45ldj_nsjidk0",
+      "configId": "node_standards_frontend",
+      "workspaceId": "workspace__ingestalt_1778930723495",
+      "position": {
+        "x": 1050,
+        "y": 330
+      },
+      "lastModified": 1778930723592,
+      "payload": {
+        "title": "Inspector Panel",
+        "content": "# Inspector Panel\r\n\r\n## Purpose\r\nSide panel that displays and allows editing of the selected node's properties, content, relationships, and metadata.\r\n\r\n## Key Files\r\n- [`lib/drdpr-horizon/components/inspector/Inspector.tsx`](../lib/drdpr-horizon/components/inspector/Inspector.tsx) - Main inspector component\r\n- [`lib/drdpr-horizon/components/inspector/Editor.tsx`](../lib/drdpr-horizon/components/inspector/Editor.tsx) - Content editor\r\n- [`lib/drdpr-horizon/components/inspector/RelationshipPanel.tsx`](../lib/drdpr-horizon/components/inspector/RelationshipPanel.tsx) - Relationship management\r\n- [`lib/drdpr-horizon/components/inspector/SchemaPanel.tsx`](../lib/drdpr-horizon/components/inspector/SchemaPanel.tsx) - Schema editor\r\n- [`lib/drdpr-horizon/components/inspector/GovernanceEditor.tsx`](../lib/drdpr-horizon/components/inspector/GovernanceEditor.tsx) - Governance rules\r\n- [`lib/drdpr-horizon/components/inspector/AITaskPromptBuilder.tsx`](../lib/drdpr-horizon/components/inspector/AITaskPromptBuilder.tsx) - AI task generation\r\n\r\n## Architecture\r\n\r\n### Component Structure\r\n\r\n```\r\nInspector\r\n├── Header\r\n│   ├── Node title (editable)\r\n│   ├── Node type badge\r\n│   └── Close button\r\n├── Tabs\r\n│   ├── Content Tab\r\n│   │   └── Editor (Markdown)\r\n│   ├── Relationships Tab\r\n│   │   └── RelationshipPanel\r\n│   ├── Schema Tab (for database nodes)\r\n│   │   └── SchemaPanel\r\n│   ├── Governance Tab\r\n│   │   └── GovernanceEditor\r\n│   └── AI Tasks Tab\r\n│       └── AITaskPromptBuilder\r\n└── Footer\r\n    ├── Last modified timestamp\r\n    └── Save status indicator\r\n```\r\n\r\n### Data Flow\r\n\r\n**Loading Node Data:**\r\n```typescript\r\nconst selectedNodeId = useUIStore(state => state.selectedNodeId);\r\n\r\nconst node = useLiveQuery(\r\n  () => db.nodes.get(selectedNodeId),\r\n  [selectedNodeId]\r\n);\r\n```\r\n\r\n**Updating Node:**\r\n```typescript\r\nasync function updateNode(updates: Partial<HorizonNode>) {\r\n  await db.nodes.update(selectedNodeId, {\r\n    ...updates,\r\n    lastModified: Date.now(),\r\n  });\r\n}\r\n```\r\n\r\n**Auto-save Strategy:**\r\n```typescript\r\nconst debouncedSave = useMemo(\r\n  () => debounce((content: string) => {\r\n    updateNode({ payload: { ...node.payload, content } });\r\n  }, 500),\r\n  [node]\r\n);\r\n```\r\n\r\n### Tab Components\r\n\r\n**Content Tab:**\r\n- Rich text editor (TipTap)\r\n- Markdown support\r\n- Slash commands\r\n- Code blocks with syntax highlighting\r\n- Tables, lists, formatting\r\n\r\n**Relationships Tab:**\r\n- List of incoming edges (dependencies)\r\n- List of outgoing edges (dependents)\r\n- Add new relationship button\r\n- Edit relationship type/label\r\n- Delete relationship\r\n- Visual relationship graph\r\n\r\n**Schema Tab (Database nodes):**\r\n- Column definitions\r\n- Data types\r\n- Constraints (PK, FK, unique, not null)\r\n- Indexes\r\n- Triggers\r\n\r\n**Governance Tab:**\r\n- Access control rules\r\n- Validation rules\r\n- Lifecycle policies\r\n- Compliance requirements\r\n\r\n**AI Tasks Tab:**\r\n- Generate implementation tasks\r\n- Create test scenarios\r\n- Generate documentation\r\n- Suggest refactoring\r\n\r\n### Inspector States\r\n\r\n**Empty State:**\r\n```typescript\r\nif (!selectedNodeId) {\r\n  return (\r\n    <div className=\"inspector-empty\">\r\n      <p>Select a node to view details</p>\r\n    </div>\r\n  );\r\n}\r\n```\r\n\r\n**Loading State:**\r\n```typescript\r\nif (!node) {\r\n  return (\r\n    <div className=\"inspector-loading\">\r\n      <Spinner />\r\n    </div>\r\n  );\r\n}\r\n```\r\n\r\n**Error State:**\r\n```typescript\r\nif (error) {\r\n  return (\r\n    <div className=\"inspector-error\">\r\n      <p>Failed to load node</p>\r\n      <button onClick={retry}>Retry</button>\r\n    </div>\r\n  );\r\n}\r\n```\r\n\r\n### Keyboard Shortcuts\r\n\r\n- `Cmd/Ctrl + S` - Save changes\r\n- `Cmd/Ctrl + E` - Focus editor\r\n- `Cmd/Ctrl + K` - Open command palette\r\n- `Esc` - Close inspector\r\n- `Tab` - Switch between tabs\r\n\r\n## Dependencies\r\n- `@tiptap/react` - Rich text editor\r\n- `dexie-react-hooks` - Live queries\r\n- [`lib/db.ts`](../lib/drdpr-horizon/lib/db.ts) - Database operations\r\n- [`lib/store/useUIStore.ts`](../lib/drdpr-horizon/lib/store/useUIStore.ts) - UI state\r\n- [`components/ui/resizable-sidebar.tsx`](../lib/drdpr-horizon/components/ui/resizable-sidebar.tsx) - Resizable panel\r\n\r\n## Relations\r\n- **Reads from:** [`ui_state`](./ui_state.md) - Selected node\r\n- **Reads/Writes:** [`db_horizon`](./db_horizon.md) - Node data\r\n- **Contains:** [`ui_editor`](./ui_editor.md) - Content editor\r\n- **Contains:** [`ui_schema_panel`](./ui_schema_panel.md) - Schema editor\r\n- **Contains:** RelationshipPanel - Relationship management\r\n\r\n## Key Concepts\r\n\r\n### Live Updates\r\nInspector uses Dexie's live queries to automatically reflect changes:\r\n- Updates when node is modified elsewhere\r\n- Shows real-time collaboration changes\r\n- No manual refresh needed\r\n\r\n### Optimistic Updates\r\n```typescript\r\n// Update UI immediately\r\nsetLocalContent(newContent);\r\n\r\n// Save to database (may fail)\r\ntry {\r\n  await updateNode({ payload: { content: newContent } });\r\n} catch (error) {\r\n  // Revert on failure\r\n  setLocalContent(node.payload.content);\r\n  showError('Failed to save');\r\n}\r\n```\r\n\r\n### Validation\r\nBefore saving, validate:\r\n- Required fields (title, type)\r\n- Relationship targets exist\r\n- Schema constraints are valid\r\n- No circular dependencies\r\n\r\n### Conflict Resolution\r\nIf node was modified elsewhere:\r\n1. Detect conflict (compare lastModified)\r\n2. Show diff view\r\n3. Allow user to choose:\r\n   - Keep local changes\r\n   - Accept remote changes\r\n   - Merge manually\r\n\r\n### Resizable Panel\r\nInspector width can be adjusted:\r\n- Drag handle on left edge\r\n- Minimum width: 300px\r\n- Maximum width: 800px\r\n- Width persisted in UI store\r\n\r\n### Type-Specific Tabs\r\nDifferent node types show different tabs:\r\n- **Database:** Content, Relationships, Schema, Governance\r\n- **API:** Content, Relationships, Governance, AI Tasks\r\n- **Frontend:** Content, Relationships, AI Tasks\r\n- **Other:** Content, Relationships\r\n\r\n### Relationship Visualization\r\nRelationshipPanel shows:\r\n- Incoming edges (who depends on this)\r\n- Outgoing edges (what this depends on)\r\n- Relationship types (reads, writes, implements, etc.)\r\n- Clickable to navigate to related nodes\r\n\r\n### Metadata Display\r\nFooter shows:\r\n- Created timestamp\r\n- Last modified timestamp\r\n- Modified by (if multi-user)\r\n- File path (if synced)\r\n- Sync status",
+        "tags": [
+          "inspector",
+          "editor",
+          "panel",
+          "details"
+        ],
+        "type": "frontend",
+        "id": "node_ui_inspector",
+        "configId": "node_standards_frontend",
+        "icon": "Layout",
+        "color": "#a855f7",
+        "components": [
+          "Inspector",
+          "RelationshipPanel",
+          "SchemaPanel",
+          "GovernanceEditor",
+          "AITaskPromptBuilder"
+        ],
+        "relations": [
+          {
+            "targetId": "node_ui_state",
+            "type": "reads",
+            "label": "Selected node state"
+          },
+          {
+            "targetId": "node_ui_editor",
+            "type": "contains",
+            "label": "Content editor"
+          },
+          {
+            "targetId": "node_ui_schema_panel",
+            "type": "contains",
+            "label": "Schema editor"
+          },
+          {
+            "targetId": "node_db_horizon",
+            "type": "reads-writes",
+            "label": "Node data"
+          }
+        ],
+        "filename": "ui_inspector.md"
+      }
+    },
+    {
+      "id": "node_1778930723593_7i6azv87q88_v55jetu",
+      "configId": "node_standards_frontend",
+      "workspaceId": "workspace__ingestalt_1778930723495",
+      "position": {
+        "x": 990,
+        "y": 230
+      },
+      "lastModified": 1778930723593,
+      "payload": {
+        "title": "Node Components",
+        "content": "# Node Components\r\n\r\n## Purpose\r\nProvides the visual representation of documentation nodes on the canvas, with type-specific styling, icons, and interactive features.\r\n\r\n## Key Files\r\n- [`lib/drdpr-horizon/components/canvas/nodes/GarnishedNode.tsx`](../lib/drdpr-horizon/components/canvas/nodes/GarnishedNode.tsx) - Unified node component\r\n- [`lib/drdpr-horizon/components/canvas/nodes/BaseNode.tsx`](../lib/drdpr-horizon/components/canvas/nodes/BaseNode.tsx) - Base node structure\r\n- [`lib/drdpr-horizon/components/canvas/nodes/ApiNode.tsx`](../lib/drdpr-horizon/components/canvas/nodes/ApiNode.tsx) - API-specific node\r\n- [`lib/drdpr-horizon/components/canvas/nodes/DatabaseNode.tsx`](../lib/drdpr-horizon/components/canvas/nodes/DatabaseNode.tsx) - Database-specific node\r\n- [`lib/drdpr-horizon/components/canvas/nodes/FrontendNode.tsx`](../lib/drdpr-horizon/components/canvas/nodes/FrontendNode.tsx) - Frontend-specific node\r\n- [`lib/drdpr-horizon/components/canvas/nodes/OtherNode.tsx`](../lib/drdpr-horizon/components/canvas/nodes/OtherNode.tsx) - Generic node\r\n\r\n## Architecture\r\n\r\n### Component Hierarchy\r\n\r\n**Unified Approach (GarnishedNode):**\r\n```\r\nGarnishedNode (type-agnostic wrapper)\r\n└── Type-specific rendering based on node.data.type\r\n    ├── Database styling\r\n    ├── API styling\r\n    ├── Frontend styling\r\n    └── Other styling\r\n```\r\n\r\n**Legacy Approach (Deprecated):**\r\n```\r\nBaseNode (shared logic)\r\n├── ApiNode\r\n├── DatabaseNode\r\n├── FrontendNode\r\n└── OtherNode\r\n```\r\n\r\n### GarnishedNode Structure\r\n\r\n**Props:**\r\n```typescript\r\ninterface NodeData {\r\n  id: string;\r\n  type: string;\r\n  title: string;\r\n  content: string;\r\n  tags: string[];\r\n  icon?: string;\r\n  // ... other domain-specific fields\r\n}\r\n\r\ninterface GarnishedNodeProps {\r\n  id: string;\r\n  data: NodeData;\r\n  selected: boolean;\r\n}\r\n```\r\n\r\n**Rendering Logic:**\r\n```typescript\r\nfunction GarnishedNode({ id, data, selected }: GarnishedNodeProps) {\r\n  const style = getStyleForType(data.type);\r\n  const icon = getIconForType(data.type);\r\n  \r\n  return (\r\n    <div className={cn('node', style, { selected })}>\r\n      <Handle type=\"target\" position={Position.Top} />\r\n      \r\n      <div className=\"node-header\">\r\n        <DynamicIcon name={icon} />\r\n        <span>{data.title}</span>\r\n      </div>\r\n      \r\n      <div className=\"node-body\">\r\n        {/* Type-specific content */}\r\n      </div>\r\n      \r\n      <Handle type=\"source\" position={Position.Bottom} />\r\n    </div>\r\n  );\r\n}\r\n```\r\n\r\n### Type-Specific Styling\r\n\r\n**Database Nodes:**\r\n- Color: Blue/Cyan\r\n- Icon: Database\r\n- Shows: Table name, columns, indexes\r\n- Border: Solid\r\n\r\n**API Nodes:**\r\n- Color: Green\r\n- Icon: Server/API\r\n- Shows: Endpoint, method, parameters\r\n- Border: Dashed\r\n\r\n**Frontend Nodes:**\r\n- Color: Purple/Pink\r\n- Icon: Component\r\n- Shows: Component name, props, state\r\n- Border: Solid\r\n\r\n**Other Nodes:**\r\n- Color: Gray\r\n- Icon: Document\r\n- Shows: Title, tags\r\n- Border: Dotted\r\n\r\n### Interactive Features\r\n\r\n**Selection State:**\r\n```typescript\r\nconst isSelected = useUIStore(state => \r\n  state.selectedNodeIds.has(id) || state.selectedNodeId === id\r\n);\r\n```\r\n\r\n**Hover State:**\r\n```typescript\r\nconst isHovered = useUIStore(state => state.hoveredNodeId === id);\r\n\r\n<div\r\n  onMouseEnter={() => setHoveredNodeId(id)}\r\n  onMouseLeave={() => setHoveredNodeId(null)}\r\n>\r\n```\r\n\r\n**Click Handling:**\r\n```typescript\r\nonClick={(e) => {\r\n  if (e.shiftKey) {\r\n    toggleNodeSelection(id);\r\n  } else {\r\n    setSelectedNodeId(id);\r\n    setIsInspectorOpen(true);\r\n  }\r\n}}\r\n```\r\n\r\n**Double-Click:**\r\n```typescript\r\nonDoubleClick={() => {\r\n  // Focus on node (zoom and center)\r\n  reactFlowInstance.fitView({\r\n    nodes: [{ id }],\r\n    duration: 300,\r\n  });\r\n}}\r\n```\r\n\r\n### Connection Handles\r\n\r\n**Target Handle (Top):**\r\n```typescript\r\n<Handle\r\n  type=\"target\"\r\n  position={Position.Top}\r\n  id={`${id}-target`}\r\n  isConnectable={true}\r\n/>\r\n```\r\n\r\n**Source Handle (Bottom):**\r\n```typescript\r\n<Handle\r\n  type=\"source\"\r\n  position={Position.Bottom}\r\n  id={`${id}-source`}\r\n  isConnectable={true}\r\n/>\r\n```\r\n\r\n**Smart Handles (Dynamic):**\r\n- Calculate optimal connection point based on edge direction\r\n- Multiple handles per side for complex connections\r\n- Auto-hide when not needed\r\n\r\n## Dependencies\r\n- `@xyflow/react` - React Flow node components\r\n- [`components/DynamicIcon.tsx`](../lib/drdpr-horizon/components/DynamicIcon.tsx) - Icon rendering\r\n- [`lib/store/useUIStore.ts`](../lib/drdpr-horizon/lib/store/useUIStore.ts) - Selection state\r\n- `tailwindcss` - Styling\r\n\r\n## Relations\r\n- **Used by:** [`ui_canvas`](./ui_canvas.md) - Rendered on canvas\r\n- **Implements:** [`standards_core`](./standards_core.md) - Node type standards\r\n- **Reads from:** [`db_horizon`](./db_horizon.md) - Node data\r\n\r\n## Key Concepts\r\n\r\n### Type-Agnostic Design\r\nGarnishedNode handles all node types in a single component:\r\n- Reduces code duplication\r\n- Easier to maintain consistent styling\r\n- Simpler to add new node types\r\n- Dynamic styling based on `data.type`\r\n\r\n### Visual Hierarchy\r\n```\r\n┌─────────────────────┐\r\n│ 🗄️  Users Table     │ ← Header (icon + title)\r\n├─────────────────────┤\r\n│ • id (uuid, pk)     │\r\n│ • email (string)    │ ← Body (type-specific content)\r\n│ • created_at        │\r\n├─────────────────────┤\r\n│ [auth] [core]       │ ← Footer (tags)\r\n└─────────────────────┘\r\n```\r\n\r\n### Selection Indicators\r\n- **Selected:** Bold border, elevated shadow\r\n- **Hovered:** Lighter border, subtle glow\r\n- **Multi-selected:** Badge with count\r\n- **Primary:** Different border color\r\n\r\n### Responsive Sizing\r\n- Minimum width: 200px\r\n- Maximum width: 400px\r\n- Height: Auto-fit content\r\n- Compact mode for zoomed-out view\r\n\r\n### Performance Optimization\r\n- Memoized rendering with `React.memo()`\r\n- Only re-render when data or selection changes\r\n- Lazy load node content when expanded\r\n- Virtual scrolling for large node lists\r\n\r\n### Accessibility\r\n- Keyboard navigation support\r\n- ARIA labels for screen readers\r\n- Focus indicators\r\n- Semantic HTML structure\r\n\r\n### Custom Node Types\r\nTo add a new node type:\r\n1. Add type to `standards_core.md`\r\n2. Define color scheme in theme\r\n3. Add icon mapping in `DynamicIcon`\r\n4. Update `getStyleForType()` in GarnishedNode\r\n5. Add type-specific rendering logic if needed",
+        "tags": [
+          "nodes",
+          "components",
+          "visualization",
+          "react-flow"
+        ],
+        "type": "frontend",
+        "id": "node_ui_node_horizon",
+        "configId": "node_standards_frontend",
+        "icon": "Layout",
+        "color": "#a855f7",
+        "components": [
+          "GarnishedNode",
+          "BaseNode",
+          "ApiNode",
+          "DatabaseNode",
+          "FrontendNode"
+        ],
+        "relations": [
+          {
+            "targetId": "node_ui_canvas",
+            "type": "used-by",
+            "label": "Rendered on canvas"
+          },
+          {
+            "targetId": "node_standards_core",
+            "type": "implements",
+            "label": "Node type standards"
+          },
+          {
+            "targetId": "node_db_horizon",
+            "type": "reads",
+            "label": "Node data"
+          }
+        ],
+        "filename": "ui_node_horizon.md"
+      }
+    },
+    {
+      "id": "node_1778930723593_86xskx0yp8l_9r6s4s2",
+      "configId": "node_standards_frontend",
+      "workspaceId": "workspace__ingestalt_1778930723495",
+      "position": {
+        "x": 1050,
+        "y": 830
+      },
+      "lastModified": 1778930723593,
+      "payload": {
+        "title": "Layout Components",
+        "content": "# Layout Components\r\n\r\n## Purpose\r\nProvides the application shell structure with toolbar, sidebars, and main content area, managing layout state and responsive behavior.\r\n\r\n## Key Files\r\n- [`lib/drdpr-horizon/components/layout/WorkspaceLayout.tsx`](../lib/drdpr-horizon/components/layout/WorkspaceLayout.tsx) - Main layout wrapper\r\n- [`lib/drdpr-horizon/components/layout/AppShell.tsx`](../lib/drdpr-horizon/components/layout/AppShell.tsx) - Application shell\r\n- [`lib/drdpr-horizon/components/layout/Toolbar.tsx`](../lib/drdpr-horizon/components/layout/Toolbar.tsx) - Top toolbar\r\n- [`lib/drdpr-horizon/components/layout/SpatialSidebar.tsx`](../lib/drdpr-horizon/components/layout/SpatialSidebar.tsx) - Left sidebar\r\n\r\n## Architecture\r\n\r\n### Layout Hierarchy\r\n\r\n```\r\nWorkspaceLayout\r\n└── AppShell\r\n    ├── Toolbar (top)\r\n    ├── SpatialSidebar (left, collapsible)\r\n    ├── HorizonCanvas (center)\r\n    └── Inspector (right, collapsible)\r\n```\r\n\r\n### WorkspaceLayout\r\n\r\n**Component Structure:**\r\n```typescript\r\nexport function WorkspaceLayout({ children }: Props) {\r\n  const { theme } = useTheme();\r\n  \r\n  return (\r\n    <div className={cn('workspace-layout', theme)}>\r\n      <ThemeProvider attribute=\"class\" defaultTheme=\"system\">\r\n        {children}\r\n      </ThemeProvider>\r\n    </div>\r\n  );\r\n}\r\n```\r\n\r\n### AppShell\r\n\r\n**Component Structure:**\r\n```typescript\r\nexport function AppShell() {\r\n  const isLeftOpen = useUIStore(state => state.isLeftOpen);\r\n  const isInspectorOpen = useUIStore(state => state.isInspectorOpen);\r\n  \r\n  return (\r\n    <div className=\"app-shell\">\r\n      <Toolbar />\r\n      \r\n      <div className=\"app-body\">\r\n        {isLeftOpen && <SpatialSidebar />}\r\n        \r\n        <main className=\"main-content\">\r\n          <HorizonCanvas />\r\n        </main>\r\n        \r\n        {isInspectorOpen && <Inspector />}\r\n      </div>\r\n    </div>\r\n  );\r\n}\r\n```\r\n\r\n**CSS Grid Layout:**\r\n```css\r\n.app-shell {\r\n  display: grid;\r\n  grid-template-rows: auto 1fr;\r\n  height: 100vh;\r\n}\r\n\r\n.app-body {\r\n  display: grid;\r\n  grid-template-columns: auto 1fr auto;\r\n  overflow: hidden;\r\n}\r\n\r\n.main-content {\r\n  position: relative;\r\n  overflow: hidden;\r\n}\r\n```\r\n\r\n### Toolbar\r\n\r\n**Component Structure:**\r\n```typescript\r\nexport function Toolbar() {\r\n  const setLeftOpen = useUIStore(state => state.setLeftOpen);\r\n  const toggleInspector = useUIStore(state => state.toggleInspector);\r\n  const toggleSearch = useUIStore(state => state.toggleSearch);\r\n  \r\n  return (\r\n    <header className=\"toolbar\">\r\n      <div className=\"toolbar-left\">\r\n        <button onClick={() => setLeftOpen(true)}>\r\n          <MenuIcon />\r\n        </button>\r\n        <h1>Ingestalt</h1>\r\n      </div>\r\n      \r\n      <div className=\"toolbar-center\">\r\n        <SearchBar />\r\n      </div>\r\n      \r\n      <div className=\"toolbar-right\">\r\n        <button onClick={toggleSearch}>\r\n          <SearchIcon />\r\n        </button>\r\n        <button onClick={toggleInspector}>\r\n          <PanelRightIcon />\r\n        </button>\r\n        <ThemeToggle />\r\n        <UserMenu />\r\n      </div>\r\n    </header>\r\n  );\r\n}\r\n```\r\n\r\n**Toolbar Actions:**\r\n- Toggle left sidebar\r\n- Global search\r\n- Toggle inspector\r\n- Theme switcher\r\n- User menu (settings, logout)\r\n- Workspace switcher\r\n\r\n### SpatialSidebar\r\n\r\n**Component Structure:**\r\n```typescript\r\nexport function SpatialSidebar() {\r\n  const setLeftOpen = useUIStore(state => state.setLeftOpen);\r\n  const activeTags = useUIStore(state => state.activeTags);\r\n  const toggleTag = useUIStore(state => state.toggleTag);\r\n  \r\n  return (\r\n    <aside className=\"spatial-sidebar\">\r\n      <div className=\"sidebar-header\">\r\n        <h2>Navigation</h2>\r\n        <button onClick={() => setLeftOpen(false)}>\r\n          <XIcon />\r\n        </button>\r\n      </div>\r\n      \r\n      <div className=\"sidebar-content\">\r\n        <WorkspaceSelector />\r\n        \r\n        <section>\r\n          <h3>Quick Actions</h3>\r\n          <button onClick={handleIngest}>\r\n            <UploadIcon /> Ingest Files\r\n          </button>\r\n          <button onClick={handleExport}>\r\n            <DownloadIcon /> Export\r\n          </button>\r\n        </section>\r\n        \r\n        <section>\r\n          <h3>Tags</h3>\r\n          <TagList tags={allTags} activeTags={activeTags} onToggle={toggleTag} />\r\n        </section>\r\n        \r\n        <section>\r\n          <h3>Recent Nodes</h3>\r\n          <RecentNodesList />\r\n        </section>\r\n      </div>\r\n    </aside>\r\n  );\r\n}\r\n```\r\n\r\n**Sidebar Sections:**\r\n- Workspace selector\r\n- Quick actions (ingest, export, sync)\r\n- Tag filters\r\n- Recent nodes\r\n- Saved views/perspectives\r\n- Settings\r\n\r\n### Responsive Behavior\r\n\r\n**Breakpoints:**\r\n```typescript\r\nconst breakpoints = {\r\n  mobile: 640,\r\n  tablet: 768,\r\n  desktop: 1024,\r\n  wide: 1280,\r\n};\r\n```\r\n\r\n**Mobile Layout:**\r\n```typescript\r\n// On mobile, sidebars become overlays\r\nconst isMobile = useMediaQuery('(max-width: 768px)');\r\n\r\nif (isMobile) {\r\n  return (\r\n    <Sheet open={isLeftOpen} onOpenChange={setLeftOpen}>\r\n      <SheetContent side=\"left\">\r\n        <SpatialSidebar />\r\n      </SheetContent>\r\n    </Sheet>\r\n  );\r\n}\r\n```\r\n\r\n**Tablet Layout:**\r\n- Collapsible sidebars\r\n- Reduced toolbar items\r\n- Touch-friendly controls\r\n\r\n**Desktop Layout:**\r\n- Full toolbar\r\n- Resizable sidebars\r\n- Keyboard shortcuts\r\n\r\n### Resizable Panels\r\n\r\n**ResizableSidebar Component:**\r\n```typescript\r\nexport function ResizableSidebar({ children, side, defaultWidth }: Props) {\r\n  const [width, setWidth] = useState(defaultWidth);\r\n  const [isResizing, setIsResizing] = useState(false);\r\n  \r\n  const handleMouseDown = () => setIsResizing(true);\r\n  \r\n  useEffect(() => {\r\n    const handleMouseMove = (e: MouseEvent) => {\r\n      if (!isResizing) return;\r\n      \r\n      const newWidth = side === 'left'\r\n        ? e.clientX\r\n        : window.innerWidth - e.clientX;\r\n      \r\n      setWidth(Math.max(200, Math.min(800, newWidth)));\r\n    };\r\n    \r\n    const handleMouseUp = () => setIsResizing(false);\r\n    \r\n    if (isResizing) {\r\n      document.addEventListener('mousemove', handleMouseMove);\r\n      document.addEventListener('mouseup', handleMouseUp);\r\n    }\r\n    \r\n    return () => {\r\n      document.removeEventListener('mousemove', handleMouseMove);\r\n      document.removeEventListener('mouseup', handleMouseUp);\r\n    };\r\n  }, [isResizing, side]);\r\n  \r\n  return (\r\n    <div className=\"resizable-sidebar\" style={{ width }}>\r\n      {children}\r\n      <div\r\n        className=\"resize-handle\"\r\n        onMouseDown={handleMouseDown}\r\n      />\r\n    </div>\r\n  );\r\n}\r\n```\r\n\r\n## Dependencies\r\n- [`components/ui/sheet.tsx`](../lib/drdpr-horizon/components/ui/sheet.tsx) - Mobile overlays\r\n- [`components/ui/resizable-sidebar.tsx`](../lib/drdpr-horizon/components/ui/resizable-sidebar.tsx) - Resizable panels\r\n- [`lib/store/useUIStore.ts`](../lib/drdpr-horizon/lib/store/useUIStore.ts) - Layout state\r\n- [`lib/hooks/useMediaQuery.ts`](../lib/drdpr-horizon/lib/hooks/useMediaQuery.ts) - Responsive detection\r\n\r\n## Relations\r\n- **Contains:** [`ui_canvas`](./ui_canvas.md) - Main canvas\r\n- **Contains:** [`ui_inspector`](./ui_inspector.md) - Inspector panel\r\n- **Reads from:** [`ui_state`](./ui_state.md) - Panel visibility\r\n\r\n## Key Concepts\r\n\r\n### Spatial Navigation\r\nLeft sidebar provides spatial navigation:\r\n- Tag-based filtering\r\n- Recent nodes\r\n- Saved perspectives\r\n- Quick jump to nodes\r\n\r\n### Panel State Persistence\r\nPanel visibility and sizes are persisted:\r\n```typescript\r\nconst useUIStore = create(\r\n  persist(\r\n    (set) => ({\r\n      isLeftOpen: true,\r\n      isInspectorOpen: false,\r\n      leftSidebarWidth: 300,\r\n      inspectorWidth: 400,\r\n    }),\r\n    { name: 'layout-state' }\r\n  )\r\n);\r\n```\r\n\r\n### Keyboard Shortcuts\r\n- `Cmd/Ctrl + B` - Toggle left sidebar\r\n- `Cmd/Ctrl + I` - Toggle inspector\r\n- `Cmd/Ctrl + K` - Focus search\r\n- `Cmd/Ctrl + ,` - Open settings\r\n\r\n### Accessibility\r\n- Semantic HTML structure\r\n- ARIA landmarks\r\n- Keyboard navigation\r\n- Focus management\r\n- Screen reader support\r\n\r\n### Performance\r\n- Lazy loading of sidebar content\r\n- Virtual scrolling for long lists\r\n- Debounced resize handlers\r\n- Memoized components\r\n\r\n### Theme Support\r\nLayout adapts to light/dark themes:\r\n- Dynamic colors\r\n- Contrast adjustments\r\n- Border styles\r\n- Shadow depths",
+        "tags": [
+          "layout",
+          "shell",
+          "toolbar",
+          "sidebar"
+        ],
+        "type": "frontend",
+        "id": "node_ui_layout",
+        "configId": "node_standards_frontend",
+        "icon": "Layout",
+        "color": "#a855f7",
+        "components": [
+          "WorkspaceLayout",
+          "AppShell",
+          "Toolbar",
+          "SpatialSidebar"
+        ],
+        "relations": [
+          {
+            "targetId": "node_ui_canvas",
+            "type": "contains",
+            "label": "Main canvas area"
+          },
+          {
+            "targetId": "node_ui_inspector",
+            "type": "contains",
+            "label": "Inspector panel"
+          },
+          {
+            "targetId": "node_ui_state",
+            "type": "reads",
+            "label": "Panel visibility state"
+          }
+        ],
+        "filename": "ui_layout.md"
+      }
+    },
+    {
+      "id": "node_1778930723593_8xqaq6s57i7_pih1486",
+      "configId": "node_standards_state",
+      "workspaceId": "workspace__ingestalt_1778930723495",
+      "position": {
+        "x": 1240,
+        "y": 130
+      },
+      "lastModified": 1778930723593,
+      "payload": {
+        "title": "UI State Management",
+        "content": "# UI State Management\r\n\r\n## Purpose\r\nCentralized state management for the Ingestalt UI using Zustand, handling selection, viewport, search, and application configuration with persistence.\r\n\r\n## Key Files\r\n- [`lib/drdpr-horizon/lib/store/useUIStore.ts`](../lib/drdpr-horizon/lib/store/useUIStore.ts) - Main UI store\r\n\r\n## Architecture\r\n\r\n### Store Structure\r\n\r\n**State Categories:**\r\n1. **Selection State** - Node selection and hover\r\n2. **Search & Filtering** - Query and tag filters\r\n3. **Panel Visibility** - Inspector, toolbar, shortcuts\r\n4. **Canvas State** - Viewport position and zoom\r\n5. **Configuration** - Theme, edge styles, relationship modes\r\n6. **File System** - Directory handle persistence\r\n7. **Clipboard** - Copy/paste operations\r\n\r\n### Key State Properties\r\n\r\n```typescript\r\ninterface UIState {\r\n  // Selection\r\n  selectedNodeId: string | null;\r\n  hoveredNodeId: string | null;\r\n  selectedNodeIds: Set<string>;\r\n  \r\n  // Panels\r\n  isLeftOpen: boolean;\r\n  isInspectorOpen: boolean;\r\n  isSearchOpen: boolean;\r\n  isToolbarOpen: boolean;\r\n  isShortcutsHelpOpen: boolean;\r\n  \r\n  // Search & Filtering\r\n  searchQuery: string;\r\n  activeTags: string[];\r\n  \r\n  // Canvas\r\n  viewport: { x: number; y: number; zoom: number };\r\n  \r\n  // Configuration\r\n  relationshipMode: 'all' | 'selected' | 'trace';\r\n  edgeHandleType: 'fixed' | 'smart';\r\n  edgePathType: 'organic' | 'circuit';\r\n  theme: 'light' | 'dark';\r\n  \r\n  // File System Access\r\n  directoryHandle: FileSystemDirectoryHandle | null;\r\n  \r\n  // Clipboard\r\n  copiedNodeIds: string[];\r\n}\r\n```\r\n\r\n### State Actions\r\n\r\n**Selection Management:**\r\n```typescript\r\nsetSelectedNodeId(id: string | null)      // Single selection\r\nsetPrimaryNodeId(id: string | null)       // Primary without clearing multi-select\r\ntoggleNodeSelection(id: string)           // Multi-select toggle\r\nclearSelection()                          // Clear all selections\r\n```\r\n\r\n**Panel Management:**\r\n```typescript\r\nsetLeftOpen(open: boolean)\r\ntoggleInspector()\r\ntoggleSearch()\r\ntoggleToolbar()\r\ntoggleShortcutsHelp()\r\n```\r\n\r\n**Search & Filtering:**\r\n```typescript\r\nsetSearchQuery(query: string)\r\nsetActiveTags(tags: string[])\r\ntoggleTag(tag: string)\r\n```\r\n\r\n**Viewport Management:**\r\n```typescript\r\nsetViewport(viewport: Viewport)\r\n```\r\n\r\n**Configuration:**\r\n```typescript\r\nsetRelationshipMode(mode: 'all' | 'selected' | 'trace')\r\nsetEdgeHandleType(type: 'fixed' | 'smart')\r\nsetEdgePathType(type: 'organic' | 'circuit')\r\nsetTheme(theme: 'light' | 'dark')\r\n```\r\n\r\n## Dependencies\r\n- `zustand` - State management library\r\n- `zustand/middleware` - Persistence middleware\r\n\r\n## Relations\r\n- **Used by:** [`ui_canvas`](./ui_canvas.md) - Canvas state and selection\r\n- **Used by:** [`ui_inspector`](./ui_inspector.md) - Inspector visibility and selection\r\n- **Used by:** [`ui_layout`](./ui_layout.md) - Panel visibility\r\n- **Used by:** All UI components - Global state access\r\n\r\n## Key Concepts\r\n\r\n### Zustand Store Pattern\r\n```typescript\r\nconst useUIStore = create<UIState>()(\r\n  persist(\r\n    (set, get) => ({\r\n      // Initial state\r\n      selectedNodeId: null,\r\n      \r\n      // Actions\r\n      setSelectedNodeId: (id) => set({ selectedNodeId: id }),\r\n    }),\r\n    {\r\n      name: 'ingestalt-ui-store',\r\n      partialize: (state) => ({\r\n        // Only persist specific fields\r\n        theme: state.theme,\r\n        viewport: state.viewport,\r\n      }),\r\n    }\r\n  )\r\n);\r\n```\r\n\r\n### Persistence Strategy\r\n- Uses `localStorage` via Zustand persist middleware\r\n- Selective persistence (not all state is persisted)\r\n- Persisted fields:\r\n  - `viewport` - Canvas position/zoom\r\n  - `theme` - Light/dark mode\r\n  - `directoryHandle` - File system access (if supported)\r\n  - Panel visibility states\r\n\r\n### Multi-Selection Pattern\r\n```typescript\r\n// Set maintains unique node IDs\r\nselectedNodeIds: Set<string>\r\n\r\n// Toggle selection\r\ntoggleNodeSelection: (id) => set((state) => {\r\n  const newSet = new Set(state.selectedNodeIds);\r\n  if (newSet.has(id)) {\r\n    newSet.delete(id);\r\n  } else {\r\n    newSet.add(id);\r\n  }\r\n  return { selectedNodeIds: newSet };\r\n})\r\n```\r\n\r\n### Primary vs Multi-Select\r\n- `selectedNodeId` - Primary node shown in inspector\r\n- `selectedNodeIds` - Set of all selected nodes for batch operations\r\n- `setPrimaryNodeId()` - Changes inspector without clearing multi-select\r\n- `setSelectedNodeId()` - Clears multi-select and sets primary\r\n\r\n### Relationship Modes\r\n- `'all'` - Show all edges in workspace\r\n- `'selected'` - Show only edges connected to selected nodes\r\n- `'trace'` - Show full dependency chain from selected node\r\n\r\n### Edge Rendering Options\r\n- **Handle Type:**\r\n  - `'fixed'` - Static connection points\r\n  - `'smart'` - Dynamic connection points based on node position\r\n- **Path Type:**\r\n  - `'organic'` - Smooth bezier curves\r\n  - `'circuit'` - Right-angle paths",
+        "tags": [
+          "zustand",
+          "state",
+          "store",
+          "persistence"
+        ],
+        "type": "state",
+        "id": "node_ui_state",
+        "configId": "node_standards_state",
+        "icon": "Activity",
+        "color": "#ec4899",
+        "store_key": "ingestalt-ui-store",
+        "relations": [
+          {
+            "targetId": "node_ui_canvas",
+            "type": "used-by",
+            "label": "Canvas viewport and selection"
+          },
+          {
+            "targetId": "node_ui_inspector",
+            "type": "used-by",
+            "label": "Inspector panel state"
+          },
+          {
+            "targetId": "node_ui_layout",
+            "type": "used-by",
+            "label": "Layout panel visibility"
+          }
+        ],
+        "filename": "ui_state.md"
+      }
+    },
+    {
+      "id": "node_1778930723593_rp29rho80r8_teha6qn",
+      "configId": "node_standards_frontend",
+      "workspaceId": "workspace__ingestalt_1778930723495",
+      "position": {
+        "x": 1110,
+        "y": 730
+      },
+      "lastModified": 1778930723593,
+      "payload": {
+        "title": "Schema Panel",
+        "content": "# Schema Panel\r\n\r\n## Purpose\r\nSpecialized editor for database schema definitions, allowing users to define tables, columns, constraints, and relationships in a structured interface.\r\n\r\n## Key Files\r\n- [`lib/drdpr-horizon/components/inspector/SchemaPanel.tsx`](../lib/drdpr-horizon/components/inspector/SchemaPanel.tsx) - Schema editor component\r\n\r\n## Architecture\r\n\r\n### Component Structure\r\n\r\n```typescript\r\nexport function SchemaPanel({ nodeId }: Props) {\r\n  const node = useLiveQuery(() => db.nodes.get(nodeId), [nodeId]);\r\n  const schema = node?.payload.schema || { columns: [], indexes: [] };\r\n  \r\n  return (\r\n    <div className=\"schema-panel\">\r\n      <ColumnEditor\r\n        columns={schema.columns}\r\n        onChange={(columns) => updateSchema({ columns })}\r\n      />\r\n      \r\n      <IndexEditor\r\n        indexes={schema.indexes}\r\n        onChange={(indexes) => updateSchema({ indexes })}\r\n      />\r\n      \r\n      <ConstraintEditor\r\n        constraints={schema.constraints}\r\n        onChange={(constraints) => updateSchema({ constraints })}\r\n      />\r\n    </div>\r\n  );\r\n}\r\n```\r\n\r\n### Schema Data Structure\r\n\r\n**Column Definition:**\r\n```typescript\r\ninterface Column {\r\n  name: string;\r\n  type: string;\r\n  nullable: boolean;\r\n  defaultValue?: string;\r\n  isPrimaryKey: boolean;\r\n  isForeignKey: boolean;\r\n  foreignKeyRef?: {\r\n    table: string;\r\n    column: string;\r\n  };\r\n  isUnique: boolean;\r\n  description?: string;\r\n}\r\n```\r\n\r\n**Index Definition:**\r\n```typescript\r\ninterface Index {\r\n  name: string;\r\n  columns: string[];\r\n  isUnique: boolean;\r\n  type: 'btree' | 'hash' | 'gin' | 'gist';\r\n}\r\n```\r\n\r\n**Constraint Definition:**\r\n```typescript\r\ninterface Constraint {\r\n  name: string;\r\n  type: 'check' | 'unique' | 'foreign_key';\r\n  definition: string;\r\n  columns: string[];\r\n}\r\n```\r\n\r\n### Column Editor\r\n\r\n**Component:**\r\n```typescript\r\nfunction ColumnEditor({ columns, onChange }: Props) {\r\n  const [editingColumn, setEditingColumn] = useState<Column | null>(null);\r\n  \r\n  const addColumn = () => {\r\n    const newColumn: Column = {\r\n      name: 'new_column',\r\n      type: 'text',\r\n      nullable: true,\r\n      isPrimaryKey: false,\r\n      isForeignKey: false,\r\n      isUnique: false,\r\n    };\r\n    onChange([...columns, newColumn]);\r\n  };\r\n  \r\n  const updateColumn = (index: number, updates: Partial<Column>) => {\r\n    const updated = [...columns];\r\n    updated[index] = { ...updated[index], ...updates };\r\n    onChange(updated);\r\n  };\r\n  \r\n  const deleteColumn = (index: number) => {\r\n    onChange(columns.filter((_, i) => i !== index));\r\n  };\r\n  \r\n  return (\r\n    <div className=\"column-editor\">\r\n      <div className=\"editor-header\">\r\n        <h3>Columns</h3>\r\n        <button onClick={addColumn}>\r\n          <PlusIcon /> Add Column\r\n        </button>\r\n      </div>\r\n      \r\n      <table className=\"column-table\">\r\n        <thead>\r\n          <tr>\r\n            <th>Name</th>\r\n            <th>Type</th>\r\n            <th>Nullable</th>\r\n            <th>PK</th>\r\n            <th>FK</th>\r\n            <th>Unique</th>\r\n            <th>Actions</th>\r\n          </tr>\r\n        </thead>\r\n        <tbody>\r\n          {columns.map((column, index) => (\r\n            <tr key={index}>\r\n              <td>\r\n                <input\r\n                  value={column.name}\r\n                  onChange={(e) => updateColumn(index, { name: e.target.value })}\r\n                />\r\n              </td>\r\n              <td>\r\n                <select\r\n                  value={column.type}\r\n                  onChange={(e) => updateColumn(index, { type: e.target.value })}\r\n                >\r\n                  <option value=\"text\">Text</option>\r\n                  <option value=\"integer\">Integer</option>\r\n                  <option value=\"bigint\">BigInt</option>\r\n                  <option value=\"uuid\">UUID</option>\r\n                  <option value=\"timestamp\">Timestamp</option>\r\n                  <option value=\"boolean\">Boolean</option>\r\n                  <option value=\"json\">JSON</option>\r\n                </select>\r\n              </td>\r\n              <td>\r\n                <input\r\n                  type=\"checkbox\"\r\n                  checked={column.nullable}\r\n                  onChange={(e) => updateColumn(index, { nullable: e.target.checked })}\r\n                />\r\n              </td>\r\n              <td>\r\n                <input\r\n                  type=\"checkbox\"\r\n                  checked={column.isPrimaryKey}\r\n                  onChange={(e) => updateColumn(index, { isPrimaryKey: e.target.checked })}\r\n                />\r\n              </td>\r\n              <td>\r\n                <input\r\n                  type=\"checkbox\"\r\n                  checked={column.isForeignKey}\r\n                  onChange={(e) => updateColumn(index, { isForeignKey: e.target.checked })}\r\n                />\r\n              </td>\r\n              <td>\r\n                <input\r\n                  type=\"checkbox\"\r\n                  checked={column.isUnique}\r\n                  onChange={(e) => updateColumn(index, { isUnique: e.target.checked })}\r\n                />\r\n              </td>\r\n              <td>\r\n                <button onClick={() => setEditingColumn(column)}>\r\n                  <EditIcon />\r\n                </button>\r\n                <button onClick={() => deleteColumn(index)}>\r\n                  <TrashIcon />\r\n                </button>\r\n              </td>\r\n            </tr>\r\n          ))}\r\n        </tbody>\r\n      </table>\r\n      \r\n      {editingColumn && (\r\n        <ColumnDetailModal\r\n          column={editingColumn}\r\n          onSave={(updated) => {\r\n            const index = columns.findIndex(c => c.name === editingColumn.name);\r\n            updateColumn(index, updated);\r\n            setEditingColumn(null);\r\n          }}\r\n          onClose={() => setEditingColumn(null)}\r\n        />\r\n      )}\r\n    </div>\r\n  );\r\n}\r\n```\r\n\r\n### Column Detail Modal\r\n\r\n**Extended Properties:**\r\n```typescript\r\nfunction ColumnDetailModal({ column, onSave, onClose }: Props) {\r\n  const [localColumn, setLocalColumn] = useState(column);\r\n  \r\n  return (\r\n    <Modal open onClose={onClose}>\r\n      <div className=\"column-detail\">\r\n        <h3>Column Details: {column.name}</h3>\r\n        \r\n        <label>\r\n          Description\r\n          <textarea\r\n            value={localColumn.description || ''}\r\n            onChange={(e) => setLocalColumn({ ...localColumn, description: e.target.value })}\r\n          />\r\n        </label>\r\n        \r\n        <label>\r\n          Default Value\r\n          <input\r\n            value={localColumn.defaultValue || ''}\r\n            onChange={(e) => setLocalColumn({ ...localColumn, defaultValue: e.target.value })}\r\n          />\r\n        </label>\r\n        \r\n        {localColumn.isForeignKey && (\r\n          <>\r\n            <label>\r\n              Foreign Table\r\n              <input\r\n                value={localColumn.foreignKeyRef?.table || ''}\r\n                onChange={(e) => setLocalColumn({\r\n                  ...localColumn,\r\n                  foreignKeyRef: {\r\n                    ...localColumn.foreignKeyRef!,\r\n                    table: e.target.value,\r\n                  },\r\n                })}\r\n              />\r\n            </label>\r\n            <label>\r\n              Foreign Column\r\n              <input\r\n                value={localColumn.foreignKeyRef?.column || ''}\r\n                onChange={(e) => setLocalColumn({\r\n                  ...localColumn,\r\n                  foreignKeyRef: {\r\n                    ...localColumn.foreignKeyRef!,\r\n                    column: e.target.value,\r\n                  },\r\n                })}\r\n              />\r\n            </label>\r\n          </>\r\n        )}\r\n        \r\n        <div className=\"modal-actions\">\r\n          <button onClick={() => onSave(localColumn)}>Save</button>\r\n          <button onClick={onClose}>Cancel</button>\r\n        </div>\r\n      </div>\r\n    </Modal>\r\n  );\r\n}\r\n```\r\n\r\n### Index Editor\r\n\r\n**Component:**\r\n```typescript\r\nfunction IndexEditor({ indexes, onChange }: Props) {\r\n  const addIndex = () => {\r\n    const newIndex: Index = {\r\n      name: 'idx_new',\r\n      columns: [],\r\n      isUnique: false,\r\n      type: 'btree',\r\n    };\r\n    onChange([...indexes, newIndex]);\r\n  };\r\n  \r\n  return (\r\n    <div className=\"index-editor\">\r\n      <div className=\"editor-header\">\r\n        <h3>Indexes</h3>\r\n        <button onClick={addIndex}>\r\n          <PlusIcon /> Add Index\r\n        </button>\r\n      </div>\r\n      \r\n      {indexes.map((index, i) => (\r\n        <div key={i} className=\"index-item\">\r\n          <input\r\n            value={index.name}\r\n            onChange={(e) => {\r\n              const updated = [...indexes];\r\n              updated[i] = { ...updated[i], name: e.target.value };\r\n              onChange(updated);\r\n            }}\r\n          />\r\n          <select\r\n            value={index.type}\r\n            onChange={(e) => {\r\n              const updated = [...indexes];\r\n              updated[i] = { ...updated[i], type: e.target.value as any };\r\n              onChange(updated);\r\n            }}\r\n          >\r\n            <option value=\"btree\">B-Tree</option>\r\n            <option value=\"hash\">Hash</option>\r\n            <option value=\"gin\">GIN</option>\r\n            <option value=\"gist\">GiST</option>\r\n          </select>\r\n          <label>\r\n            <input\r\n              type=\"checkbox\"\r\n              checked={index.isUnique}\r\n              onChange={(e) => {\r\n                const updated = [...indexes];\r\n                updated[i] = { ...updated[i], isUnique: e.target.checked };\r\n                onChange(updated);\r\n              }}\r\n            />\r\n            Unique\r\n          </label>\r\n          <button onClick={() => onChange(indexes.filter((_, idx) => idx !== i))}>\r\n            <TrashIcon />\r\n          </button>\r\n        </div>\r\n      ))}\r\n    </div>\r\n  );\r\n}\r\n```\r\n\r\n### SQL Generation\r\n\r\n**Generate CREATE TABLE:**\r\n```typescript\r\nfunction generateCreateTableSQL(node: HorizonNode): string {\r\n  const { schema } = node.payload;\r\n  const tableName = node.payload.title;\r\n  \r\n  const columnDefs = schema.columns.map(col => {\r\n    let def = `  ${col.name} ${col.type.toUpperCase()}`;\r\n    if (col.isPrimaryKey) def += ' PRIMARY KEY';\r\n    if (!col.nullable) def += ' NOT NULL';\r\n    if (col.isUnique) def += ' UNIQUE';\r\n    if (col.defaultValue) def += ` DEFAULT ${col.defaultValue}`;\r\n    return def;\r\n  }).join(',\\n');\r\n  \r\n  return `CREATE TABLE ${tableName} (\\n${columnDefs}\\n);`;\r\n}\r\n```\r\n\r\n## Dependencies\r\n- [`lib/db.ts`](../lib/drdpr-horizon/lib/db.ts) - Database operations\r\n- `dexie-react-hooks` - Live queries\r\n\r\n## Relations\r\n- **Used by:** [`ui_inspector`](./ui_inspector.md) - Schema tab\r\n- **Reads/Writes:** [`db_horizon`](./db_horizon.md) - Schema data\r\n\r\n## Key Concepts\r\n\r\n### Structured Schema Definition\r\nUnlike free-form content, schema is structured data:\r\n- Type-safe column definitions\r\n- Validation rules\r\n- Relationship tracking\r\n- SQL generation\r\n\r\n### Visual Schema Editor\r\nTable-based interface for:\r\n- Quick column addition\r\n- Inline editing\r\n- Constraint management\r\n- Index configuration\r\n\r\n### Foreign Key Relationships\r\nWhen marking a column as FK:\r\n- Automatically creates edge to referenced table\r\n- Validates referenced table exists\r\n- Shows relationship in canvas\r\n\r\n### SQL Export\r\nGenerate SQL DDL from schema:\r\n- CREATE TABLE statements\r\n- Index definitions\r\n- Constraint definitions\r\n- Migration scripts\r\n\r\n### Schema Validation\r\nValidates schema before saving:\r\n- At least one column\r\n- Primary key defined\r\n- Valid data types\r\n- No duplicate column names\r\n- Valid foreign key references\r\n\r\n### Auto-completion\r\nWhen editing foreign keys:\r\n- Suggests existing tables\r\n- Suggests columns from referenced table\r\n- Validates references",
+        "tags": [
+          "schema",
+          "database",
+          "editor",
+          "inspector"
+        ],
+        "type": "frontend",
+        "id": "node_ui_schema_panel",
+        "configId": "node_standards_frontend",
+        "icon": "Layout",
+        "color": "#a855f7",
+        "components": [
+          "SchemaPanel",
+          "ColumnEditor",
+          "IndexEditor",
+          "ConstraintEditor"
+        ],
+        "relations": [
+          {
+            "targetId": "node_ui_inspector",
+            "type": "used-by",
+            "label": "Schema tab in inspector"
+          },
+          {
+            "targetId": "node_db_horizon",
+            "type": "reads-writes",
+            "label": "Schema data"
+          }
+        ],
+        "filename": "ui_schema_panel.md"
+      }
+    },
+    {
+      "id": "node_1778930723593_rpbh1xdyd8_qpzczea",
+      "configId": "node_standards_frontend",
+      "workspaceId": "workspace__ingestalt_1778930723495",
+      "position": {
+        "x": 750,
+        "y": 310
+      },
+      "lastModified": 1778930723593,
+      "payload": {
+        "title": "Prompt Components",
+        "content": "# Prompt Components\r\n\r\n## Purpose\r\nProvides reusable dialog and modal components for user interactions, confirmations, and data input throughout the application.\r\n\r\n## Key Files\r\n- [`lib/drdpr-horizon/components/PromptModal.tsx`](../lib/drdpr-horizon/components/PromptModal.tsx) - Generic prompt modal\r\n- [`lib/drdpr-horizon/components/ConfirmDialog.tsx`](../lib/drdpr-horizon/components/ConfirmDialog.tsx) - Confirmation dialog\r\n- [`lib/drdpr-horizon/components/IconPickerModal.tsx`](../lib/drdpr-horizon/components/IconPickerModal.tsx) - Icon selection modal\r\n- [`lib/drdpr-horizon/components/KeyboardShortcutsHelp.tsx`](../lib/drdpr-horizon/components/KeyboardShortcutsHelp.tsx) - Shortcuts reference\r\n\r\n## Architecture\r\n\r\n### Component Types\r\n\r\n**PromptModal:**\r\n- Generic text input dialog\r\n- Used for renaming, creating nodes\r\n- Supports validation\r\n\r\n**ConfirmDialog:**\r\n- Confirmation for destructive actions\r\n- Delete, clear, reset operations\r\n- Variant styling (default/destructive)\r\n\r\n**IconPickerModal:**\r\n- Visual icon selector\r\n- Search and filter by category\r\n- Grid layout with preview\r\n\r\n**KeyboardShortcutsHelp:**\r\n- Reference modal for shortcuts\r\n- Categorized by function\r\n- Platform-specific key display\r\n\r\n## Dependencies\r\n- [`components/ui/sheet.tsx`](../lib/drdpr-horizon/components/ui/sheet.tsx) - Dialog components\r\n- [`lib/store/useUIStore.ts`](../lib/drdpr-horizon/lib/store/useUIStore.ts) - UI state\r\n\r\n## Relations\r\n- **Used by:** [`ui_canvas`](./ui_canvas.md) - User interactions\r\n- **Used by:** [`ui_inspector`](./ui_inspector.md) - Confirmation dialogs\r\n\r\n## Key Concepts\r\n\r\n### Reusable Dialogs\r\nConsistent dialog patterns across the application for better UX and maintainability.\r\n\r\n### Keyboard Shortcuts Reference\r\nHelps users discover and learn keyboard shortcuts, improving productivity.\r\n\r\n### Accessibility\r\nAll dialogs support keyboard navigation, focus management, and screen readers.",
+        "tags": [
+          "prompts",
+          "dialogs",
+          "modals",
+          "ui"
+        ],
+        "type": "frontend",
+        "id": "node_ui_prompts",
+        "configId": "node_standards_frontend",
+        "icon": "Layout",
+        "color": "#a855f7",
+        "components": [
+          "PromptModal",
+          "ConfirmDialog",
+          "IconPickerModal",
+          "KeyboardShortcutsHelp"
+        ],
+        "relations": [
+          {
+            "targetId": "node_ui_canvas",
+            "type": "used-by",
+            "label": "User interactions"
+          },
+          {
+            "targetId": "node_ui_inspector",
+            "type": "used-by",
+            "label": "Confirmation dialogs"
+          }
+        ],
+        "filename": "ui_prompts.md"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge_node_1778930723590_kt4jq1etdn8_1037a4a_node_1778930723591_jix5advi2_g5jlr90",
+      "workspaceId": "workspace__ingestalt_1778930723495",
+      "sourceId": "node_1778930723590_kt4jq1etdn8_1037a4a",
+      "targetId": "node_1778930723591_jix5advi2_g5jlr90",
+      "type": "writes",
+      "metadata": {}
+    },
+    {
+      "id": "edge_node_1778930723590_kt4jq1etdn8_1037a4a_node_1778930723591_s0c3kkdm5w_j7ya3ta",
+      "workspaceId": "workspace__ingestalt_1778930723495",
+      "sourceId": "node_1778930723590_kt4jq1etdn8_1037a4a",
+      "targetId": "node_1778930723591_s0c3kkdm5w_j7ya3ta",
+      "type": "calls",
+      "metadata": {}
+    },
+    {
+      "id": "edge_node_1778930723590_liwho0weuk_kl5xrz6_node_1778930723591_jix5advi2_g5jlr90",
+      "workspaceId": "workspace__ingestalt_1778930723495",
+      "sourceId": "node_1778930723590_liwho0weuk_kl5xrz6",
+      "targetId": "node_1778930723591_jix5advi2_g5jlr90",
+      "type": "writes",
+      "metadata": {}
+    },
+    {
+      "id": "edge_node_1778930723590_liwho0weuk_kl5xrz6_node_1778930723591_s0c3kkdm5w_j7ya3ta",
+      "workspaceId": "workspace__ingestalt_1778930723495",
+      "sourceId": "node_1778930723590_liwho0weuk_kl5xrz6",
+      "targetId": "node_1778930723591_s0c3kkdm5w_j7ya3ta",
+      "type": "calls",
+      "metadata": {}
+    },
+    {
+      "id": "edge_node_1778930723590_liwho0weuk_kl5xrz6_node_1778930723593_8xqaq6s57i7_pih1486",
+      "workspaceId": "workspace__ingestalt_1778930723495",
+      "sourceId": "node_1778930723590_liwho0weuk_kl5xrz6",
+      "targetId": "node_1778930723593_8xqaq6s57i7_pih1486",
+      "type": "updates",
+      "metadata": {}
+    },
+    {
+      "id": "edge_node_1778930723591_1s1jzp3yvcw_qjh4tpj_node_1778930723590_liwho0weuk_kl5xrz6",
+      "workspaceId": "workspace__ingestalt_1778930723495",
+      "sourceId": "node_1778930723591_1s1jzp3yvcw_qjh4tpj",
+      "targetId": "node_1778930723590_liwho0weuk_kl5xrz6",
+      "type": "uses",
+      "metadata": {}
+    },
+    {
+      "id": "edge_node_1778930723591_1s1jzp3yvcw_qjh4tpj_node_1778930723591_cleuwir4m0r_qfynxoh",
+      "workspaceId": "workspace__ingestalt_1778930723495",
+      "sourceId": "node_1778930723591_1s1jzp3yvcw_qjh4tpj",
+      "targetId": "node_1778930723591_cleuwir4m0r_qfynxoh",
+      "type": "contains",
+      "metadata": {}
+    },
+    {
+      "id": "edge_node_1778930723591_cleuwir4m0r_qfynxoh_node_1778930723591_jix5advi2_g5jlr90",
+      "workspaceId": "workspace__ingestalt_1778930723495",
+      "sourceId": "node_1778930723591_cleuwir4m0r_qfynxoh",
+      "targetId": "node_1778930723591_jix5advi2_g5jlr90",
+      "type": "reads",
+      "metadata": {}
+    },
+    {
+      "id": "edge_node_1778930723591_cleuwir4m0r_qfynxoh_node_1778930723593_7i6azv87q88_v55jetu",
+      "workspaceId": "workspace__ingestalt_1778930723495",
+      "sourceId": "node_1778930723591_cleuwir4m0r_qfynxoh",
+      "targetId": "node_1778930723593_7i6azv87q88_v55jetu",
+      "type": "contains",
+      "metadata": {}
+    },
+    {
+      "id": "edge_node_1778930723591_cleuwir4m0r_qfynxoh_node_1778930723593_8xqaq6s57i7_pih1486",
+      "workspaceId": "workspace__ingestalt_1778930723495",
+      "sourceId": "node_1778930723591_cleuwir4m0r_qfynxoh",
+      "targetId": "node_1778930723593_8xqaq6s57i7_pih1486",
+      "type": "reads",
+      "metadata": {}
+    },
+    {
+      "id": "edge_node_1778930723591_idwafsn15bg_ezz564x_node_1778930723591_s0c3kkdm5w_j7ya3ta",
+      "workspaceId": "workspace__ingestalt_1778930723495",
+      "sourceId": "node_1778930723591_idwafsn15bg_ezz564x",
+      "targetId": "node_1778930723591_s0c3kkdm5w_j7ya3ta",
+      "type": "implemented-by",
+      "metadata": {}
+    },
+    {
+      "id": "edge_node_1778930723591_idwafsn15bg_ezz564x_node_1778930723593_7i6azv87q88_v55jetu",
+      "workspaceId": "workspace__ingestalt_1778930723495",
+      "sourceId": "node_1778930723591_idwafsn15bg_ezz564x",
+      "targetId": "node_1778930723593_7i6azv87q88_v55jetu",
+      "type": "implemented-by",
+      "metadata": {}
+    },
+    {
+      "id": "edge_node_1778930723591_jix5advi2_g5jlr90_node_1778930723591_cleuwir4m0r_qfynxoh",
+      "workspaceId": "workspace__ingestalt_1778930723495",
+      "sourceId": "node_1778930723591_jix5advi2_g5jlr90",
+      "targetId": "node_1778930723591_cleuwir4m0r_qfynxoh",
+      "type": "read-by",
+      "metadata": {}
+    },
+    {
+      "id": "edge_node_1778930723591_jix5advi2_g5jlr90_node_1778930723591_s0c3kkdm5w_j7ya3ta",
+      "workspaceId": "workspace__ingestalt_1778930723495",
+      "sourceId": "node_1778930723591_jix5advi2_g5jlr90",
+      "targetId": "node_1778930723591_s0c3kkdm5w_j7ya3ta",
+      "type": "written-by",
+      "metadata": {}
+    },
+    {
+      "id": "edge_node_1778930723591_jix5advi2_g5jlr90_node_1778930723592_qe2kir45ldj_nsjidk0",
+      "workspaceId": "workspace__ingestalt_1778930723495",
+      "sourceId": "node_1778930723591_jix5advi2_g5jlr90",
+      "targetId": "node_1778930723592_qe2kir45ldj_nsjidk0",
+      "type": "read-write-by",
+      "metadata": {}
+    },
+    {
+      "id": "edge_node_1778930723591_s0c3kkdm5w_j7ya3ta_node_1778930723591_idwafsn15bg_ezz564x",
+      "workspaceId": "workspace__ingestalt_1778930723495",
+      "sourceId": "node_1778930723591_s0c3kkdm5w_j7ya3ta",
+      "targetId": "node_1778930723591_idwafsn15bg_ezz564x",
+      "type": "implements",
+      "metadata": {}
+    },
+    {
+      "id": "edge_node_1778930723591_s0c3kkdm5w_j7ya3ta_node_1778930723591_jix5advi2_g5jlr90",
+      "workspaceId": "workspace__ingestalt_1778930723495",
+      "sourceId": "node_1778930723591_s0c3kkdm5w_j7ya3ta",
+      "targetId": "node_1778930723591_jix5advi2_g5jlr90",
+      "type": "writes",
+      "metadata": {}
+    },
+    {
+      "id": "edge_node_1778930723592_77bf9krlf2m_o4lfy0a_node_1778930723592_o0hao70qmeh_secdqdl",
+      "workspaceId": "workspace__ingestalt_1778930723495",
+      "sourceId": "node_1778930723592_77bf9krlf2m_o4lfy0a",
+      "targetId": "node_1778930723592_o0hao70qmeh_secdqdl",
+      "type": "used-by",
+      "metadata": {}
+    },
+    {
+      "id": "edge_node_1778930723592_k4byg8aiq9_xp3ez25_node_1778930723592_o0hao70qmeh_secdqdl",
+      "workspaceId": "workspace__ingestalt_1778930723495",
+      "sourceId": "node_1778930723592_k4byg8aiq9_xp3ez25",
+      "targetId": "node_1778930723592_o0hao70qmeh_secdqdl",
+      "type": "used-by",
+      "metadata": {}
+    },
+    {
+      "id": "edge_node_1778930723592_o0hao70qmeh_secdqdl_node_1778930723592_77bf9krlf2m_o4lfy0a",
+      "workspaceId": "workspace__ingestalt_1778930723495",
+      "sourceId": "node_1778930723592_o0hao70qmeh_secdqdl",
+      "targetId": "node_1778930723592_77bf9krlf2m_o4lfy0a",
+      "type": "contains",
+      "metadata": {}
+    },
+    {
+      "id": "edge_node_1778930723592_o0hao70qmeh_secdqdl_node_1778930723592_k4byg8aiq9_xp3ez25",
+      "workspaceId": "workspace__ingestalt_1778930723495",
+      "sourceId": "node_1778930723592_o0hao70qmeh_secdqdl",
+      "targetId": "node_1778930723592_k4byg8aiq9_xp3ez25",
+      "type": "contains",
+      "metadata": {}
+    },
+    {
+      "id": "edge_node_1778930723592_o0hao70qmeh_secdqdl_node_1778930723592_qe2kir45ldj_nsjidk0",
+      "workspaceId": "workspace__ingestalt_1778930723495",
+      "sourceId": "node_1778930723592_o0hao70qmeh_secdqdl",
+      "targetId": "node_1778930723592_qe2kir45ldj_nsjidk0",
+      "type": "used-by",
+      "metadata": {}
+    },
+    {
+      "id": "edge_node_1778930723592_qe2kir45ldj_nsjidk0_node_1778930723591_jix5advi2_g5jlr90",
+      "workspaceId": "workspace__ingestalt_1778930723495",
+      "sourceId": "node_1778930723592_qe2kir45ldj_nsjidk0",
+      "targetId": "node_1778930723591_jix5advi2_g5jlr90",
+      "type": "reads-writes",
+      "metadata": {}
+    },
+    {
+      "id": "edge_node_1778930723592_qe2kir45ldj_nsjidk0_node_1778930723592_o0hao70qmeh_secdqdl",
+      "workspaceId": "workspace__ingestalt_1778930723495",
+      "sourceId": "node_1778930723592_qe2kir45ldj_nsjidk0",
+      "targetId": "node_1778930723592_o0hao70qmeh_secdqdl",
+      "type": "contains",
+      "metadata": {}
+    },
+    {
+      "id": "edge_node_1778930723592_qe2kir45ldj_nsjidk0_node_1778930723593_8xqaq6s57i7_pih1486",
+      "workspaceId": "workspace__ingestalt_1778930723495",
+      "sourceId": "node_1778930723592_qe2kir45ldj_nsjidk0",
+      "targetId": "node_1778930723593_8xqaq6s57i7_pih1486",
+      "type": "reads",
+      "metadata": {}
+    },
+    {
+      "id": "edge_node_1778930723592_qe2kir45ldj_nsjidk0_node_1778930723593_rp29rho80r8_teha6qn",
+      "workspaceId": "workspace__ingestalt_1778930723495",
+      "sourceId": "node_1778930723592_qe2kir45ldj_nsjidk0",
+      "targetId": "node_1778930723593_rp29rho80r8_teha6qn",
+      "type": "contains",
+      "metadata": {}
+    },
+    {
+      "id": "edge_node_1778930723593_7i6azv87q88_v55jetu_node_1778930723591_cleuwir4m0r_qfynxoh",
+      "workspaceId": "workspace__ingestalt_1778930723495",
+      "sourceId": "node_1778930723593_7i6azv87q88_v55jetu",
+      "targetId": "node_1778930723591_cleuwir4m0r_qfynxoh",
+      "type": "used-by",
+      "metadata": {}
+    },
+    {
+      "id": "edge_node_1778930723593_7i6azv87q88_v55jetu_node_1778930723591_idwafsn15bg_ezz564x",
+      "workspaceId": "workspace__ingestalt_1778930723495",
+      "sourceId": "node_1778930723593_7i6azv87q88_v55jetu",
+      "targetId": "node_1778930723591_idwafsn15bg_ezz564x",
+      "type": "implements",
+      "metadata": {}
+    },
+    {
+      "id": "edge_node_1778930723593_7i6azv87q88_v55jetu_node_1778930723591_jix5advi2_g5jlr90",
+      "workspaceId": "workspace__ingestalt_1778930723495",
+      "sourceId": "node_1778930723593_7i6azv87q88_v55jetu",
+      "targetId": "node_1778930723591_jix5advi2_g5jlr90",
+      "type": "reads",
+      "metadata": {}
+    },
+    {
+      "id": "edge_node_1778930723593_86xskx0yp8l_9r6s4s2_node_1778930723591_cleuwir4m0r_qfynxoh",
+      "workspaceId": "workspace__ingestalt_1778930723495",
+      "sourceId": "node_1778930723593_86xskx0yp8l_9r6s4s2",
+      "targetId": "node_1778930723591_cleuwir4m0r_qfynxoh",
+      "type": "contains",
+      "metadata": {}
+    },
+    {
+      "id": "edge_node_1778930723593_86xskx0yp8l_9r6s4s2_node_1778930723592_qe2kir45ldj_nsjidk0",
+      "workspaceId": "workspace__ingestalt_1778930723495",
+      "sourceId": "node_1778930723593_86xskx0yp8l_9r6s4s2",
+      "targetId": "node_1778930723592_qe2kir45ldj_nsjidk0",
+      "type": "contains",
+      "metadata": {}
+    },
+    {
+      "id": "edge_node_1778930723593_86xskx0yp8l_9r6s4s2_node_1778930723593_8xqaq6s57i7_pih1486",
+      "workspaceId": "workspace__ingestalt_1778930723495",
+      "sourceId": "node_1778930723593_86xskx0yp8l_9r6s4s2",
+      "targetId": "node_1778930723593_8xqaq6s57i7_pih1486",
+      "type": "reads",
+      "metadata": {}
+    },
+    {
+      "id": "edge_node_1778930723593_8xqaq6s57i7_pih1486_node_1778930723591_cleuwir4m0r_qfynxoh",
+      "workspaceId": "workspace__ingestalt_1778930723495",
+      "sourceId": "node_1778930723593_8xqaq6s57i7_pih1486",
+      "targetId": "node_1778930723591_cleuwir4m0r_qfynxoh",
+      "type": "used-by",
+      "metadata": {}
+    },
+    {
+      "id": "edge_node_1778930723593_8xqaq6s57i7_pih1486_node_1778930723592_qe2kir45ldj_nsjidk0",
+      "workspaceId": "workspace__ingestalt_1778930723495",
+      "sourceId": "node_1778930723593_8xqaq6s57i7_pih1486",
+      "targetId": "node_1778930723592_qe2kir45ldj_nsjidk0",
+      "type": "used-by",
+      "metadata": {}
+    },
+    {
+      "id": "edge_node_1778930723593_8xqaq6s57i7_pih1486_node_1778930723593_86xskx0yp8l_9r6s4s2",
+      "workspaceId": "workspace__ingestalt_1778930723495",
+      "sourceId": "node_1778930723593_8xqaq6s57i7_pih1486",
+      "targetId": "node_1778930723593_86xskx0yp8l_9r6s4s2",
+      "type": "used-by",
+      "metadata": {}
+    },
+    {
+      "id": "edge_node_1778930723593_rp29rho80r8_teha6qn_node_1778930723591_jix5advi2_g5jlr90",
+      "workspaceId": "workspace__ingestalt_1778930723495",
+      "sourceId": "node_1778930723593_rp29rho80r8_teha6qn",
+      "targetId": "node_1778930723591_jix5advi2_g5jlr90",
+      "type": "reads-writes",
+      "metadata": {}
+    },
+    {
+      "id": "edge_node_1778930723593_rp29rho80r8_teha6qn_node_1778930723592_qe2kir45ldj_nsjidk0",
+      "workspaceId": "workspace__ingestalt_1778930723495",
+      "sourceId": "node_1778930723593_rp29rho80r8_teha6qn",
+      "targetId": "node_1778930723592_qe2kir45ldj_nsjidk0",
+      "type": "used-by",
+      "metadata": {}
+    },
+    {
+      "id": "edge_node_1778930723593_rpbh1xdyd8_qpzczea_node_1778930723591_cleuwir4m0r_qfynxoh",
+      "workspaceId": "workspace__ingestalt_1778930723495",
+      "sourceId": "node_1778930723593_rpbh1xdyd8_qpzczea",
+      "targetId": "node_1778930723591_cleuwir4m0r_qfynxoh",
+      "type": "used-by",
+      "metadata": {}
+    },
+    {
+      "id": "edge_node_1778930723593_rpbh1xdyd8_qpzczea_node_1778930723592_qe2kir45ldj_nsjidk0",
+      "workspaceId": "workspace__ingestalt_1778930723495",
+      "sourceId": "node_1778930723593_rpbh1xdyd8_qpzczea",
+      "targetId": "node_1778930723592_qe2kir45ldj_nsjidk0",
+      "type": "used-by",
+      "metadata": {}
+    }
+  ],
+  "exportedAt": 1778930735650
+}

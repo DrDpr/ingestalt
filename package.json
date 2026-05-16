@@ -43,6 +43,7 @@
     "dexie-react-hooks": "^4.4.0",
     "framer-motion": "^12.38.0",
     "gray-matter": "^4.0.3",
+    "html-to-image": "^1.11.13",
     "lowlight": "^3.3.0",
     "lucide-react": "^1.16.0",
     "marked": "^18.0.3",

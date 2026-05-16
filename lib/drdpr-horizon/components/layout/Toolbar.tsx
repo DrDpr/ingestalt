@@ -8,6 +8,9 @@ import { db } from '@/lib/drdpr-horizon/lib/db';
 import { useTheme } from 'next-themes';
 import { PromptModal } from '../PromptModal';
 import { generateProfessionalWiki } from '@/lib/drdpr-horizon/lib/publish/wikiGenerator';
+import { exportCanvas, exportNodeWithRelationships, exportSelectedNodes } from '@/lib/drdpr-horizon/lib/exportCanvas';
+import { ExportPreviewModal } from '../ExportPreviewModal';
+import { useReactFlow } from '@xyflow/react';
 
 export function Toolbar() {
   const {
@@ -28,6 +31,7 @@ export function Toolbar() {
   const [ingestStatus, setIngestStatus] = useState<string | null>(null);
   const [isIngesting, setIsIngesting] = useState(false);
   const [permissionState, setPermissionState] = useState<'granted' | 'prompt' | 'denied'>('prompt');
+  const [mounted, setMounted] = useState(false);
   const [promptConfig, setPromptConfig] = useState<{
     show: boolean;
     title: string;
@@ -41,8 +45,11 @@ export function Toolbar() {
     onConfirm: () => { },
   });
 
+  const [exportPreview, setExportPreview] = useState<{ url: string, filename: string, format: string } | null>(null);
+
   // On mount, check handle and permission
   useEffect(() => {
+    setMounted(true);
     const checkHandle = async () => {
       const handle = await getStoredFolderHandle();
       if (handle) {
@@ -225,6 +232,72 @@ export function Toolbar() {
     });
   };
 
+  const handleExportCanvas = async () => {
+    const canvasElement = document.querySelector('.react-flow') as HTMLElement;
+    if (!canvasElement) {
+      console.error('Canvas element not found');
+      return;
+    }
+
+    try {
+      const nodes = getNodes();
+      const edges = getEdges();
+
+      // If a single node is selected, export it with relationships
+      if (selectedNodeId && selectedNodeIds.size === 1) {
+        setPromptConfig({
+          show: true,
+          title: 'EXPORT SCREENSHOT',
+          message: 'Export the selected node with its relationships, or the entire canvas?',
+          options: [
+            { label: 'NODE + RELATIONSHIPS', value: 'node' },
+            { label: 'ENTIRE CANVAS', value: 'canvas' },
+            { label: 'CANCEL', value: 'cancel' }
+          ],
+          onConfirm: async (val) => {
+            if (val === 'node') {
+              const res = await exportNodeWithRelationships(canvasElement, nodes, edges, selectedNodeId, {
+                format: 'png',
+                backgroundColor: resolvedTheme === 'dark' ? '#09090b' : '#ffffff',
+                download: false
+              });
+              setExportPreview({ url: res.dataUrl, filename: res.filename, format: res.format });
+            } else if (val === 'canvas') {
+              const res = await exportCanvas(canvasElement, {
+                format: 'png',
+                backgroundColor: resolvedTheme === 'dark' ? '#09090b' : '#ffffff',
+                download: false
+              });
+              setExportPreview({ url: res.dataUrl, filename: res.filename, format: res.format });
+            }
+            setPromptConfig(prev => ({ ...prev, show: false }));
+          }
+        });
+      }
+      // If multiple nodes are selected, export them
+      else if (selectedNodeIds.size > 1) {
+        const res = await exportSelectedNodes(canvasElement, nodes, edges, Array.from(selectedNodeIds), {
+          format: 'png',
+          backgroundColor: resolvedTheme === 'dark' ? '#09090b' : '#ffffff',
+          download: false
+        });
+        setExportPreview({ url: res.dataUrl, filename: res.filename, format: res.format });
+      }
+      // Otherwise, export the entire canvas
+      else {
+        const res = await exportCanvas(canvasElement, {
+          format: 'png',
+          backgroundColor: resolvedTheme === 'dark' ? '#09090b' : '#ffffff',
+          download: false
+        });
+        setExportPreview({ url: res.dataUrl, filename: res.filename, format: res.format });
+      }
+    } catch (error) {
+      console.error('Export failed:', error);
+      alert('Failed to export canvas. Please try again.');
+    }
+  };
+
 
 
   return (
@@ -274,6 +347,19 @@ export function Toolbar() {
 
           <div className="h-6 w-[1px] bg-border mx-1" />
           <button
+            onClick={handleExportCanvas}
+            title={
+              selectedNodeId && selectedNodeIds.size === 1
+                ? 'Export node with relationships'
+                : selectedNodeIds.size > 1
+                ? 'Export selected nodes'
+                : 'Export canvas screenshot'
+            }
+            className="p-2 hover:bg-secondary text-foreground/60 hover:text-foreground rounded transition-colors"
+          >
+            <Camera size={16} />
+          </button>
+          <button
             onClick={() => setShortcutsHelpOpen(true)}
             title="Keyboard Shortcuts"
             className="p-2 hover:bg-secondary text-foreground/60 hover:text-foreground rounded transition-colors"
@@ -285,7 +371,7 @@ export function Toolbar() {
             title={`Switch to ${resolvedTheme === 'dark' ? 'light' : 'dark'} mode`}
             className="p-2 hover:bg-secondary text-foreground/60 hover:text-foreground rounded transition-colors"
           >
-            {resolvedTheme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+            {mounted && resolvedTheme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
           </button>
         </div>
         {/* Folder status badge */}
@@ -454,6 +540,23 @@ export function Toolbar() {
         options={promptConfig.options}
         onConfirm={promptConfig.onConfirm}
         onCancel={() => setPromptConfig(prev => ({ ...prev, show: false }))}
+      />
+
+      <ExportPreviewModal
+        show={!!exportPreview}
+        dataUrl={exportPreview?.url || ''}
+        filename={exportPreview?.filename || ''}
+        format={exportPreview?.format || ''}
+        onCancel={() => setExportPreview(null)}
+        onConfirm={() => {
+          if (exportPreview) {
+            const link = document.createElement('a');
+            link.download = `${exportPreview.filename}.${exportPreview.format}`;
+            link.href = exportPreview.url;
+            link.click();
+            setExportPreview(null);
+          }
+        }}
       />
     </div>
   );

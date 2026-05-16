@@ -28,11 +28,7 @@ import { WelcomeOnboarding } from '@/lib/drdpr-horizon/components/layout/Welcome
  * - EventBus + SyncManager for sync
  */
 export default function CanvasPage() {
-  const canvasComponent = React.useMemo(() => (
-    <ReactFlowProvider>
-      <HorizonCanvas />
-    </ReactFlowProvider>
-  ), []);
+  const canvasComponent = React.useMemo(() => <HorizonCanvas />, []);
   
   const inspectorComponent = React.useMemo(() => <Inspector />, []);
   const toolbarComponent = React.useMemo(() => <Toolbar />, []);

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import {
   ReactFlow,
   Background,
@@ -71,6 +71,8 @@ export function HorizonCanvas() {
     onConfirm: () => { },
   });
   const { resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
   const { screenToFlowPosition, getNodes } = useReactFlow();
   const { syncNodeToFile } = useSync();
 
@@ -484,13 +486,21 @@ export function HorizonCanvas() {
         selectionOnDrag
         selectionMode={SelectionMode.Partial}
         multiSelectionKeyCode={['Shift', 'Control', 'Meta']}
-        colorMode={resolvedTheme as 'dark' | 'light' | 'system' || 'system'}
+        colorMode={mounted ? (resolvedTheme as 'dark' | 'light' | 'system' || 'light') : 'light'}
       >
         <Background
           color="var(--border)"
           variant={BackgroundVariant.Dots}
           gap={20}
           size={1}
+        />
+        <Controls />
+        <MiniMap
+          nodeColor={(node) => {
+            const nodeData = node.data as any;
+            return nodeData?.color || (resolvedTheme === 'dark' ? '#52525b' : '#e4e4e7');
+          }}
+          className="bg-card border-border"
         />
       </ReactFlow>
       <PromptModal
