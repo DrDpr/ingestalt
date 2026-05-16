@@ -621,9 +621,12 @@ export function SpatialSidebar() {
 function SidebarCollapsible({ title, count, isOpen, onToggle, children, action }: any) {
   return (
     <div className="border-b border-border/5 last:border-b-0">
-      <button 
+      <div 
         onClick={onToggle}
-        className={cn("w-full h-12 flex items-center justify-between px-6 hover:bg-secondary/[0.02] transition-colors group", isOpen && "border-b" ,"bg-muted/60 hover:bg-muted/100")}
+        role="button"
+        tabIndex={0}
+        onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') onToggle(); }}
+        className={cn("w-full h-12 flex items-center justify-between px-6 hover:bg-secondary/[0.02] transition-colors group cursor-pointer", isOpen && "border-b" ,"bg-muted/60 hover:bg-muted/100")}
       >
         <div className="flex items-center gap-3">
           <div className={cn("text-xs font-black uppercase text-foreground/20 group-hover:text-foreground/60 transition-colors", isOpen && "!text-foreground/60")}>
@@ -639,7 +642,7 @@ function SidebarCollapsible({ title, count, isOpen, onToggle, children, action }
           {action && <div onClick={e => e.stopPropagation()}>{action}</div>}
           <ChevronDown size={10} className={cn("text-foreground/10 group-hover:text-foreground/40 transition-transform duration-300", !isOpen && "-rotate-90")} />
         </div>
-      </button>
+      </div>
       {isOpen && (
         <div className="animate-in fade-in slide-in-from-top-1 duration-200">
           {children}

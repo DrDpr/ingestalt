@@ -40,12 +40,14 @@ export default function CanvasPage() {
   }, []);
 
   return (
-    <WorkspaceLayout
-      canvas={canvasComponent}
-      inspector={inspectorComponent}
-      toolbar={toolbarComponent}
-    >
-      <WelcomeOnboarding />
-    </WorkspaceLayout>
+    <ReactFlowProvider>
+      <WorkspaceLayout
+        canvas={canvasComponent}
+        inspector={inspectorComponent}
+        toolbar={toolbarComponent}
+      >
+        <WelcomeOnboarding />
+      </WorkspaceLayout>
+    </ReactFlowProvider>
   );
 }
