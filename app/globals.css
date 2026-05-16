@@ -158,3 +158,20 @@
     border-color: var(--border) !important;
   }
 }
+
+/* Export Mode Overrides */
+.exporting .backdrop-blur-sm,
+.exporting .backdrop-blur,
+.exporting .backdrop-blur-md,
+.exporting .backdrop-blur-lg,
+.exporting .backdrop-blur-xl,
+.exporting .backdrop-blur-2xl,
+.exporting .backdrop-blur-3xl {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.exporting * {
+  transition: none !important;
+  animation: none !important;
+}

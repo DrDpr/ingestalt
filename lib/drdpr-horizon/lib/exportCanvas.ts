@@ -69,21 +69,21 @@ async function captureViewportBounds(
   // We temporarily disable them and apply a solid background, then restore them afterwards.
   const isDark = document.documentElement.classList.contains('dark');
   const solidBg = isDark ? '#09090b' : '#ffffff';
-  const modifiedNodes: { el: HTMLElement, filter: string, webkitFilter: string, bg: string, shadow: string }[] = [];
+  
+  // Add exporting class to disable blur/animations via global CSS
+  viewportElement.classList.add('exporting');
+  
+  const modifiedNodes: { el: HTMLElement, bg: string, shadow: string }[] = [];
 
   // Disable on nodes (they have backdrop-blur-xl and shadow-xl)
   viewportElement.querySelectorAll('.react-flow__node > div').forEach((el) => {
     const htmlEl = el as HTMLElement;
     modifiedNodes.push({
       el: htmlEl,
-      filter: htmlEl.style.backdropFilter,
-      webkitFilter: htmlEl.style.webkitBackdropFilter,
       bg: htmlEl.style.backgroundColor,
       shadow: htmlEl.style.boxShadow
     });
     
-    htmlEl.style.setProperty('backdrop-filter', 'none', 'important');
-    htmlEl.style.setProperty('-webkit-backdrop-filter', 'none', 'important');
     htmlEl.style.setProperty('box-shadow', 'none', 'important');
     htmlEl.style.setProperty('background-color', solidBg, 'important');
   });
@@ -113,10 +113,11 @@ async function captureViewportBounds(
     
     return { dataUrl, filename, format };
   } finally {
+    // Remove exporting class
+    viewportElement.classList.remove('exporting');
+
     // Restore original styles
-    modifiedNodes.forEach(({ el, filter, webkitFilter, bg, shadow }) => {
-      el.style.backdropFilter = filter;
-      el.style.webkitBackdropFilter = webkitFilter;
+    modifiedNodes.forEach(({ el, bg, shadow }) => {
       el.style.backgroundColor = bg;
       el.style.boxShadow = shadow;
     });

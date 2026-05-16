@@ -153,7 +153,7 @@ export function ExportPreviewModal({ show, generateImage, onCancel }: ExportPrev
                     <Button
                         onClick={handleDownload}
                         disabled={isGenerating || !preview}
-                        className="flex-1 bg-blue-600 hover:bg-blue-500 text-foreground flex items-center gap-2 disabled:opacity-50"
+                        className="flex-1 bg-blue-600 hover:bg-blue-500 text-secondary flex items-center gap-2 disabled:opacity-50"
                     >
                         <Download size={16} />
                         Download Image
