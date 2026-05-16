@@ -1,35 +1,34 @@
-import type { AppDB } from '@drdpr/workspace-core';
-import type { EventBus, EventMap } from '@drdpr/event-bus';
+import type { HorizonDatabase } from "../db";
 import { FSASyncAdapter } from './FSASyncAdapter';
-import { GitSyncAdapter } from './GitSyncAdapter';
 
 export class SyncManager {
   private fsaAdapter: FSASyncAdapter;
-  private gitAdapter: GitSyncAdapter;
-
   constructor(
-    private db: AppDB,
-    private bus: EventBus<EventMap>
+    private db: HorizonDatabase,
+    private bus: any // Using any to avoid broken external type dependencies
   ) {
     this.fsaAdapter = new FSASyncAdapter();
-    this.gitAdapter = new GitSyncAdapter();
     
-    // Listen for changes
-    this.bus.on('node:updated', ({ nodeId }) => this.handleNodeChange(nodeId));
-    this.bus.on('node:created', ({ nodeId }) => this.handleNodeChange(nodeId));
+    // Listen for changes emitted by the Inspector or Canvas
+    this.bus.on('node:updated', (payload: { nodeId: string }) => {
+      this.handleNodeChange(payload.nodeId);
+    });
+    this.bus.on('node:created', (payload: { nodeId: string }) => {
+      this.handleNodeChange(payload.nodeId);
+    });
   }
-
   private async handleNodeChange(nodeId: string) {
     const node = await this.db.nodes.get(nodeId);
     if (!node) return;
-
-    // 1. Sync to File System (FSA)
-    const config = await this.db.config.get(`config:${node.workspaceId}`);
-    if (config?.fsHandle) {
-      await this.fsaAdapter.syncNode(node, config.fsHandle);
+    // Retrieve the file system handle stored during ingestion
+    // In ingest-fsa.ts, we store the handle under the 'project_root' ID
+    const config = await this.db.config.get('project_root');
+    
+    if (config?.handle) {
+      // Sync the node to the file system
+      await this.fsaAdapter.syncNode(node, config.handle as FileSystemDirectoryHandle);
+    } else {
+      console.warn(`[SyncManager] Cannot sync node ${nodeId}: No file system handle found in config.`);
     }
-
-    // 2. Sync to Git (Stub)
-    await this.gitAdapter.syncNode(node);
   }
 }

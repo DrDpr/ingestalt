@@ -4,6 +4,8 @@ import { useCallback } from 'react';
 import { db } from '../db';
 import { serializeNodeToMarkdown } from '../serializer';
 import { useUIStore } from '../store/useUIStore';
+import { getStoredFolderHandle } from '../ingest-fsa';
+import { FSASyncAdapter } from '../sync/FSASyncAdapter';
 
 /**
  * useSync Hook
@@ -21,54 +23,34 @@ import { useUIStore } from '../store/useUIStore';
 export function useSync() {
   const autoSaveEnabled = useUIStore((state) => state.autoSaveEnabled);
   const directoryHandle = useUIStore((state) => (state as any).directoryHandle);
+  const adapter = new FSASyncAdapter();
 
   /**
    * Sync a single node to the file system
    * Converts the node to Markdown with YAML frontmatter and writes to disk
    */
+  
   const syncNodeToFile = useCallback(async (nodeId: string) => {
-    if (!directoryHandle) {
-      console.log('[useSync] No directory handle - skipping sync');
+    // 1. Get the handle from IndexedDB (persisted) instead of UI Store
+    const handle = await getStoredFolderHandle();
+    
+    if (!handle) {
+      console.warn('[useSync] No directory handle found in IndexedDB');
+      alert('No folder connected. Please connect a folder in the toolbar first.');
       return;
     }
-
     try {
       const node = await db.nodes.get(nodeId);
-      if (!node) {
-        console.warn('[useSync] Node not found:', nodeId);
-        return;
-      }
-
-      // Get edges for this node to include in relations
-      const outgoingEdges = await db.edges.where('sourceId').equals(nodeId).toArray();
-      const relations = outgoingEdges.map(e => ({
-        target: e.targetId,
-        type: e.type
-      }));
-
-      // Add relations to node for serialization
-      const nodeWithRelations = { ...node, relations };
-
-      // Serialize node to Markdown
-      const markdown = serializeNodeToMarkdown(nodeWithRelations);
-      
-      // Use filename from payload, or generate from title, or use node ID
-      const filename = node.payload?.filename ||
-        `${node.payload?.title?.replace(/[^a-z0-9]/gi, '_').toLowerCase() || node.id}.md`;
-      
-      // Write to file system
-      const fileHandle = await directoryHandle.getFileHandle(filename, { create: true });
-      const writable = await fileHandle.createWritable();
-      await writable.write(markdown);
-      await writable.close();
-
-      console.log('[useSync] ✓ Synced node to file:', filename);
+      if (!node) return;
+      // 2. Use our centralized adapter to handle the heavy lifting
+      // This ensures customizations are included and gray-matter is used
+      await adapter.syncNode(node, handle);
+      console.log('[useSync] ✓ Manual sync successful');
     } catch (error) {
-      console.error('[useSync] ✗ Failed to sync node:', error);
-      // Show error to user
+      console.error('[useSync] ✗ Manual sync failed:', error);
       alert(`Failed to sync to disk: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
-  }, [directoryHandle]);
+  }, []);
 
   /**
    * Sync all nodes in the workspace to the file system

@@ -6,6 +6,10 @@ import { HorizonCanvas } from '@/lib/drdpr-horizon/components/canvas/HorizonCanv
 import { Inspector } from '@/lib/drdpr-horizon/components/inspector/Inspector';
 import { Toolbar } from '@/lib/drdpr-horizon/components/layout/Toolbar';
 import { ReactFlowProvider } from '@xyflow/react';
+import { useEffect } from 'react';
+import { SyncManager } from '@/lib/drdpr-horizon/lib/sync/SyncManager';
+import { db } from '@/lib/drdpr-horizon/lib/db';
+import { eventBus } from '@/lib/drdpr-horizon/lib/events/EventBus';
 
 /**
  * Canvas Page - Spatial Graph IDE
@@ -31,6 +35,12 @@ export default function CanvasPage() {
   
   const inspectorComponent = React.useMemo(() => <Inspector />, []);
   const toolbarComponent = React.useMemo(() => <Toolbar />, []);
+
+  useEffect(() => {
+    const sync = new SyncManager(db, eventBus);
+    return () => {
+    };
+  }, []);
 
   return (
     <WorkspaceLayout
