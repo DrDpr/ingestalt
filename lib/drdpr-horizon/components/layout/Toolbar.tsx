@@ -47,7 +47,7 @@ export function Toolbar() {
     onConfirm: () => { },
   });
 
-  const [exportPreview, setExportPreview] = useState<{ url: string, filename: string, format: string } | null>(null);
+  const [exportTarget, setExportTarget] = useState<'node' | 'selection' | 'canvas' | null>(null);
 
   // On mount, check handle and permission
   useEffect(() => {
@@ -245,7 +245,7 @@ export function Toolbar() {
       const nodes = getNodes();
       const edges = getEdges();
 
-      // If a single node is selected, export it with relationships
+      // If a single node is selected, prompt between node or canvas
       if (selectedNodeId && selectedNodeIds.size === 1) {
         setPromptConfig({
           show: true,
@@ -258,41 +258,21 @@ export function Toolbar() {
           ],
           onConfirm: async (val) => {
             if (val === 'node') {
-              const res = await exportNodeWithRelationships(canvasElement, nodes, edges, selectedNodeId, {
-                format: 'png',
-                backgroundColor: resolvedTheme === 'dark' ? '#09090b' : '#ffffff',
-                download: false
-              });
-              setExportPreview({ url: res.dataUrl, filename: res.filename, format: res.format });
+              setExportTarget('node');
             } else if (val === 'canvas') {
-              const res = await exportCanvas(canvasElement, {
-                format: 'png',
-                backgroundColor: resolvedTheme === 'dark' ? '#09090b' : '#ffffff',
-                download: false
-              });
-              setExportPreview({ url: res.dataUrl, filename: res.filename, format: res.format });
+              setExportTarget('canvas');
             }
             setPromptConfig(prev => ({ ...prev, show: false }));
           }
         });
       }
-      // If multiple nodes are selected, export them
+      // If multiple nodes are selected, default to selection export
       else if (selectedNodeIds.size > 1) {
-        const res = await exportSelectedNodes(canvasElement, nodes, edges, Array.from(selectedNodeIds), {
-          format: 'png',
-          backgroundColor: resolvedTheme === 'dark' ? '#09090b' : '#ffffff',
-          download: false
-        });
-        setExportPreview({ url: res.dataUrl, filename: res.filename, format: res.format });
+        setExportTarget('selection');
       }
-      // Otherwise, export the entire canvas
+      // Otherwise, default to entire canvas
       else {
-        const res = await exportCanvas(canvasElement, {
-          format: 'png',
-          backgroundColor: resolvedTheme === 'dark' ? '#09090b' : '#ffffff',
-          download: false
-        });
-        setExportPreview({ url: res.dataUrl, filename: res.filename, format: res.format });
+        setExportTarget('canvas');
       }
     } catch (error) {
       console.error('Export failed:', error);
@@ -510,18 +490,23 @@ export function Toolbar() {
       />
 
       <ExportPreviewModal
-        show={!!exportPreview}
-        dataUrl={exportPreview?.url || ''}
-        filename={exportPreview?.filename || ''}
-        format={exportPreview?.format || ''}
-        onCancel={() => setExportPreview(null)}
-        onConfirm={() => {
-          if (exportPreview) {
-            const link = document.createElement('a');
-            link.download = `${exportPreview.filename}.${exportPreview.format}`;
-            link.href = exportPreview.url;
-            link.click();
-            setExportPreview(null);
+        show={exportTarget !== null}
+        onCancel={() => setExportTarget(null)}
+        generateImage={async (transparent: boolean) => {
+          const canvasElement = document.querySelector('.react-flow') as HTMLElement;
+          if (!canvasElement) throw new Error('Canvas element not found');
+
+          const nodes = getNodes();
+          const edges = getEdges();
+          const bg = transparent ? 'transparent' : (resolvedTheme === 'dark' ? '#09090b' : '#ffffff');
+          const options = { format: 'png' as const, backgroundColor: bg, download: false };
+
+          if (exportTarget === 'node' && selectedNodeId) {
+            return await exportNodeWithRelationships(canvasElement, nodes, edges, selectedNodeId, options);
+          } else if (exportTarget === 'selection' && selectedNodeIds.size > 1) {
+            return await exportSelectedNodes(canvasElement, nodes, edges, Array.from(selectedNodeIds), options);
+          } else {
+            return await exportCanvas(canvasElement, nodes, options);
           }
         }}
       />
