@@ -77,7 +77,7 @@ export function PromptModal({ show, title, message, defaultValue = '', options, 
                             <h3 className="text-blue-500 font-bold text-lg mb-2" >{title}</h3>
                         )}
                         {message && (
-                            <p className="text-neutral-100 text-sm leading-relaxed mb-4" >{message}</p>
+                            <p className="text-foreground/80 text-sm leading-relaxed mb-4" >{message}</p>
                         )}
                     </div>
                 </div>
@@ -90,8 +90,8 @@ export function PromptModal({ show, title, message, defaultValue = '', options, 
                                 onClick={() => onConfirm(option.value)}
                                 className="w-full px-4 py-3 text-left border border-border rounded-lg hover:bg-secondary transition-colors flex items-center justify-between group"
                             >
-                                <span className="text-sm font-medium text-neutral-100">{option.label}</span>
-                                <span className="opacity-0 group-hover:opacity-100 transition-opacity text-neutral-400">→</span>
+                                <span className="text-sm font-medium text-foreground/80">{option.label}</span>
+                                <span className="opacity-0 group-hover:opacity-100 transition-opacity text-foreground/60">→</span>
                             </button>
                         ))}
                     </div>
@@ -102,7 +102,7 @@ export function PromptModal({ show, title, message, defaultValue = '', options, 
                         type="text"
                         value={inputValue}
                         onChange={(e) => setInputValue(e.target.value)}
-                        className="w-full px-4 py-3 bg-background border border-border text-neutral-100 text-sm focus:outline-none focus:border-blue-500 rounded-lg transition-all mb-6"
+                        className="w-full px-4 py-3 bg-background border border-border text-foreground/80 text-sm focus:outline-none focus:border-blue-500 rounded-lg transition-all mb-6"
                         placeholder="Enter text..."
                         onKeyDown={(e) => {
                             if (e.key === 'Enter') {
@@ -118,7 +118,7 @@ export function PromptModal({ show, title, message, defaultValue = '', options, 
                         <Button
                             onClick={onCancel}
                             variant="outline"
-                            className="flex-1 border-border bg-card text-neutral-100 hover:bg-secondary"
+                            className="flex-1 border-border bg-card text-foreground/80 hover:bg-secondary"
                         >
                             Cancel
                         </Button>

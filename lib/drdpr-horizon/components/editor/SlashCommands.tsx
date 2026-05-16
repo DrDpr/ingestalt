@@ -210,7 +210,7 @@ export const SlashCommands = forwardRef<SlashCommandsHandle, SlashCommandsProps>
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
-                    className="rounded-lg border border-border bg-card shadow-lg p-4 text-center text-neutral-400"
+                    className="rounded-lg border border-border bg-card shadow-lg p-4 text-center text-foreground/60"
                 >
                     <p className="text-sm">No commands found</p>
                 </motion.div>
@@ -236,15 +236,15 @@ export const SlashCommands = forwardRef<SlashCommandsHandle, SlashCommandsProps>
                                 }`}
                         >
                             <div
-                                className={`flex-shrink-0 w-8 h-8 rounded flex items-center justify-center ${index === selectedIndex ? 'bg-blue-500/20 text-blue-400' : 'bg-secondary text-neutral-400'}`}
+                                className={`flex-shrink-0 w-8 h-8 rounded flex items-center justify-center ${index === selectedIndex ? 'bg-blue-500/20 text-blue-400' : 'bg-secondary text-foreground/60'}`}
                             >
                                 {command.icon}
                             </div>
                             <div className="flex-1 min-w-0">
-                                <div className="text-sm font-medium text-neutral-100">
+                                <div className="text-sm font-medium text-foreground/90">
                                     {command.title}
                                 </div>
-                                <div className="text-xs truncate text-neutral-400">
+                                <div className="text-xs truncate text-foreground/60">
                                     {command.description}
                                 </div>
                             </div>

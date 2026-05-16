@@ -27,8 +27,8 @@ export function useSync() {
    * Converts the node to Markdown with YAML frontmatter and writes to disk
    */
   const syncNodeToFile = useCallback(async (nodeId: string) => {
-    if (!autoSaveEnabled || !directoryHandle) {
-      console.log('[useSync] Auto-save disabled or no directory handle');
+    if (!directoryHandle) {
+      console.log('[useSync] No directory handle - skipping sync');
       return;
     }
 
@@ -39,11 +39,22 @@ export function useSync() {
         return;
       }
 
+      // Get edges for this node to include in relations
+      const outgoingEdges = await db.edges.where('sourceId').equals(nodeId).toArray();
+      const relations = outgoingEdges.map(e => ({
+        target: e.targetId,
+        type: e.type
+      }));
+
+      // Add relations to node for serialization
+      const nodeWithRelations = { ...node, relations };
+
       // Serialize node to Markdown
-      const markdown = serializeNodeToMarkdown(node);
+      const markdown = serializeNodeToMarkdown(nodeWithRelations);
       
-      // Generate filename from node ID or title
-      const filename = `${node.payload?.title?.replace(/[^a-z0-9]/gi, '_').toLowerCase() || node.id}.md`;
+      // Use filename from payload, or generate from title, or use node ID
+      const filename = node.payload?.filename ||
+        `${node.payload?.title?.replace(/[^a-z0-9]/gi, '_').toLowerCase() || node.id}.md`;
       
       // Write to file system
       const fileHandle = await directoryHandle.getFileHandle(filename, { create: true });
@@ -51,11 +62,13 @@ export function useSync() {
       await writable.write(markdown);
       await writable.close();
 
-      console.log('[useSync] Synced node to file:', filename);
+      console.log('[useSync] ✓ Synced node to file:', filename);
     } catch (error) {
-      console.error('[useSync] Failed to sync node:', error);
+      console.error('[useSync] ✗ Failed to sync node:', error);
+      // Show error to user
+      alert(`Failed to sync to disk: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
-  }, [autoSaveEnabled, directoryHandle]);
+  }, [directoryHandle]);
 
   /**
    * Sync all nodes in the workspace to the file system

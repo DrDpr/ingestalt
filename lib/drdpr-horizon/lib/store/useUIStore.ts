@@ -8,8 +8,8 @@ interface Viewport {
 }
 
 interface UIState {
-  setLeftOpen: any;
-  isLeftOpen: any;
+  setLeftOpen: (open: boolean) => void;
+  isLeftOpen: boolean;
   // Global Selection
   selectedNodeId: string | null;
   hoveredNodeId: string | null;

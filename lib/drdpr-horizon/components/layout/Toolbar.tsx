@@ -1,11 +1,12 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { RefreshCw, Database, Share2, Anchor, Zap, Cpu, Compass, Trash2, FolderOpen, CheckCircle2, Loader2, Sun, Moon } from 'lucide-react';
+import { RefreshCw, Database, Share2, Anchor, Zap, Cpu, Compass, Trash2, FolderOpen, CheckCircle2, Loader2, Sun, Moon, Eraser } from 'lucide-react';
 import { useUIStore } from '@/lib/drdpr-horizon/lib/store/useUIStore';
 import { ingestFromFileSystem, getStoredFolderHandle, connectAndStoreFolder } from '@/lib/drdpr-horizon/lib/ingest-fsa';
 import { db } from '@/lib/drdpr-horizon/lib/db';
 import { useTheme } from 'next-themes';
+import { PromptModal } from '../PromptModal';
 
 export function Toolbar() {
   const {
@@ -25,6 +26,14 @@ export function Toolbar() {
   const toggleAppTheme = () => {
     setTheme(resolvedTheme === 'dark' ? 'light' : 'dark');
   };
+
+  const [promptConfig, setPromptConfig] = useState({
+  show: false,
+  title: '',
+  message: '',
+  options: [] as { label: string; value: string }[] | undefined,
+  onConfirm: (val: string) => {},
+});
 
   // On mount, check if we already have a stored handle
   useEffect(() => {
@@ -117,30 +126,60 @@ export function Toolbar() {
   };
 
   const handleClear = async () => {
-    if (!activeGraphId) {
-      alert('Please select a canvas first.');
-      return;
-    }
-    
-    if (confirm('Are you sure you want to clear all nodes and connections from the current canvas?')) {
-      try {
-        // Get the active graph's workspace
-        const activeGraph = await db.graphs.get(activeGraphId);
-        const targetWorkspaceId = activeGraph?.workspaceId || activeGraphId;
-        
-        // Delete only nodes and edges from the current workspace
-        const nodesToDelete = await db.nodes.where('workspaceId').equals(targetWorkspaceId).toArray();
-        const nodeIds = nodesToDelete.map(n => n.id);
-        
-        await db.nodes.where('workspaceId').equals(targetWorkspaceId).delete();
-        await db.edges.where('workspaceId').equals(targetWorkspaceId).delete();
-        
-        alert(`Deleted ${nodeIds.length} nodes from current canvas.`);
-      } catch (e) {
-        alert('Failed to clear canvas.');
+    // Button is now disabled if !activeGraphId, so we just focus on the modal
+    setPromptConfig({
+      show: true,
+      title: 'CLEAR CANVAS',
+      message: 'Are you sure you want to clear all nodes and connections from the current canvas? This cannot be undone.',
+      options: [
+        { label: 'CLEAR ALL', value: 'confirm' },
+        { label: 'CANCEL', value: 'cancel' }
+      ],
+      onConfirm: async (val) => {
+        if (val === 'confirm') {
+          try {
+            const activeGraph = await db.graphs.get(activeGraphId);
+            const targetWorkspaceId = activeGraph?.workspaceId || activeGraphId;
+            await db.nodes.where('workspaceId').equals(targetWorkspaceId).delete();
+            await db.edges.where('workspaceId').equals(targetWorkspaceId).delete();
+          } catch (e) {
+            console.error('Failed to clear canvas:', e);
+          }
+        }
+        setPromptConfig(prev => ({ ...prev, show: false }));
       }
-    }
+    });
   };
+
+  const handlePurgeOrphans = async () => {
+    const allGraphs = await db.graphs.toArray();
+    const validWorkspaceIds = new Set(allGraphs.map(g => g.workspaceId));
+    const everyNode = await db.nodes.toArray();
+    const orphans = everyNode.filter(n => !validWorkspaceIds.has(n.workspaceId));
+    
+    setPromptConfig({
+      show: true,
+      title: orphans.length > 0 ? 'PURGE ORPHANS' : 'DATABASE CLEAN',
+      message: orphans.length > 0 
+        ? `Found ${orphans.length} orphaned nodes from deleted canvases. These are taking up space in the background. Purge them?`
+        : 'No orphaned nodes found. Your database is fully synchronized.',
+      options: orphans.length > 0 
+        ? [{ label: 'PURGE DATABASE', value: 'confirm' }, { label: 'KEEP THEM', value: 'cancel' }]
+        : [{ label: 'EXCELLENT', value: 'close' }],
+      onConfirm: async (val) => {
+        if (val === 'confirm') {
+          const orphanIds = orphans.map(n => n.id);
+          await db.nodes.bulkDelete(orphanIds);
+          const everyEdge = await db.edges.toArray();
+          const orphanEdgeIds = everyEdge.filter(e => !validWorkspaceIds.has(e.workspaceId)).map(e => e.id);
+          await db.edges.bulkDelete(orphanEdgeIds);
+        }
+        setPromptConfig(prev => ({ ...prev, show: false }));
+      }
+    });
+  };
+
+
 
   return (
     <div className="flex items-center gap-4 p-4">
@@ -155,13 +194,23 @@ export function Toolbar() {
           >
             {isIngesting ? <Loader2 size={16} className="animate-spin" /> : connectedFolder ? <RefreshCw size={16} /> : <FolderOpen size={16} />}
           </button>
-          <button
+                    <button
             onClick={handleClear}
-            title="Clear All Nodes"
-            className="p-2 hover:bg-secondary text-red-400/60 hover:text-red-400 rounded transition-colors"
+            disabled={!activeGraphId}
+            title={activeGraphId ? "Clear All Nodes" : "Select a canvas first"}
+            className="p-2 hover:bg-secondary text-red-400/60 hover:text-red-400 rounded transition-colors disabled:opacity-20 disabled:cursor-not-allowed"
           >
             <Trash2 size={16} />
           </button>
+          
+          <button
+            onClick={handlePurgeOrphans}
+            title="Purge Orphaned Nodes"
+            className="p-2 hover:bg-secondary text-amber-400/60 hover:text-amber-400 rounded transition-colors"
+          >
+            <Eraser size={16} />
+          </button>
+
           <div className="h-6 w-[1px] bg-secondary-700 mx-1" />
           <button
             onClick={toggleAppTheme}
@@ -269,6 +318,14 @@ export function Toolbar() {
           ))}
         </div>
       </div>
+      <PromptModal
+        show={promptConfig.show}
+        title={promptConfig.title}
+        message={promptConfig.message}
+        options={promptConfig.options}
+        onConfirm={promptConfig.onConfirm}
+        onCancel={() => setPromptConfig(prev => ({ ...prev, show: false }))}
+      />
     </div>
   );
 }

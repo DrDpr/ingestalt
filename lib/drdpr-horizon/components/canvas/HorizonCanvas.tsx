@@ -110,17 +110,18 @@ export function HorizonCanvas() {
       const standard = activeStandardsMap.get(configId);
       
       const resolvedType = standard ? standard.type : 'other';
-      const nodeColor = standard ? standard.color : '#52525b';
-      const nodeIcon = standard ? standard.icon : 'FileText';
+      // Prioritize node-level icon/color over standard defaults
+      const nodeColor = node.payload?.color || (standard ? standard.color : '#52525b');
+      const nodeIcon = node.payload?.icon || (standard ? standard.icon : 'FileText');
       
       return {
         id: node.id,
         type: ['database', 'api', 'frontend', 'hook', 'standards'].includes(resolvedType) ? resolvedType : 'other',
         position: node.position,
-        data: { 
-          id: node.id, 
-          label: node.payload?.title || 'Untitled', 
-          type: resolvedType, 
+        data: {
+          id: node.id,
+          label: node.payload?.title || 'Untitled',
+          type: resolvedType,
           tags: node.payload?.tags || [],
           configId: configId,
           color: nodeColor,

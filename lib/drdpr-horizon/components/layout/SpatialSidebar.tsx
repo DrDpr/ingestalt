@@ -20,6 +20,7 @@ import {
   Settings
 } from 'lucide-react';
 import { DynamicIcon } from '@/lib/drdpr-horizon/components/DynamicIcon';
+import { PromptModal } from '../PromptModal';
 
 const CORE_TEMPLATES = [
   { id: 'note', title: 'Note', icon: FileText, color: '#94a3b8' },
@@ -32,6 +33,13 @@ export function SpatialSidebar() {
   const [searchQuery, setSearchQuery] = React.useState('');
   const [isCreatingGraph, setIsCreatingGraph] = React.useState(false);
   const [newGraphName, setNewGraphName] = React.useState('');
+  const [promptConfig, setPromptConfig] = React.useState({
+  show: false,
+  title: '',
+  message: '',
+  options: [] as { label: string; value: string }[] | undefined,
+  onConfirm: (val: string) => {},
+});
   
   // 1. Load Canvas (Space feature)
   const graphs = useLiveQuery(() => db.graphs.toArray()) || [];
@@ -50,7 +58,7 @@ export function SpatialSidebar() {
   
   // Filter nodes by active graph's workspace
   const filteredNodes = React.useMemo(() => {
-    if (!workspaceFilter) return allNodes;
+    if (!workspaceFilter) return [];
     return allNodes.filter(n => n.workspaceId === workspaceFilter);
   }, [allNodes, workspaceFilter]);
   
@@ -100,15 +108,67 @@ export function SpatialSidebar() {
   };
 
   // Delete a graph
-  const handleDeleteGraph = async (graphId: string, e: React.MouseEvent) => {
+    const handleDeleteGraph = async (graphId: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (confirm('Delete this canvas? All nodes in this view will remain but be unassigned.')) {
-      await db.graphs.delete(graphId);
-      if (activeGraphId === graphId) {
-        setActiveGraphId(null);
+    
+    setPromptConfig({
+      show: true,
+      title: 'DELETE CANVAS',
+      message: 'This will remove the canvas and all nodes associated with it. This cannot be undone.',
+      options: [
+        { label: 'DELETE EVERYTHING', value: 'confirm' },
+        { label: 'CANCEL', value: 'cancel' }
+      ],
+      onConfirm: async (val) => {
+        if (val === 'confirm') {
+          const graph = await db.graphs.get(graphId);
+          if (graph) {
+            await db.nodes.where('workspaceId').equals(graph.workspaceId).delete();
+            await db.edges.where('workspaceId').equals(graph.workspaceId).delete();
+          }
+          await db.graphs.delete(graphId);
+          if (activeGraphId === graphId) setActiveGraphId(null);
+        }
+        setPromptConfig(prev => ({ ...prev, show: false }));
       }
-    }
+    });
   };
+  // Purge Orphans using PromptModal
+  const handlePurgeOrphans = async () => {
+    const allGraphs = await db.graphs.toArray();
+    const validWorkspaceIds = new Set(allGraphs.map(g => g.workspaceId));
+    const everyNode = await db.nodes.toArray();
+    const orphans = everyNode.filter(n => !validWorkspaceIds.has(n.workspaceId));
+    
+    if (orphans.length === 0) {
+      alert('No orphaned nodes found.');
+      return;
+    }
+    setPromptConfig({
+      show: true,
+      title: 'PURGE ORPHANS',
+      message: `Found ${orphans.length} orphaned nodes from deleted canvases. Purge them now?`,
+      options: [
+        { label: 'PURGE DATABASE', value: 'confirm' },
+        { label: 'KEEP THEM', value: 'cancel' }
+      ],
+      onConfirm: async (val) => {
+        if (val === 'confirm') {
+          const orphanIds = orphans.map(n => n.id);
+          await db.nodes.bulkDelete(orphanIds);
+          
+          const everyEdge = await db.edges.toArray();
+          const orphanEdgeIds = everyEdge
+            .filter(e => !validWorkspaceIds.has(e.workspaceId))
+            .map(e => e.id);
+          await db.edges.bulkDelete(orphanEdgeIds);
+        }
+        setPromptConfig(prev => ({ ...prev, show: false }));
+      }
+    });
+  };
+
+  
 
   const onTypeDragStart = (event: React.DragEvent, typeId: string, configId?: string) => {
     event.dataTransfer.setData('application/reactflow', typeId);
@@ -304,6 +364,14 @@ export function SpatialSidebar() {
           </div>
         </SidebarCollapsible>
       </div>
+      <PromptModal
+        show={promptConfig.show}
+        title={promptConfig.title}
+        message={promptConfig.message}
+        options={promptConfig.options}
+        onConfirm={promptConfig.onConfirm}
+        onCancel={() => setPromptConfig(prev => ({ ...prev, show: false }))}
+      />
     </div>
   );
 }

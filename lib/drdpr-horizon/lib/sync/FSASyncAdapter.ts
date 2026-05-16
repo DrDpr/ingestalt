@@ -1,34 +1,31 @@
-import yaml from 'js-yaml';
-import type { NodeRecord } from '@drdpr/workspace-core';
+import matter from 'gray-matter';
 
 export class FSASyncAdapter {
-  async syncNode(node: NodeRecord, rootHandle: FileSystemDirectoryHandle) {
-    if (!node.filepath) return;
-
+  async syncNode(node: any, rootHandle: FileSystemDirectoryHandle) {
+    // Look in payload for the filename
+    const filepath = node.payload?.filename || node.payload?.filepath;
+    if (!filepath) return;
     const content = this.serialize(node);
     try {
-      await this.writeFile(rootHandle, node.filepath, content);
-      console.log(`[FSASync] Synced node ${node.id} to ${node.filepath}`);
+      await this.writeFile(rootHandle, filepath, content);
+      console.log(`[FSASync] Synced node ${node.id} to ${filepath}`);
     } catch (err) {
       console.error(`[FSASync] Failed to sync node ${node.id}:`, err);
     }
   }
-
-  private serialize(node: NodeRecord): string {
+  private serialize(node: any): string {
+    const { content, ...restOfPayload } = node.payload;
+    
+    // Merge core spatial data with payload customizations
     const frontmatter = {
       id: node.id,
-      type: node.type,
-      tags: node.tags,
+      configId: node.configId,
       position: node.position,
-      ...node.payload
+      ...restOfPayload
     };
     
-    // Remove content from frontmatter to keep it clean
-    const content = node.payload.content || '';
-    delete (frontmatter as any).content;
-    
-    const yamlBlock = yaml.dump(frontmatter);
-    return `---\n${yamlBlock}---\n\n${content}`;
+    // gray-matter's stringify will create the perfect Markdown + YAML file
+    return matter.stringify(content || '', frontmatter);
   }
 
   private async writeFile(root: FileSystemDirectoryHandle, path: string, content: string) {

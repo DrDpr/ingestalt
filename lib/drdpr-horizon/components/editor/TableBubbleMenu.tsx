@@ -106,13 +106,13 @@ export function TableBubbleMenu({ editor }: TableBubbleMenuProps) {
                         <ActionButton
                             onClick={() => editor.chain().focus().toggleHeaderRow().run()}
                             title="Toggle Header Row"
-                            className={editor.isActive('tableHeader') ? 'bg-secondary text-neutral-100' : ''}
+                            className={editor.isActive('tableHeader') ? 'bg-secondary text-foreground/90' : ''}
                             icon={<Table size={14} />}
                         />
                         <ActionButton
                             onClick={() => editor.chain().focus().toggleHeaderColumn().run()}
                             title="Toggle Header Column"
-                            className={editor.isActive('tableHeader') ? 'bg-secondary text-neutral-100' : ''}
+                            className={editor.isActive('tableHeader') ? 'bg-secondary text-foreground/90' : ''}
                             icon={<PanelLeft size={14} />}
                         />
 
@@ -147,7 +147,7 @@ function ActionButton({ onClick, icon, title, className = '' }: { onClick: () =>
     return (
         <button
             onClick={onClick}
-            className={`p-1.5 rounded-md transition-colors text-neutral-400 hover:bg-secondary hover:text-neutral-100 ${className}`}
+            className={`p-1.5 rounded-md transition-colors text-foreground/60 hover:bg-secondary hover:text-foreground/90 ${className}`}
             title={title}
         >
             {icon}

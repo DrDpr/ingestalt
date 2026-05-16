@@ -41,29 +41,32 @@ export const DynamicIcon = ({
   ...props
 }: DynamicIconProps) => {
   const IconComponent = useMemo(() => {
-    // Normalize icon name to PascalCase
-    const normalizedName = name
-      .split(/[-_\s]/)
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-      .join('') as IconName;
+    // 1. Try a direct match first (this fixes the PascalCase issue)
+    let Icon = LucideIcons[name as IconName];
     
-    // Try to get icon from lucide-react
-    const Icon = LucideIcons[normalizedName] as LucideIcon | undefined;
-    
-    if (Icon) {
-      return Icon;
+    // 2. If not found, try to normalize (for kebab-case or lowercase inputs)
+    if (!Icon) {
+      const normalizedName = name
+        .split(/[-_\s]/)
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .join('') as IconName;
+      Icon = LucideIcons[normalizedName];
     }
     
-    // Fallback icon
-    const FallbackIcon = LucideIcons[fallback] as LucideIcon | undefined;
-    
-    if (!FallbackIcon) {
-      console.warn(`[DynamicIcon] Neither "${normalizedName}" nor fallback "${fallback}" found. Using Box.`);
-      return LucideIcons.Box;
+    // 3. Validate and Return
+    if (Icon && (typeof Icon === 'function' || typeof Icon === 'object')) {
+      return Icon as React.ComponentType<LucideProps>;
     }
     
-    console.warn(`[DynamicIcon] Icon "${normalizedName}" not found. Using fallback "${fallback}".`);
-    return FallbackIcon;
+    const FallbackIcon = LucideIcons[fallback];
+    
+    if (FallbackIcon && (typeof FallbackIcon === 'function' || typeof FallbackIcon === 'object')) {
+      console.warn(`[DynamicIcon] Icon "${name}" not found. Using fallback "${fallback}".`);
+      return FallbackIcon as React.ComponentType<LucideProps>;
+    }
+    
+    console.warn(`[DynamicIcon] Neither "${name}" nor fallback "${fallback}" found. Using Box.`);
+    return LucideIcons.Box as React.ComponentType<LucideProps>;
   }, [name, fallback]);
   
   return <IconComponent size={size} className={className} style={style} {...props} />;
@@ -85,7 +88,23 @@ export const isValidIconName = (name: string): boolean => {
  * Get all available icon names
  */
 export const getAvailableIcons = (): string[] => {
-  return Object.keys(LucideIcons).filter(
-    key => typeof LucideIcons[key as IconName] === 'function'
-  );
+  const excludeList = ['createLucideIcon', 'Icon', 'icons', 'default', 'LucideIcon'];
+  
+  return Object.keys(LucideIcons).filter(key => {
+    if (excludeList.includes(key)) return false;
+    
+    // Icons always start with Uppercase
+    if (key.charAt(0) !== key.charAt(0).toUpperCase()) return false;
+
+    const value = LucideIcons[key as IconName];
+    
+    // Stricter check: Most icons in modern Lucide are objects with a specific 
+    // displayName or are simple functions.
+    const isRenderable = value && (
+      (typeof value === 'function') || 
+      (typeof value === 'object' && (value as any).displayName)
+    );
+    
+    return isRenderable;
+  });
 };

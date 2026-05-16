@@ -1,13 +1,16 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useUIStore } from '@/lib/drdpr-horizon/lib/store/useUIStore';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/lib/drdpr-horizon/lib/db';
-import { X, Eye, Edit2, ChevronDown, ChevronRight, Share2, ShieldAlert, Cpu, FileText, Settings2, HardDrive, Loader2 } from 'lucide-react';
+import { X, Eye, Edit2, ChevronDown, ChevronRight, Share2, ShieldAlert, Cpu, FileText, Settings2, HardDrive, Loader2, Palette, Tag, Plus, XCircle } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { useSync } from '@/lib/drdpr-horizon/lib/hooks/useSync';
 import { LocalInput } from '@/lib/drdpr-horizon/components/ui/LocalInput';
+import { DynamicIcon } from '@/lib/drdpr-horizon/components/DynamicIcon';
+import { IconPickerModal } from '@/lib/drdpr-horizon/components/IconPickerModal';
+import { ConfirmDialog } from '@/lib/drdpr-horizon/components/ConfirmDialog';
 
 // --- Modular Imports ---
 import { RelationshipPanel } from './RelationshipPanel';
@@ -31,6 +34,28 @@ export function Inspector() {
 
   // Governance Edit State (MOVED ABOVE EARLY RETURN)
   const [isEditingGovernance, setIsEditingGovernance] = useState(false);
+  
+  // New Feature States
+  const [showIconPicker, setShowIconPicker] = useState(false);
+  const [showStandardsDropdown, setShowStandardsDropdown] = useState(false);
+  const [newTagInput, setNewTagInput] = useState('');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [tagToDelete, setTagToDelete] = useState<string | null>(null);
+  const standardsDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close standards dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (standardsDropdownRef.current && !standardsDropdownRef.current.contains(event.target as Node)) {
+        setShowStandardsDropdown(false);
+      }
+    };
+
+    if (showStandardsDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showStandardsDropdown]);
 
   const togglePanel = (id: string) => {
     setOpenPanels(prev => ({ ...prev, [id]: !prev[id] }));
@@ -51,10 +76,13 @@ export function Inspector() {
   }, [selectedNodeId]);
 
   // Check for standards to decide if Properties panel is applicable
-  const activeStandards = useLiveQuery(
-    () => db.nodes.toArray().then(nodes => nodes.filter(n => n.payload?.type === 'standards')), 
-    []
-  );
+  // Filter by current workspace to avoid duplicates from other workspaces
+  const activeStandards = useLiveQuery(async () => {
+    if (!activeNode) return [];
+    const workspaceId = activeNode.workspaceId;
+    const allNodes = await db.nodes.where('workspaceId').equals(workspaceId).toArray();
+    return allNodes.filter(n => n.payload?.type === 'standards');
+  }, [activeNode?.workspaceId]);
 
   const standardDef = useMemo(() => {
     if (!activeNode || !activeStandards) return null;
@@ -99,22 +127,148 @@ export function Inspector() {
     if (autoSaveEnabled) await syncNodeToFile(selectedNodeId);
   };
 
+  // New Feature Handlers
+  const handleColorChange = async (newColor: string) => {
+    if (!selectedNodeId) return;
+    await db.nodes.update(selectedNodeId, {
+      'payload.color': newColor,
+      lastModified: Date.now()
+    });
+    if (autoSaveEnabled) await syncNodeToFile(selectedNodeId);
+  };
+
+  const handleIconChange = async (newIcon: string) => {
+    if (!selectedNodeId) return;
+    await db.nodes.update(selectedNodeId, {
+      'payload.icon': newIcon,
+      lastModified: Date.now()
+    });
+    setShowIconPicker(false);
+    if (autoSaveEnabled) await syncNodeToFile(selectedNodeId);
+  };
+
+  const handleStandardChange = async (newConfigId: string) => {
+    if (!selectedNodeId) return;
+    await db.nodes.update(selectedNodeId, {
+      configId: newConfigId,
+      lastModified: Date.now()
+    });
+    setShowStandardsDropdown(false);
+    if (autoSaveEnabled) await syncNodeToFile(selectedNodeId);
+  };
+
+  const handleAddTag = async () => {
+    if (!selectedNodeId || !newTagInput.trim()) return;
+    const currentTags = activeNode?.payload?.tags || [];
+    if (currentTags.includes(newTagInput.trim())) {
+      setNewTagInput('');
+      return;
+    }
+    await db.nodes.update(selectedNodeId, {
+      'payload.tags': [...currentTags, newTagInput.trim()],
+      lastModified: Date.now()
+    });
+    setNewTagInput('');
+    if (autoSaveEnabled) await syncNodeToFile(selectedNodeId);
+  };
+
+  const handleRemoveTag = async (tag: string) => {
+    if (!selectedNodeId) return;
+    const currentTags = activeNode?.payload?.tags || [];
+    await db.nodes.update(selectedNodeId, {
+      'payload.tags': currentTags.filter((t: string) => t !== tag),
+      lastModified: Date.now()
+    });
+    setShowDeleteConfirm(false);
+    setTagToDelete(null);
+    if (autoSaveEnabled) await syncNodeToFile(selectedNodeId);
+  };
+
   return (
     <div className="flex flex-col h-full bg-background text-foreground/60 overflow-hidden">
+      {/* Modals */}
+      <IconPickerModal
+        show={showIconPicker}
+        currentIcon={payload?.icon || 'FileText'}
+        onSelect={handleIconChange}
+        onCancel={() => setShowIconPicker(false)}
+      />
+      <ConfirmDialog
+        show={showDeleteConfirm}
+        title="Remove Tag"
+        message={`Are you sure you want to remove the tag "${tagToDelete}"?`}
+        variant="warning"
+        confirmText="Remove"
+        onConfirm={() => tagToDelete && handleRemoveTag(tagToDelete)}
+        onCancel={() => {
+          setShowDeleteConfirm(false);
+          setTagToDelete(null);
+        }}
+      />
+
       {/* Inspector Header */}
       <div className="flex justify-between items-start p-4 border-b border-border bg-background/50 flex-shrink-0 z-20">
         <div className="flex-1 min-w-0 mr-4">
-          <LocalInput 
+          <LocalInput
             value={payload?.title || ''}
             onChange={(val) => handleTitleChange(val)}
             className="w-full bg-transparent border-none focus:ring-0 text-sm font-bold text-foreground/80 uppercase  placeholder:text-foreground/30"
             placeholder="Node Title"
           />
-          <div className="flex items-center gap-2 mt-1">
-            <span className="text-xs px-1.5 py-0.5 rounded bg-background text-foreground/50 font-bold uppercase">
-              {type}
-            </span>
-            <LocalInput 
+          <div className="flex items-center gap-2 mt-1 flex-wrap">
+            {/* Standards Switcher */}
+            <div className="relative" ref={standardsDropdownRef}>
+              <button
+                onClick={() => setShowStandardsDropdown(!showStandardsDropdown)}
+                className="text-xs px-1.5 py-0.5 rounded bg-background text-foreground/50 font-bold uppercase hover:bg-secondary transition-colors flex items-center gap-1"
+              >
+                {type}
+                <ChevronDown size={10} />
+              </button>
+              {showStandardsDropdown && (
+                <div className="absolute top-full left-0 mt-1 bg-card border border-border rounded-lg shadow-lg z-50 min-w-[150px] max-h-[200px] overflow-y-auto custom-scrollbar">
+                  {activeStandards?.map((std) => (
+                    <div key={std.id}>
+                      {std.payload?.definitions?.map((def: any) => (
+                        <button
+                          key={def.id}
+                          onClick={() => handleStandardChange(def.id)}
+                          className={`w-full px-3 py-2 text-left text-xs hover:bg-secondary transition-colors flex items-center gap-2 ${
+                            activeNode.configId === def.id ? 'bg-secondary' : ''
+                          }`}
+                        >
+                          <DynamicIcon name={def.icon || 'Box'} size={12} style={{ color: def.color }} />
+                          <span>{def.type}</span>
+                        </button>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Color Picker */}
+            <div className="flex items-center gap-1">
+              <Palette size={10} className="text-foreground/40" />
+              <input
+                type="color"
+                value={payload?.color || '#52525b'}
+                onChange={(e) => handleColorChange(e.target.value)}
+                className="w-6 h-4 rounded cursor-pointer border border-border"
+                title="Node Color"
+              />
+            </div>
+
+            {/* Icon Picker */}
+            <button
+              onClick={() => setShowIconPicker(true)}
+              className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-background hover:bg-secondary transition-colors"
+              title="Change Icon"
+            >
+              <DynamicIcon name={payload?.icon || 'FileText'} size={12} style={{ color: payload?.color || '#52525b' }} />
+            </button>
+
+            <LocalInput
               value={payload?.filename || `${activeNode.id}.md`}
               onChange={async (val) => {
                 await db.nodes.update(selectedNodeId, {
@@ -123,9 +277,53 @@ export function Inspector() {
                 });
                 if (autoSaveEnabled) await syncNodeToFile(selectedNodeId);
               }}
-              className="bg-transparent border-none focus:ring-0 text-xs text-foreground/50 font-mono italic outline-none hover:text-foreground/30 transition-colors w-full"
+              className="bg-transparent border-none focus:ring-0 text-xs text-foreground/50 font-mono italic outline-none hover:text-foreground/30 transition-colors flex-1 min-w-[100px]"
               placeholder={`${activeNode.id}.md`}
             />
+          </div>
+
+          {/* Inline Tag Editor */}
+          <div className="flex items-center gap-1 mt-2 flex-wrap">
+            <Tag size={10} className="text-foreground/40" />
+            {(payload?.tags || []).map((tag: string) => (
+              <div
+                key={tag}
+                className="group flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-500/20 border border-blue-500/30 text-xs text-blue-400"
+              >
+                <span>{tag}</span>
+                <button
+                  onClick={() => {
+                    setTagToDelete(tag);
+                    setShowDeleteConfirm(true);
+                  }}
+                  className="opacity-0 group-hover:opacity-100 transition-opacity hover:text-red-400"
+                >
+                  <XCircle size={10} />
+                </button>
+              </div>
+            ))}
+            <div className="flex items-center gap-1">
+              <input
+                type="text"
+                value={newTagInput}
+                onChange={(e) => setNewTagInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleAddTag();
+                  }
+                }}
+                placeholder="Add tag..."
+                className="w-20 px-2 py-0.5 text-xs bg-transparent border border-dashed border-border rounded focus:outline-none focus:border-blue-500 text-foreground/60"
+              />
+              <button
+                onClick={handleAddTag}
+                className="p-0.5 hover:bg-secondary rounded transition-colors text-foreground/40 hover:text-foreground"
+                title="Add Tag"
+              >
+                <Plus size={12} />
+              </button>
+            </div>
           </div>
         </div>
         <div className="flex items-center gap-2">
