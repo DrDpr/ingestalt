@@ -27,11 +27,7 @@ import { eventBus } from '@/lib/drdpr-horizon/lib/events/EventBus';
  * - EventBus + SyncManager for sync
  */
 export default function CanvasPage() {
-  const canvasComponent = React.useMemo(() => (
-    <ReactFlowProvider>
-      <HorizonCanvas />
-    </ReactFlowProvider>
-  ), []);
+  const canvasComponent = React.useMemo(() => <HorizonCanvas />, []);
   
   const inspectorComponent = React.useMemo(() => <Inspector />, []);
   const toolbarComponent = React.useMemo(() => <Toolbar />, []);
@@ -43,10 +39,12 @@ export default function CanvasPage() {
   }, []);
 
   return (
-    <WorkspaceLayout
-      canvas={canvasComponent}
-      inspector={inspectorComponent}
-      toolbar={toolbarComponent}
-    />
+    <ReactFlowProvider>
+      <WorkspaceLayout
+        canvas={canvasComponent}
+        inspector={inspectorComponent}
+        toolbar={toolbarComponent}
+      />
+    </ReactFlowProvider>
   );
 }
