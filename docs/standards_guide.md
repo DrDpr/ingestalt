@@ -35,12 +35,39 @@ Consistency in color and iconography is critical for spatial navigation.
 | Type | Color | Icon | Description |
 | :--- | :--- | :--- | :--- |
 | **Database** | `#3b82f6` (Blue) | `Database` | Tables, schemas, and persistence layers. |
-| **API** | `#22c55e` (Green) | `Network` | Endpoints, services, and data parsers. |
+| **API** | `#22c55e` (Green) | `Wifi` | Endpoints, services, and network requests. |
 | **Frontend** | `#a855f7` (Purple) | `Layout` | UI components, pages, and layouts. |
-| **Hook** | `#f59e0b` (Orange) | `Zap` | React hooks and state management logic. |
-| **State** | `#ec4899` (Pink) | `Activity` | Global state stores and transitions. |
-| **Standards** | `#fbbf24` (Yellow) | `Star` | Core principles and architectural rules. |
-| **Task** | `#8b5cf6` (Violet) | `Sparkles` | AI tasks or actionable items. |
+| **Hook / Logic** | `#f59e0b` (Orange) | `Box` | Reusable logic, hooks, and process flows. |
+| **Standards** | `#f59e0b` (Yellow) | `Settings` | Architectural rules and node definitions. |
+| **AI Task** | `#a855f7` (Violet) | `CheckSquare` | Actionable items for AI agents. |
+
+---
+
+## 3. Supported Field Types (Interpreters)
+
+When defining `fields` in your standard, use these types to enable specialized UI interpreters in the Inspector:
+
+| Type ID | Label | Description |
+| :--- | :--- | :--- |
+| `text` | Plain Text | Standard string input. |
+| `file_path` | File Path | Clickable path to open files in VSCode. |
+| `interface_list`| Method List | Table of functions with "Jump to Code" support. |
+| `tables_list` | DB Tables | Schema management for databases. |
+| `code_list` | Code Snippets | Collection of editable code blocks. |
+| `story_list` | User Stories | Behavioral checklist (User Stories). |
+| `flow_list` | Process Flow | Numbered execution steps. |
+
+---
+
+## 4. AI Prompt Templates
+
+Standards can include `prompts` to automate tasks. These appear in the ✨ Sparkles panel of any node following the standard.
+
+```yaml
+prompts:
+  - label: "Generate Documentation"
+    template: "Document this {type} called {title}: {context}"
+```
 
 ---
 

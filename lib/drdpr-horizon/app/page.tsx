@@ -1,10 +1,10 @@
 'use client';
 
 import React from 'react';
-import { WorkspaceLayout } from '@/components/layout/WorkspaceLayout';
-import { HorizonCanvas } from '@/components/canvas/HorizonCanvas';
-import { Inspector } from '@/components/inspector/Inspector';
-import { Toolbar } from '@/components/layout/Toolbar';
+import { WorkspaceLayout } from '../components/layout/WorkspaceLayout';
+import { HorizonCanvas } from '../components/canvas/HorizonCanvas';
+import { Inspector } from '../components/inspector/Inspector';
+import { Toolbar } from '../components/layout/Toolbar';
 
 import { ReactFlowProvider } from '@xyflow/react';
 

@@ -26,12 +26,12 @@ interface UIState {
   isInspectorOpen: boolean;
   isSearchOpen: boolean;
   isToolbarOpen: boolean;
+  isPaletteOpen: boolean;
   isShortcutsHelpOpen: boolean; // Keyboard shortcuts help modal
   relationshipMode: 'all' | 'selected' | 'trace';
   edgeHandleType: 'fixed' | 'smart';
   edgePathType: 'organic' | 'circuit';
   basePath: string;
-  theme: 'light' | 'dark';
   
   // Canvas State (React Flow Viewport)
   viewport: Viewport;
@@ -61,14 +61,13 @@ interface UIState {
   setInspectorOpen: (open: boolean) => void;
   setSearchOpen: (open: boolean) => void;
   setToolbarOpen: (open: boolean) => void;
+  setPaletteOpen: (open: boolean) => void;
   setShortcutsHelpOpen: (open: boolean) => void;
   setRelationshipMode: (mode: 'all' | 'selected' | 'trace') => void;
   setEdgeHandleType: (mode: 'fixed' | 'smart') => void;
   setEdgePathType: (mode: 'organic' | 'circuit') => void;
   cycleEdgePathType: () => void;
   setBasePath: (path: string) => void;
-  setTheme: (theme: 'light' | 'dark') => void;
-  toggleTheme: () => void;
   
   setViewport: (viewport: Viewport) => void;
   setDirectoryHandle: (handle: FileSystemDirectoryHandle | null) => void;
@@ -94,11 +93,11 @@ export const useUIStore = create<UIState>()(
       isInspectorOpen: false,
       isSearchOpen: false,
       isToolbarOpen: true,
+      isPaletteOpen: true,
       isShortcutsHelpOpen: false,
       relationshipMode: 'all',
       edgeHandleType: 'smart',
       edgePathType: 'circuit',
-      theme: 'dark',
       
       viewport: { x: 0, y: 0, zoom: 1 },
       autoSaveEnabled: false,
@@ -165,6 +164,7 @@ export const useUIStore = create<UIState>()(
       setLeftOpen: (open) => set({ isLeftOpen: open }),
       setSearchOpen: (open) => set({ isSearchOpen: open }),
       setToolbarOpen: (open) => set({ isToolbarOpen: open }),
+      setPaletteOpen: (open) => set({ isPaletteOpen: open }),
       setShortcutsHelpOpen: (open) => set({ isShortcutsHelpOpen: open }),
       setRelationshipMode: (mode) => set({ relationshipMode: mode }),
       setEdgeHandleType: (mode) => set({ edgeHandleType: mode }),
@@ -173,8 +173,6 @@ export const useUIStore = create<UIState>()(
         edgePathType: state.edgePathType === 'organic' ? 'circuit' : 'organic'
       })),
       setBasePath: (path) => set({ basePath: path }),
-      setTheme: (theme) => set({ theme }),
-      toggleTheme: () => set((state) => ({ theme: state.theme === 'dark' ? 'light' : 'dark' })),
       
       setViewport: (viewport) => set({ viewport }),
       setDirectoryHandle: (handle) => set({ directoryHandle: handle }),
@@ -186,8 +184,8 @@ export const useUIStore = create<UIState>()(
     {
       name: 'horizon-ui-store',
       partialize: (state) => ({
-        theme: state.theme,
         isToolbarOpen: state.isToolbarOpen,
+        isPaletteOpen: state.isPaletteOpen,
         relationshipMode: state.relationshipMode,
         edgeHandleType: state.edgeHandleType,
         edgePathType: state.edgePathType,

@@ -23,6 +23,7 @@ import { FloatingEdge } from './edges/FloatingEdge';
 import { useKeyboardShortcuts } from '../../lib/hooks/useKeyboardShortcuts';
 import { KeyboardShortcutsHelp } from '../KeyboardShortcutsHelp';
 import { useTheme } from 'next-themes';
+import { PromptModal } from '../PromptModal';
 
 import '@xyflow/react/dist/style.css';
 
@@ -52,10 +53,23 @@ export function HorizonCanvas() {
     setSelectedNodeId, selectedNodeId,
     clearSelection,
     relationshipMode, setViewport, viewport,
-    autoSaveEnabled, theme, activeGraphId,
+    autoSaveEnabled, activeGraphId,
     copiedNodeIds, setCopiedNodeIds,
     toggleNodeSelection, selectedNodeIds, selectAllNodes, setPrimaryNodeId
   } = useUIStore();
+  const [promptConfig, setPromptConfig] = React.useState<{
+    show: boolean;
+    title: string;
+    message: string;
+    defaultValue?: string;
+    options?: { label: string; value: string }[];
+    onConfirm: (val: string) => void;
+  }>({
+    show: false,
+    title: '',
+    message: '',
+    onConfirm: () => { },
+  });
   const { resolvedTheme } = useTheme();
   const { screenToFlowPosition, getNodes } = useReactFlow();
   const { syncNodeToFile } = useSync();
@@ -99,6 +113,7 @@ export function HorizonCanvas() {
         if (node.payload?.configId || node.id) {
            map.set(node.payload?.configId || node.id, {
              type: node.payload?.type,
+             label: node.payload?.title,
              title: node.payload?.title,
              icon: node.payload?.icon || 'ShieldAlert',
              color: node.payload?.color || '#f59e0b',
@@ -242,13 +257,24 @@ export function HorizonCanvas() {
   }, [syncNodeToFile, autoSaveEnabled, workspaceFilter]);
 
   const onEdgeDoubleClick = useCallback(async (e: any, edge: Edge) => {
-    if (confirm('Delete this connection?')) {
-      await db.edges.delete(edge.id);
-      // Sync the source node because its YAML 'relations' just changed
-      if (autoSaveEnabled) {
-        await syncNodeToFile(edge.source);
+    setPromptConfig({
+      show: true,
+      title: 'DELETE CONNECTION',
+      message: 'Are you sure you want to remove this relationship?',
+      options: [
+        { label: 'DELETE CONNECTION', value: 'confirm' },
+        { label: 'CANCEL', value: 'cancel' }
+      ],
+      onConfirm: async (val) => {
+        if (val === 'confirm') {
+          await db.edges.delete(edge.id);
+          if (autoSaveEnabled) {
+            await syncNodeToFile(edge.source);
+          }
+        }
+        setPromptConfig(prev => ({ ...prev, show: false }));
       }
-    }
+    });
   }, [syncNodeToFile, autoSaveEnabled]);
 
   const onDragOver = useCallback((event: React.DragEvent) => {
@@ -285,8 +311,10 @@ export function HorizonCanvas() {
       });
 
       const id = `node_${Math.random().toString(36).substr(2, 9)}`;
-      const nodeType = type || activeStandardsMap.get(configId)?.type || 'other';
-      const title = `New ${activeStandardsMap.get(configId)?.title || type.charAt(0).toUpperCase() + type.slice(1)}`;
+      const standard = activeStandardsMap.get(configId);
+      const nodeType = type || standard?.type || 'other';
+      const typeLabel = standard?.label || standard?.title || type;
+      const title = `New ${typeLabel.charAt(0).toUpperCase() + typeLabel.slice(1)}`;
 
       // Get workspaceId from active graph's workspace or use activeGraphId directly or 'default'
       const nodeWorkspaceId = workspaceFilter || 'default';
@@ -327,25 +355,59 @@ export function HorizonCanvas() {
 
   const onPaneContextMenu = useCallback((event: React.MouseEvent) => {
     event.preventDefault();
-    // Prompt-based spawning is now secondary to the Palette, but we'll keep it as a fallback
-    const type = prompt('Spawn node type? (database, api, frontend, other)', 'other');
-    if (!type) return;
-    const title = prompt('Node title?', 'New Node');
-    if (!title) return;
-    const id = `node_${Math.random().toString(36).substr(2, 9)}`;
-    const position = screenToFlowPosition({ x: event.clientX, y: event.clientY });
-    db.nodes.add({
-      id, configId: `node_standards_${type}`, workspaceId: 'default', position, lastModified: Date.now(),
-      payload: { title, type, content: `# ${title}\nGenerated on canvas.`, tags: [] }
+    const x = event.clientX;
+    const y = event.clientY;
+
+    // Step 1: Prompt for Type
+    setPromptConfig({
+      show: true,
+      title: 'SPAWN NODE',
+      message: 'Select the architectural type for the new node.',
+      options: [
+        { label: 'DATABASE (ENTITY)', value: 'database' },
+        { label: 'API (ENDPOINT)', value: 'api' },
+        { label: 'FRONTEND (UI)', value: 'frontend' },
+        { label: 'OTHER (GENERAL)', value: 'other' }
+      ],
+      onConfirm: (type) => {
+        // Step 2: Prompt for Title
+        setPromptConfig({
+          show: true,
+          title: `NEW ${type.toUpperCase()}`,
+          message: 'Give your new node a descriptive title.',
+          defaultValue: 'New Node',
+          onConfirm: (title) => {
+            const id = `node_${Math.random().toString(36).substr(2, 9)}`;
+            const position = screenToFlowPosition({ x, y });
+            db.nodes.add({
+              id, configId: `node_standards_${type}`, workspaceId: workspaceFilter || 'default', position, lastModified: Date.now(),
+              payload: { title, type, content: `# ${title}\nGenerated on canvas.`, tags: [] }
+            });
+            setPromptConfig(prev => ({ ...prev, show: false }));
+          }
+        });
+      }
     });
-  }, [screenToFlowPosition]);
+  }, [screenToFlowPosition, workspaceFilter]);
 
   // Keyboard shortcuts handlers
   const handleDelete = useCallback(async (nodeIds: string[]) => {
-    if (confirm(`Delete ${nodeIds.length} node(s)?`)) {
-      await Promise.all(nodeIds.map(id => db.nodes.delete(id)));
-      clearSelection();
-    }
+    setPromptConfig({
+      show: true,
+      title: 'DELETE NODES',
+      message: `Delete ${nodeIds.length} node(s) from the workspace?`,
+      options: [
+        { label: 'DELETE ALL', value: 'confirm' },
+        { label: 'CANCEL', value: 'cancel' }
+      ],
+      onConfirm: async (val) => {
+        if (val === 'confirm') {
+          await Promise.all(nodeIds.map(id => db.nodes.delete(id)));
+          clearSelection();
+        }
+        setPromptConfig(prev => ({ ...prev, show: false }));
+      }
+    });
   }, [clearSelection]);
 
   const handleDuplicate = useCallback(async (nodeIds: string[]) => {
@@ -431,6 +493,15 @@ export function HorizonCanvas() {
           size={1}
         />
       </ReactFlow>
+      <PromptModal
+        show={promptConfig.show}
+        title={promptConfig.title}
+        message={promptConfig.message}
+        defaultValue={promptConfig.defaultValue}
+        options={promptConfig.options}
+        onConfirm={promptConfig.onConfirm}
+        onCancel={() => setPromptConfig(prev => ({ ...prev, show: false }))}
+      />
     </div>
   );
 }

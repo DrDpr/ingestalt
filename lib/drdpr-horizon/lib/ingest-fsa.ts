@@ -70,12 +70,28 @@ export async function getStoredFolderHandle(): Promise<FileSystemDirectoryHandle
 }
 
 /**
+ * Checks if a directory handle likely points to a project root or system folder
+ * rather than a documentation/notes folder.
+ */
+export async function isProbablyProjectRoot(handle: FileSystemDirectoryHandle): Promise<boolean> {
+  const rootMarkers = ['node_modules', '.git', 'package.json', 'venv', '.venv', '.next', '.gemini', 'target', 'vendor'];
+  try {
+    for await (const [name] of (handle as any).entries()) {
+      if (rootMarkers.includes(name)) return true;
+    }
+  } catch (e) {
+    console.warn('[FSA] Could not perform root check:', e);
+  }
+  return false;
+}
+
+/**
  * Primary client-side ingestion:
  * 1. Uses stored FSA handle if available
  * 2. Falls back to prompting the user to pick a folder
  * 3. Reads all .md files and ingests them into IndexedDB
  */
-export async function ingestFromFileSystem(onProgress?: (msg: string) => void): Promise<{ count: number; nodeIds: string[] }> {
+export async function ingestFromFileSystem(onProgress?: (msg: string) => void, skipRootCheck = false): Promise<{ count: number; nodeIds: string[]; isProjectRoot?: boolean }> {
   onProgress?.('Checking stored folder handle...');
 
   let handle = await getStoredFolderHandle();
@@ -88,6 +104,14 @@ export async function ingestFromFileSystem(onProgress?: (msg: string) => void): 
   if (!handle) {
     onProgress?.('Folder access denied or cancelled.');
     return { count: 0, nodeIds: [] };
+  }
+
+  // Check if this looks like a project root (e.g. has node_modules)
+  if (!skipRootCheck) {
+    const isRoot = await isProbablyProjectRoot(handle);
+    if (isRoot) {
+      return { count: 0, nodeIds: [], isProjectRoot: true };
+    }
   }
 
   onProgress?.(`Reading files from "${handle.name}"...`);
@@ -104,7 +128,7 @@ export async function ingestFromFileSystem(onProgress?: (msg: string) => void): 
   const result = await layoutAndPersist(files, workspaceId);
 
   onProgress?.(`Done. Ingested ${result.count} nodes from "${handle.name}".`);
-  return result;
+  return { ...result, isProjectRoot: false };
 }
 
 /**

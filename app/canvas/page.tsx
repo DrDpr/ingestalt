@@ -10,6 +10,7 @@ import { useEffect } from 'react';
 import { SyncManager } from '@/lib/drdpr-horizon/lib/sync/SyncManager';
 import { db } from '@/lib/drdpr-horizon/lib/db';
 import { eventBus } from '@/lib/drdpr-horizon/lib/events/EventBus';
+import { WelcomeOnboarding } from '@/lib/drdpr-horizon/components/layout/WelcomeOnboarding';
 
 /**
  * Canvas Page - Spatial Graph IDE
@@ -47,6 +48,8 @@ export default function CanvasPage() {
       canvas={canvasComponent}
       inspector={inspectorComponent}
       toolbar={toolbarComponent}
-    />
+    >
+      <WelcomeOnboarding />
+    </WorkspaceLayout>
   );
 }

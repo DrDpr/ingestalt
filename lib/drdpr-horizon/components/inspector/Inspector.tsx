@@ -110,8 +110,8 @@ export function Inspector() {
 
   // --- Logic for Visibility ---
   const showGovernance = type === 'standards';
-  const showPayload = !!(standardDef && standardDef.fields);
-  const showAITask = type === 'ai-task';
+  const showPayload = !!(standardDef && (standardDef.fields || standardDef.prompts));
+  const showAITask = type === 'ai-task' || (standardDef && standardDef.prompts && standardDef.prompts.length > 0);
 
   const handleManualSave = async () => {
     if (!selectedNodeId) return;
@@ -427,7 +427,10 @@ export function Inspector() {
             isOpen={openPanels.aiTask}
             onToggle={() => togglePanel('aiTask')}
           >
-            <AITaskPromptBuilder node={activeNode} />
+          <AITaskPromptBuilder 
+            node={activeNode} 
+            customTemplates={standardDef?.prompts} 
+          />
           </CollapsibleSection>
         )}
 

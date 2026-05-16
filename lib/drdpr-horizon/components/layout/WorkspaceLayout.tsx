@@ -19,10 +19,12 @@ export function WorkspaceLayout({
   canvas,
   inspector,
   toolbar,
+  children
 }: {
   canvas: React.ReactNode;
   inspector: React.ReactNode;
   toolbar?: React.ReactNode;
+  children?: React.ReactNode;
 }) {
   const isInspectorOpen = useUIStore((state) => state.isInspectorOpen);
   const setInspectorOpen = useUIStore((state) => state.setInspectorOpen);
@@ -67,6 +69,7 @@ export function WorkspaceLayout({
         onRightSidebarChange={setInspectorOpen}
       >
         {canvas}
+        {children}
       </AppShell>
     </SidePull>
   );

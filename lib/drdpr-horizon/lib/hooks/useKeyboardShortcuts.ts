@@ -2,6 +2,7 @@ import { useEffect, useCallback } from 'react';
 import { useReactFlow } from '@xyflow/react';
 import { useUIStore } from '../store/useUIStore';
 import { db } from '../db';
+import { useTheme } from 'next-themes';
 
 interface KeyboardShortcutsOptions {
   onDelete?: (nodeIds: string[]) => void;
@@ -17,10 +18,10 @@ interface KeyboardShortcutsOptions {
  */
 export function useKeyboardShortcuts(options: KeyboardShortcutsOptions = {}) {
   const { fitView, zoomIn, zoomOut, setCenter } = useReactFlow();
+  const { setTheme, resolvedTheme } = useTheme();
   const {
     selectedNodeId,
     clearSelection,
-    toggleTheme,
     cycleEdgePathType,
     setShortcutsHelpOpen,
     setInspectorOpen,
@@ -113,7 +114,7 @@ export function useKeyboardShortcuts(options: KeyboardShortcutsOptions = {}) {
       // FR-10.5.3: Toggle theme (Ctrl/Cmd+Shift+T)
       if (mod && shift && event.key === 'T') {
         event.preventDefault();
-        toggleTheme();
+        setTheme(resolvedTheme === 'dark' ? 'light' : 'dark');
         return;
       }
 
@@ -229,7 +230,8 @@ export function useKeyboardShortcuts(options: KeyboardShortcutsOptions = {}) {
       zoomOut,
       setCenter,
       clearSelection,
-      toggleTheme,
+      setTheme,
+      resolvedTheme,
       cycleEdgePathType,
       setShortcutsHelpOpen,
       setInspectorOpen,

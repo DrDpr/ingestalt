@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { RefreshCw, Share2, Anchor, Zap, Cpu, Compass, Trash2, FolderOpen, CheckCircle2, Loader2, Sun, Moon, Eraser, Keyboard, Copy, Download, FileText, X } from 'lucide-react';
+import { RefreshCw, Share2, Anchor, Zap, ZapOff, Cpu, Compass, Trash2, FolderOpen, CheckCircle2, Loader2, Sun, Moon, Eraser, Keyboard, Copy, Download, FileText, X } from 'lucide-react';
 import { useUIStore } from '@/lib/drdpr-horizon/lib/store/useUIStore';
 import { ingestFromFileSystem, getStoredFolderHandle, connectAndStoreFolder, verifyPermission } from '@/lib/drdpr-horizon/lib/ingest-fsa';
 import { db } from '@/lib/drdpr-horizon/lib/db';
@@ -14,14 +14,15 @@ export function Toolbar() {
     relationshipMode, setRelationshipMode,
     edgeHandleType, setEdgeHandleType,
     edgePathType, setEdgePathType,
-    theme, toggleTheme,
     setActiveGraphId,
     activeGraphId,
     setShortcutsHelpOpen,
     selectedNodeIds,
-    clearNodeSelection
+    clearNodeSelection,
+    isPaletteOpen,
+    setPaletteOpen
   } = useUIStore();
-  const { resolvedTheme } = useTheme();
+  const { setTheme, resolvedTheme } = useTheme();
 
   const [connectedFolder, setConnectedFolder] = useState<string | null>(null);
   const [ingestStatus, setIngestStatus] = useState<string | null>(null);
@@ -31,13 +32,12 @@ export function Toolbar() {
     show: boolean;
     title: string;
     message: string;
-    options: { label: string; value: string }[];
+    options?: { label: string; value: string }[];
     onConfirm: (val: string) => void;
   }>({
     show: false,
     title: '',
     message: '',
-    options: [],
     onConfirm: () => { },
   });
 
@@ -102,24 +102,38 @@ export function Toolbar() {
       }
 
       // Ingest with temporary workspace ID (folder name)
-      const result = await ingestFromFileSystem((msg) => setIngestStatus(msg));
+      let result = await ingestFromFileSystem((msg) => setIngestStatus(msg));
 
-      // Update ONLY the newly ingested nodes to use the target workspace
-      for (const nodeId of result.nodeIds) {
-        await db.nodes.update(nodeId, { workspaceId: targetWorkspaceId });
+      // Handle Project Root Warning
+      if (result.isProjectRoot) {
+        setIngestStatus('⚠ Potential project root detected');
+        setPromptConfig({
+          show: true,
+          title: 'WIDE INGESTION WARNING',
+          message: `The folder "${handle.name}" contains project files (like node_modules or .git). Ingesting this might result in a lot of noise. Do you want to continue indexing markdown files from this entire project, or cancel and select a more specific documentation folder?`,
+          options: [
+            { label: 'INGEST ANYWAY', value: 'confirm' },
+            { label: 'SELECT DIFFERENT FOLDER', value: 'change' },
+            { label: 'CANCEL', value: 'cancel' }
+          ],
+          onConfirm: async (val) => {
+            setPromptConfig(prev => ({ ...prev, show: false }));
+            if (val === 'confirm') {
+              const retryResult = await ingestFromFileSystem((msg) => setIngestStatus(msg), true);
+              finalizeIngestion(retryResult, targetWorkspaceId);
+            } else if (val === 'change') {
+              await handleChangeFolder();
+            } else {
+              setIngestStatus('Ingestion cancelled.');
+              setTimeout(() => setIngestStatus(null), 3000);
+            }
+          }
+        });
+        return;
       }
 
-      // Update edges for the newly ingested nodes
-      const allEdges = await db.edges.toArray();
-      const edgesToUpdate = allEdges.filter(e =>
-        result.nodeIds.includes(e.sourceId) || result.nodeIds.includes(e.targetId)
-      );
-      for (const edge of edgesToUpdate) {
-        await db.edges.update(edge.id, { workspaceId: targetWorkspaceId });
-      }
+      await finalizeIngestion(result, targetWorkspaceId);
 
-      setIngestStatus(`✓ ${result.count} nodes ingested`);
-      setTimeout(() => setIngestStatus(null), 3000);
     } catch (e) {
       console.error('Ingestion error:', e);
       setIngestStatus('✗ Ingestion failed');
@@ -127,6 +141,25 @@ export function Toolbar() {
     } finally {
       setIsIngesting(false);
     }
+  };
+
+  const finalizeIngestion = async (result: any, targetWorkspaceId: string) => {
+    // Update ONLY the newly ingested nodes to use the target workspace
+    for (const nodeId of result.nodeIds) {
+      await db.nodes.update(nodeId, { workspaceId: targetWorkspaceId });
+    }
+
+    // Update edges for the newly ingested nodes
+    const allEdges = await db.edges.toArray();
+    const edgesToUpdate = allEdges.filter(e =>
+      result.nodeIds.includes(e.sourceId) || result.nodeIds.includes(e.targetId)
+    );
+    for (const edge of edgesToUpdate) {
+      await db.edges.update(edge.id, { workspaceId: targetWorkspaceId });
+    }
+
+    setIngestStatus(`✓ ${result.count} nodes ingested`);
+    setTimeout(() => setIngestStatus(null), 3000);
   };
 
   const handleChangeFolder = async () => {
@@ -248,7 +281,7 @@ export function Toolbar() {
             <Keyboard size={16} />
           </button>
           <button
-            onClick={toggleTheme}
+            onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
             title={`Switch to ${resolvedTheme === 'dark' ? 'light' : 'dark'} mode`}
             className="p-2 hover:bg-secondary text-foreground/60 hover:text-foreground rounded transition-colors"
           >
@@ -359,6 +392,24 @@ export function Toolbar() {
         </div>
       </div>
 
+      {/* Floating Palette Toggle */}
+      <div className="flex flex-col gap-1">
+        <span className="text-xs uppercase tracking-widest text-foreground/40 ml-1">Palette</span>
+        <div className="flex bg-card/80 backdrop-blur border border-border rounded p-1 shadow-xs">
+          <button
+            onClick={() => setPaletteOpen(!isPaletteOpen)}
+            title={isPaletteOpen ? "Hide Floating Palette" : "Show Floating Palette"}
+            className={`flex items-center gap-1.5 px-3 py-1 text-xs uppercase tracking-wider rounded transition-all ${isPaletteOpen
+                ? 'bg-amber-600/50 text-foreground shadow-lg'
+                : 'text-foreground/40 hover:text-foreground/90'
+              }`}
+          >
+            {isPaletteOpen ? <Zap size={10} /> : <ZapOff size={10} />}
+            {isPaletteOpen ? 'Floating' : 'Hidden'}
+          </button>
+        </div>
+      </div>
+
       {/* Batch Actions (when nodes selected) */}
       {selectedNodeIds.size > 0 && (
         <>
@@ -370,7 +421,26 @@ export function Toolbar() {
             <button onClick={async () => { const nodes = await db.nodes.bulkGet(Array.from(selectedNodeIds)); await navigator.clipboard.writeText(nodes.filter(n => n).map(n => `# ${n.payload?.title}\n\n${n.payload?.content}\n\n---\n\n`).join('')); }} className="p-2 hover:bg-secondary text-foreground/60 hover:text-foreground rounded transition-colors" title="Copy content"><Copy size={16} /></button>
             <button onClick={async () => { const nodes = await db.nodes.bulkGet(Array.from(selectedNodeIds)); const blob = new Blob([JSON.stringify({ nodes: nodes.filter(n => n) }, null, 2)], { type: 'application/json' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `export_${Date.now()}.json`; a.click(); URL.revokeObjectURL(url); }} className="p-2 hover:bg-secondary text-foreground/60 hover:text-foreground rounded transition-colors" title="Export JSON"><Download size={16} /></button>
             <button onClick={async () => { const nodes = await db.nodes.bulkGet(Array.from(selectedNodeIds)); const validNodes = nodes.filter(n => n !== undefined); const allEdges = await db.edges.toArray(); const relevantEdges = allEdges.filter(e => selectedNodeIds.has(e.sourceId) && selectedNodeIds.has(e.targetId)); const allNodes = await db.nodes.toArray(); const standards = allNodes.filter(n => n.payload?.type === 'standards'); const html = generateProfessionalWiki(validNodes, relevantEdges, standards); const blob = new Blob([html], { type: 'text/html' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `wiki_${Date.now()}.html`; a.click(); URL.revokeObjectURL(url); }} className="p-2 hover:bg-secondary text-foreground/60 hover:text-foreground rounded transition-colors" title="Generate Wiki"><FileText size={16} /></button>
-            <button onClick={async () => { if (confirm(`Delete ${selectedNodeIds.size} nodes?`)) { await db.nodes.bulkDelete(Array.from(selectedNodeIds)); const edges = await db.edges.toArray(); await db.edges.bulkDelete(edges.filter(e => selectedNodeIds.has(e.sourceId) || selectedNodeIds.has(e.targetId)).map(e => e.id)); clearNodeSelection(); } }} className="p-2 hover:bg-secondary text-red-400/60 hover:text-red-400 rounded transition-colors" title="Delete selected"><Trash2 size={16} /></button>
+            <button onClick={async () => {
+              setPromptConfig({
+                show: true,
+                title: 'DELETE NODES',
+                message: `Are you sure you want to delete ${selectedNodeIds.size} selected nodes and their connections?`,
+                options: [
+                  { label: 'DELETE ALL', value: 'confirm' },
+                  { label: 'CANCEL', value: 'cancel' }
+                ],
+                onConfirm: async (val) => {
+                  if (val === 'confirm') {
+                    await db.nodes.bulkDelete(Array.from(selectedNodeIds));
+                    const edges = await db.edges.toArray();
+                    await db.edges.bulkDelete(edges.filter(e => selectedNodeIds.has(e.sourceId) || selectedNodeIds.has(e.targetId)).map(e => e.id));
+                    clearNodeSelection();
+                  }
+                  setPromptConfig(prev => ({ ...prev, show: false }));
+                }
+              });
+            }} className="p-2 hover:bg-secondary text-red-400/60 hover:text-red-400 rounded transition-colors" title="Delete selected"><Trash2 size={16} /></button>
             <button onClick={clearNodeSelection} className="p-2 hover:bg-secondary text-foreground/40 hover:text-foreground rounded transition-colors" title="Clear selection"><X size={16} /></button>
           </div>
           <div className="h-4 w-[1px] bg-secondary" />

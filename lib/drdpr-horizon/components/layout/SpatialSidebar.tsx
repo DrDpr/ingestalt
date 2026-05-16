@@ -38,13 +38,18 @@ export function SpatialSidebar() {
   const [searchQuery, setSearchQuery] = React.useState('');
   const [isCreatingGraph, setIsCreatingGraph] = React.useState(false);
   const [newGraphName, setNewGraphName] = React.useState('');
-  const [promptConfig, setPromptConfig] = React.useState({
-  show: false,
-  title: '',
-  message: '',
-  options: [] as { label: string; value: string }[] | undefined,
-  onConfirm: (val: string) => {},
-});
+  const [promptConfig, setPromptConfig] = React.useState<{
+    show: boolean;
+    title: string;
+    message: string;
+    options?: { label: string; value: string }[];
+    onConfirm: (val: string) => void;
+  }>({
+    show: false,
+    title: '',
+    message: '',
+    onConfirm: () => { },
+  });
   
   // 1. Load Canvas (Space feature)
   const graphs = useLiveQuery(() => db.graphs.toArray()) || [];
@@ -71,9 +76,16 @@ export function SpatialSidebar() {
   const standards = filteredNodes.filter(n => n.payload?.type === 'standards');
   const autoregisteredTypes = React.useMemo(() => {
     const types: any[] = [];
+    const seenIds = new Set<string>();
+    
     standards.forEach(s => {
       if (s.payload?.definitions) {
-        types.push(...s.payload.definitions);
+        s.payload.definitions.forEach((def: any) => {
+          if (!seenIds.has(def.id)) {
+            types.push(def);
+            seenIds.add(def.id);
+          }
+        });
       }
     });
     return types;
@@ -156,7 +168,13 @@ export function SpatialSidebar() {
     };
     
     await db.graphs.update(graphId, { snapshot });
-    alert('Canvas snapshot saved!');
+    setPromptConfig({
+      show: true,
+      title: 'SNAPSHOT SAVED',
+      message: 'Canvas snapshot has been successfully recorded to the local database.',
+      options: [{ label: 'EXCELLENT', value: 'close' }],
+      onConfirm: () => setPromptConfig(prev => ({ ...prev, show: false }))
+    });
   };
 
   // Restore canvas from snapshot
@@ -165,7 +183,13 @@ export function SpatialSidebar() {
     
     const graph = await db.graphs.get(graphId);
     if (!graph || !graph.snapshot) {
-      alert('No snapshot found for this canvas.');
+      setPromptConfig({
+        show: true,
+        title: 'NO SNAPSHOT',
+        message: 'No recorded snapshot found for this canvas to restore from.',
+        options: [{ label: 'UNDERSTOOD', value: 'close' }],
+        onConfirm: () => setPromptConfig(prev => ({ ...prev, show: false }))
+      });
       return;
     }
     
@@ -183,7 +207,13 @@ export function SpatialSidebar() {
           for (const nodeSnapshot of graph.snapshot.nodes) {
             await db.nodes.update(nodeSnapshot.id, { position: nodeSnapshot.position });
           }
-          alert('Canvas restored from snapshot!');
+          setPromptConfig({
+            show: true,
+            title: 'RESTORED',
+            message: 'Canvas has been restored to the snapshot state.',
+            options: [{ label: 'PERFECT', value: 'close' }],
+            onConfirm: () => setPromptConfig(prev => ({ ...prev, show: false }))
+          });
         }
         setPromptConfig(prev => ({ ...prev, show: false }));
       }
@@ -242,7 +272,13 @@ export function SpatialSidebar() {
         const atlasData = JSON.parse(text);
         
         if (!atlasData.version || !atlasData.graph) {
-          alert('Invalid Atlas file format.');
+          setPromptConfig({
+            show: true,
+            title: 'INVALID ATLAS',
+            message: 'The selected file does not appear to be a valid Ingestalt Atlas format.',
+            options: [{ label: 'TRY AGAIN', value: 'close' }],
+            onConfirm: () => setPromptConfig(prev => ({ ...prev, show: false }))
+          });
           return;
         }
         
@@ -277,10 +313,22 @@ export function SpatialSidebar() {
         }
         
         setActiveGraphId(newGraphId);
-        alert('Atlas imported successfully!');
+        setPromptConfig({
+          show: true,
+          title: 'IMPORT SUCCESS',
+          message: `Atlas for "${atlasData.graph.name}" has been successfully imported into a new workspace.`,
+          options: [{ label: 'VIEW CANVAS', value: 'close' }],
+          onConfirm: () => setPromptConfig(prev => ({ ...prev, show: false }))
+        });
       } catch (error) {
         console.error('Import error:', error);
-        alert('Failed to import Atlas file.');
+        setPromptConfig({
+          show: true,
+          title: 'IMPORT FAILED',
+          message: 'An error occurred while importing the Atlas file. See console for details.',
+          options: [{ label: 'CLOSE', value: 'close' }],
+          onConfirm: () => setPromptConfig(prev => ({ ...prev, show: false }))
+        });
       }
     };
     
@@ -295,7 +343,13 @@ export function SpatialSidebar() {
     const orphans = everyNode.filter(n => !validWorkspaceIds.has(n.workspaceId));
     
     if (orphans.length === 0) {
-      alert('No orphaned nodes found.');
+      setPromptConfig({
+        show: true,
+        title: 'DATABASE CLEAN',
+        message: 'No orphaned nodes found. Your database is fully synchronized.',
+        options: [{ label: 'EXCELLENT', value: 'close' }],
+        onConfirm: () => setPromptConfig(prev => ({ ...prev, show: false }))
+      });
       return;
     }
     setPromptConfig({
