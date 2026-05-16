@@ -45,6 +45,7 @@ export default function RootLayout({
     >
       <head>
         <link rel="manifest" href="/ingestalt/manifest.json" />
+        <link rel="icon" href="/ingestalt/Logo.png" type="image/png" />
         <script
           dangerouslySetInnerHTML={{
             __html: `
