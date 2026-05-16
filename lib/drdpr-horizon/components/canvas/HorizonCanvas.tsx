@@ -430,14 +430,6 @@ export function HorizonCanvas() {
           gap={20}
           size={1}
         />
-        <Controls />
-        <MiniMap
-          nodeColor={(node) => {
-            const nodeData = node.data as any;
-            return nodeData?.color || (resolvedTheme === 'dark' ? '#52525b' : '#e4e4e7');
-          }}
-          className="bg-background border border-border"
-        />
       </ReactFlow>
     </div>
   );

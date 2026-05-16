@@ -1,8 +1,14 @@
 ---
 id: node_api_ingest
+configId: node_standards_api
 title: Ingest Client
 type: api
+icon: Network
+color: '#22c55e'
 tags: [ingestion, file-system-access, client-side, indexeddb]
+methods:
+  - ingestFromFSA
+  - traverseDirectory
 relations:
   - targetId: node_api_parser
     type: calls

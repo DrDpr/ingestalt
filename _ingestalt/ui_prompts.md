@@ -1,8 +1,16 @@
 ---
 id: node_ui_prompts
+configId: node_standards_frontend
 title: Prompt Components
-type: ui
+type: frontend
+icon: Layout
+color: '#a855f7'
 tags: [prompts, dialogs, modals, ui]
+components:
+  - PromptModal
+  - ConfirmDialog
+  - IconPickerModal
+  - KeyboardShortcutsHelp
 relations:
   - targetId: node_ui_canvas
     type: used-by

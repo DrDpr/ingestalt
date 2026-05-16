@@ -1,8 +1,16 @@
 ---
 id: node_ui_schema_panel
+configId: node_standards_frontend
 title: Schema Panel
-type: ui
+type: frontend
+icon: Layout
+color: '#a855f7'
 tags: [schema, database, editor, inspector]
+components:
+  - SchemaPanel
+  - ColumnEditor
+  - IndexEditor
+  - ConstraintEditor
 relations:
   - targetId: node_ui_inspector
     type: used-by

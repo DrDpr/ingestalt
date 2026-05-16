@@ -1,8 +1,15 @@
 ---
 id: node_db_horizon
+configId: node_standards_database
 title: Horizon Database
 type: database
+icon: Database
+color: '#3b82f6'
 tags: [indexeddb, dexie, storage, local-first]
+tables:
+  - nodes
+  - edges
+  - workspaces
 relations:
   - targetId: node_api_parser
     type: written-by

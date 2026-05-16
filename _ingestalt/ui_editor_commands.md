@@ -1,7 +1,10 @@
 ---
 id: node_ui_editor_commands
+configId: node_standards_frontend
 title: Editor Slash Commands
-type: ui
+type: frontend
+icon: Layout
+color: '#a855f7'
 tags: [editor, commands, slash-commands, tiptap]
 relations:
   - targetId: node_ui_editor

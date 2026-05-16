@@ -1,8 +1,16 @@
 ---
 id: node_ui_canvas
+configId: node_standards_frontend
 title: Horizon Canvas
-type: ui
+type: frontend
+icon: Layout
+color: '#a855f7'
 tags: [canvas, react-flow, visualization, spatial]
+components:
+  - HorizonCanvas
+  - Palette
+  - BatchActionToolbar
+  - FloatingEdge
 relations:
   - targetId: node_ui_state
     type: reads

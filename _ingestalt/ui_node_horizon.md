@@ -1,8 +1,17 @@
 ---
 id: node_ui_node_horizon
+configId: node_standards_frontend
 title: Node Components
-type: ui
+type: frontend
+icon: Layout
+color: '#a855f7'
 tags: [nodes, components, visualization, react-flow]
+components:
+  - GarnishedNode
+  - BaseNode
+  - ApiNode
+  - DatabaseNode
+  - FrontendNode
 relations:
   - targetId: node_ui_canvas
     type: used-by

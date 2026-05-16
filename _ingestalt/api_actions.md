@@ -1,8 +1,12 @@
----
 id: node_api_actions
+configId: node_standards_api
 title: Server Actions
 type: api
+icon: Network
+color: '#22c55e'
 tags: [server-actions, nextjs, file-system, ingestion]
+methods:
+  - readWorkspaceFiles
 relations:
   - targetId: node_api_parser
     type: calls
@@ -10,7 +14,6 @@ relations:
   - targetId: node_api_ingest
     type: alternative-to
     label: Server-side alternative to FSA
----
 
 # Server Actions
 

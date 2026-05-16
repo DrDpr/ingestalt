@@ -1,8 +1,13 @@
 ---
 id: node_api_seed
+configId: node_standards_api
 title: Database Seeding
 type: api
+icon: Network
+color: '#22c55e'
 tags: [seed, mock-data, development, testing]
+methods:
+  - seedDatabase
 relations:
   - targetId: node_api_parser
     type: calls

@@ -1,7 +1,10 @@
 ---
 id: node_app_routes
+configId: node_standards_frontend
 title: Application Routes
-type: app
+type: frontend
+icon: Layout
+color: '#a855f7'
 tags: [nextjs, routing, pages, app-router]
 relations:
   - targetId: node_ui_canvas

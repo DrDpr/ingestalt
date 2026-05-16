@@ -1,8 +1,17 @@
 ---
 id: node_ui_inspector
+configId: node_standards_frontend
 title: Inspector Panel
-type: ui
+type: frontend
+icon: Layout
+color: '#a855f7'
 tags: [inspector, editor, panel, details]
+components:
+  - Inspector
+  - RelationshipPanel
+  - SchemaPanel
+  - GovernanceEditor
+  - AITaskPromptBuilder
 relations:
   - targetId: node_ui_state
     type: reads

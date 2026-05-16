@@ -1,7 +1,10 @@
 ---
 id: node_ui_editor_menus
+configId: node_standards_frontend
 title: Editor Bubble Menus
-type: ui
+type: frontend
+icon: Layout
+color: '#a855f7'
 tags: [editor, menus, toolbar, tiptap]
 relations:
   - targetId: node_ui_editor

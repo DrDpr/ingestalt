@@ -1,8 +1,72 @@
 ---
 id: node_standards_core
+configId: node_standards_standards
 title: Core Standards
 type: standards
 tags: [standards, conventions, architecture, patterns]
+definitions:
+  - id: node_standards_database
+    type: database
+    icon: Database
+    color: '#3b82f6'
+    fields:
+      - name: filepath
+        type: file_path
+      - name: tables
+        type: tables_list
+  - id: node_standards_api
+    type: api
+    icon: Network
+    color: '#22c55e'
+    fields:
+      - name: methods
+        type: interface_list
+      - name: endpoints
+        type: endpoint_list
+  - id: node_standards_frontend
+    type: frontend
+    icon: Layout
+    color: '#a855f7'
+    fields:
+      - name: filepath
+        type: file_path
+      - name: components
+        type: component_list
+  - id: node_standards_hook
+    type: hook
+    icon: Zap
+    color: '#f59e0b'
+    fields:
+      - name: filepath
+        type: file_path
+      - name: methods
+        type: interface_list
+  - id: node_standards_state
+    type: state
+    icon: Activity
+    color: '#ec4899'
+    fields:
+      - name: store_key
+        type: string
+  - id: node_standards_standards
+    type: standards
+    icon: Star
+    color: '#fbbf24'
+    fields:
+      - name: principles
+        type: list
+  - id: node_standards_other
+    type: other
+    icon: FileText
+    color: '#94a3b8'
+  - id: node_standards_horizon_doc
+    type: horizonDoc
+    icon: Book
+    color: '#6366f1'
+  - id: node_standards_ai_task
+    type: ai-task
+    icon: Sparkles
+    color: '#8b5cf6'
 relations:
   - targetId: node_api_parser
     type: implemented-by

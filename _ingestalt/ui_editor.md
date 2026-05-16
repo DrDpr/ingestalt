@@ -1,8 +1,16 @@
 ---
 id: node_ui_editor
+configId: node_standards_frontend
 title: Content Editor
-type: ui
+type: frontend
+icon: Layout
+color: '#a855f7'
 tags: [editor, tiptap, markdown, rich-text]
+components:
+  - Editor
+  - EditorBubbleMenu
+  - TableBubbleMenu
+  - SlashCommands
 relations:
   - targetId: node_ui_inspector
     type: used-by

@@ -1,8 +1,13 @@
 ---
 id: node_api_parser
+configId: node_standards_api
 title: Markdown Parser
 type: api
+icon: Network
+color: '#22c55e'
 tags: [parser, markdown, frontmatter, core]
+methods:
+  - parseMarkdownToNode
 relations:
   - targetId: node_db_horizon
     type: writes

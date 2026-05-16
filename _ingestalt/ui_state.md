@@ -1,8 +1,12 @@
 ---
 id: node_ui_state
+configId: node_standards_state
 title: UI State Management
-type: ui
+type: state
+icon: Activity
+color: '#ec4899'
 tags: [zustand, state, store, persistence]
+store_key: ingestalt-ui-store
 relations:
   - targetId: node_ui_canvas
     type: used-by
