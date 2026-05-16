@@ -15,9 +15,12 @@ export interface BaseNodeProps {
 }
 
 function BaseNodeInner({ id, data, icon, colorClass, isStatic, style }: BaseNodeProps) {
-  const { selectedNodeId, hoveredNodeId } = useUIStore();
-  const isSelected = !isStatic && (selectedNodeId === id || selectedNodeId === data.id);
+  const { selectedNodeId, selectedNodeIds, hoveredNodeId } = useUIStore();
+  const isPrimary = !isStatic && selectedNodeId === id; // primary = inspector open
+  const isInMultiSelect = !isStatic && selectedNodeIds.has(id);
+  const isSelected = isPrimary || isInMultiSelect;
   const isHovered = hoveredNodeId === id || hoveredNodeId === data.id;
+  const nodeColor = data.color || '#52525b';
 
   const handleDelete = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -31,10 +34,29 @@ function BaseNodeInner({ id, data, icon, colorClass, isStatic, style }: BaseNode
       className={cn(
         "group relative rounded-2xl border p-4 min-w-[200px] shadow-xl backdrop-blur-xl transition-all duration-300",
         colorClass,
-        isSelected ? "ring-2 ring-white/50 scale-105" : "hover:border-border/20",
-        isHovered && "ring-4 ring-blue-500/50 scale-110 shadow-[0_0_30px_rgba(59,130,246,0.5)] z-50 border-blue-400/50"
+        isHovered && "scale-110 shadow-[0_0_30px_rgba(59,130,246,0.5)] z-50",
       )}
-      style={style}
+      style={{
+        ...style,
+        // Primary selection: bright ring with node's own color + glow
+        ...(isPrimary && !isHovered && {
+          outline: `2px solid ${nodeColor}`,
+          outlineOffset: '3px',
+          boxShadow: `0 0 16px ${nodeColor}60`,
+          transform: 'scale(1.05)',
+        }),
+        // Multi-select (not primary): softer ring with node color
+        ...(!isPrimary && isInMultiSelect && !isHovered && {
+          outline: `2px dashed ${nodeColor}99`,
+          outlineOffset: '3px',
+        }),
+        // Hover: blue glow override
+        ...(isHovered && {
+          outline: '2px solid #3b82f6',
+          outlineOffset: '3px',
+          borderColor: '#60a5fa80',
+        }),
+      }}
     >
       {!isStatic && (
         <button 

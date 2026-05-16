@@ -45,6 +45,7 @@ interface UIState {
   
   // Actions
   setSelectedNodeId: (id: string | null) => void;
+  setPrimaryNodeId: (id: string | null) => void; // Sets inspector node WITHOUT resetting multi-select set
   clearSelection: () => void;
   setHoveredNodeId: (id: string | null) => void;
   toggleNodeSelection: (id: string) => void;
@@ -107,23 +108,43 @@ export const useUIStore = create<UIState>()(
       // Actions
       setSelectedNodeId: (id) => set({
         selectedNodeId: id,
+        selectedNodeIds: id ? new Set([id]) : new Set<string>(),
         isInspectorOpen: !!id
+      }),
+
+      setPrimaryNodeId: (id) => set({
+        selectedNodeId: id,
+        isInspectorOpen: !!id
+        // Does NOT reset selectedNodeIds — safe to call alongside selectAllNodes
       }),
       
       clearSelection: () => set({
         selectedNodeId: null,
+        selectedNodeIds: new Set<string>(),
         isInspectorOpen: false
       }),
       
       setHoveredNodeId: (id) => set({ hoveredNodeId: id }),
       toggleNodeSelection: (id) => set((state) => {
         const newSelection = new Set(state.selectedNodeIds);
+        let nextSelectedNodeId = state.selectedNodeId;
+
         if (newSelection.has(id)) {
           newSelection.delete(id);
+          // If we deselected the primary node, pick another one from the set or null
+          if (nextSelectedNodeId === id) {
+            nextSelectedNodeId = Array.from(newSelection).pop() || null;
+          }
         } else {
           newSelection.add(id);
+          nextSelectedNodeId = id; // Focus the last selected node
         }
-        return { selectedNodeIds: newSelection };
+        
+        return { 
+          selectedNodeIds: newSelection,
+          selectedNodeId: nextSelectedNodeId,
+          isInspectorOpen: !!nextSelectedNodeId
+        };
       }),
       clearNodeSelection: () => set({ selectedNodeIds: new Set<string>() }),
       selectAllNodes: (nodeIds) => set({ selectedNodeIds: new Set(nodeIds) }),

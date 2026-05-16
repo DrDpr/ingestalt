@@ -53,9 +53,8 @@ export function HorizonCanvas() {
     clearSelection,
     relationshipMode, setViewport, viewport,
     autoSaveEnabled, theme, activeGraphId,
-    copiedNodeIds, setCopiedNodeIds
-    autoSaveEnabled, theme, activeGraphId,
-    toggleNodeSelection, selectedNodeIds
+    copiedNodeIds, setCopiedNodeIds,
+    toggleNodeSelection, selectedNodeIds, selectAllNodes, setPrimaryNodeId
   } = useUIStore();
   const { resolvedTheme } = useTheme();
   const { screenToFlowPosition } = useReactFlow();
@@ -129,7 +128,8 @@ export function HorizonCanvas() {
         id: node.id,
         type: ['database', 'api', 'frontend', 'hook', 'standards', 'ai-task'].includes(resolvedType) ? resolvedType : 'other',
         position: node.position,
-        selected: selectedNodeIds.has(node.id),
+        // NOTE: do NOT set `selected` here — BaseNode reads store directly for visuals.
+        // Setting it here causes React Flow to fire onSelectionChange → infinite loop.
         data: {
           id: node.id,
           label: node.payload?.title || 'Untitled',
@@ -197,21 +197,29 @@ export function HorizonCanvas() {
   useEffect(() => { setNodes(nodes_transformed); }, [nodes_transformed, setNodes]);
   useEffect(() => { setEdges(filteredEdges); }, [filteredEdges, setEdges]);
 
-  // Single node selection
-  const onNodeClick = useCallback((e: React.MouseEvent, node: Node) => {
-    setSelectedNodeId(node.id);
-  }, [setSelectedNodeId]);
-
-  const onPaneClick = useCallback(() => clearSelection(), [clearSelection]);
   const onNodeClick = useCallback((e: any, node: Node) => {
-    // Multi-select with Ctrl/Cmd key
-    if (e.ctrlKey || e.metaKey) {
+    if (e.ctrlKey || e.metaKey || e.shiftKey) {
+      // Ctrl/Cmd/Shift: toggle node in multi-select
       toggleNodeSelection(node.id);
     } else {
+      // Plain click: single select (sets primary + inspector)
       setSelectedNodeId(node.id);
     }
   }, [setSelectedNodeId, toggleNodeSelection]);
-  const onPaneClick = useCallback(() => setSelectedNodeId(null), [setSelectedNodeId]);
+
+  // Bridge React Flow's native drag-select box back to the store.
+  // Uses setPrimaryNodeId (not setSelectedNodeId) to avoid overwriting the multi-select Set.
+  const onSelectionChange = useCallback(({ nodes: selectedNodes }: { nodes: Node[] }) => {
+    if (selectedNodes.length === 0) return; // pane click is handled by onPaneClick
+    const ids = selectedNodes.map((n: Node) => n.id);
+    selectAllNodes(ids);
+    // Focus the last node in inspector without resetting the Set
+    setPrimaryNodeId(ids[ids.length - 1]);
+  }, [selectAllNodes, setPrimaryNodeId]);
+
+  const onPaneClick = useCallback(() => {
+    clearSelection();
+  }, [clearSelection]);
   const onMoveEnd = useCallback((e: any, vp: any) => setViewport(vp), [setViewport]);
   const onNodeDragStop = useCallback(async (e: any, node: Node) => {
     await db.nodes.update(node.id, { position: node.position });
@@ -400,6 +408,7 @@ export function HorizonCanvas() {
         nodes={nodes} edges={edges}
         onNodesChange={onNodesChange} onEdgesChange={onEdgesChange}
         onNodeClick={onNodeClick} onPaneClick={onPaneClick}
+        onSelectionChange={onSelectionChange}
         onMoveEnd={onMoveEnd} onNodeDragStop={onNodeDragStop}
         onConnect={onConnect} onEdgeDoubleClick={onEdgeDoubleClick}
         onPaneContextMenu={onPaneContextMenu}
@@ -410,7 +419,9 @@ export function HorizonCanvas() {
         defaultViewport={viewport}
         proOptions={{ hideAttribution: true }}
         panOnDrag={[1, 2]}
-        selectionKeyCode={null}
+        selectionOnDrag
+        selectionMode={SelectionMode.Partial}
+        multiSelectionKeyCode="Shift"
         colorMode={resolvedTheme as 'dark' | 'light' | 'system' || 'system'}
       >
         <Background
@@ -423,7 +434,7 @@ export function HorizonCanvas() {
         <MiniMap
           nodeColor={(node) => {
             const nodeData = node.data as any;
-            return nodeData?.color || (isDark ? '#52525b' : '#e4e4e7');
+            return nodeData?.color || (resolvedTheme === 'dark' ? '#52525b' : '#e4e4e7');
           }}
           className="bg-background border border-border"
         />

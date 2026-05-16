@@ -1,10 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { RefreshCw, Database, Share2, Anchor, Zap, Cpu, Compass, Trash2, FolderOpen, CheckCircle2, Loader2, Sun, Moon, Eraser, Keyboard } from 'lucide-react';
-import { RefreshCw, Database, Share2, Anchor, Zap, Cpu, Compass, Trash2, FolderOpen, CheckCircle2, Loader2, Sun, Moon, Eraser, Copy, Download, FileText, X } from 'lucide-react';
+import { RefreshCw, Share2, Anchor, Zap, Cpu, Compass, Trash2, FolderOpen, CheckCircle2, Loader2, Sun, Moon, Eraser, Keyboard, Copy, Download, FileText, X } from 'lucide-react';
 import { useUIStore } from '@/lib/drdpr-horizon/lib/store/useUIStore';
-import { ingestFromFileSystem, getStoredFolderHandle, connectAndStoreFolder } from '@/lib/drdpr-horizon/lib/ingest-fsa';
+import { ingestFromFileSystem, getStoredFolderHandle, connectAndStoreFolder, verifyPermission } from '@/lib/drdpr-horizon/lib/ingest-fsa';
 import { db } from '@/lib/drdpr-horizon/lib/db';
 import { useTheme } from 'next-themes';
 import { PromptModal } from '../PromptModal';
@@ -17,18 +16,29 @@ export function Toolbar() {
     theme, toggleTheme,
     setActiveGraphId,
     activeGraphId,
-    setShortcutsHelpOpen
-    activeGraphId,
+    setShortcutsHelpOpen,
     selectedNodeIds,
     clearNodeSelection
   } = useUIStore();
+  const { resolvedTheme } = useTheme();
 
   const [connectedFolder, setConnectedFolder] = useState<string | null>(null);
   const [ingestStatus, setIngestStatus] = useState<string | null>(null);
   const [isIngesting, setIsIngesting] = useState(false);
   const [permissionState, setPermissionState] = useState<'granted' | 'prompt' | 'denied'>('prompt');
-  
-  const { syncAllNodes } = useSync();
+  const [promptConfig, setPromptConfig] = useState<{
+    show: boolean;
+    title: string;
+    message: string;
+    options: { label: string; value: string }[];
+    onConfirm: (val: string) => void;
+  }>({
+    show: false,
+    title: '',
+    message: '',
+    options: [],
+    onConfirm: () => {},
+  });
 
   // On mount, check handle and permission
   useEffect(() => {
@@ -192,10 +202,25 @@ export function Toolbar() {
           <button
             onClick={handleIngest}
             disabled={isIngesting}
-            title={connectedFolder ? `Re-sync from "${connectedFolder}"` : 'Connect folder & ingest'}
-            className="p-2 hover:bg-secondary text-neutral-400 hover:text-foreground rounded transition-colors disabled:opacity-50"
+            title={
+              isIngesting ? 'Syncing...'
+              : permissionState === 'prompt' && connectedFolder ? `Re-authorize "${connectedFolder}" then sync`
+              : connectedFolder ? `Re-sync from "${connectedFolder}"`
+              : 'Connect folder & ingest'
+            }
+            className={`p-2 hover:bg-secondary rounded transition-colors disabled:opacity-50 ${
+              permissionState === 'prompt' && connectedFolder
+                ? 'text-amber-400 hover:text-amber-300'
+                : 'text-neutral-400 hover:text-foreground'
+            }`}
           >
-            {isIngesting ? <Loader2 size={16} className="animate-spin" /> : connectedFolder ? <RefreshCw size={16} /> : <FolderOpen size={16} />}
+            {isIngesting
+              ? <Loader2 size={16} className="animate-spin" />
+              : permissionState === 'prompt' && connectedFolder
+                ? <RefreshCw size={16} className="opacity-60" />
+                : connectedFolder
+                  ? <RefreshCw size={16} />
+                  : <FolderOpen size={16} />}
           </button>
                     <button
             onClick={handleClear}
@@ -223,11 +248,11 @@ export function Toolbar() {
             <Keyboard size={16} />
           </button>
           <button
-            onClick={toggleAppTheme}
+            onClick={toggleTheme}
             title={`Switch to ${resolvedTheme === 'dark' ? 'light' : 'dark'} mode`}
             className="p-2 hover:bg-secondary text-neutral-400 hover:text-foreground rounded transition-colors"
           >
-            {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+            {resolvedTheme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
           </button>
         </div>
         {/* Folder status badge */}
@@ -241,6 +266,14 @@ export function Toolbar() {
           >
             {ingestStatus ? (
               <span className="text-blue-400 truncate">{ingestStatus}</span>
+            ) : permissionState === 'prompt' && connectedFolder ? (
+              <>
+                <span className="relative flex h-2 w-2 flex-shrink-0">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500" />
+                </span>
+                <span className="text-amber-400/80 truncate" title="Click sync to re-authorize">{connectedFolder}</span>
+              </>
             ) : (
               <>
                 <CheckCircle2 size={10} className="text-green-500 flex-shrink-0 group-hover:hidden" />

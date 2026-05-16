@@ -108,6 +108,20 @@ export async function ingestFromFileSystem(onProgress?: (msg: string) => void): 
 }
 
 /**
+ * Silently checks if we currently have readwrite permission for a stored handle.
+ * Does NOT prompt the user — use this for passive UI state checks on mount.
+ * Returns true only if permission is already 'granted'.
+ */
+export async function verifyPermission(handle: FileSystemDirectoryHandle): Promise<boolean> {
+  try {
+    const perm = await handle.queryPermission({ mode: 'readwrite' });
+    return perm === 'granted';
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Fallback: server-side ingestion via path string.
  */
 export { ingestWorkspace as ingestFromServerPath };
