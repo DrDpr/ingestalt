@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { RefreshCw, Share2, Anchor, Zap, ZapOff, Cpu, Compass, Trash2, FolderOpen, CheckCircle2, Loader2, Sun, Moon, Eraser, Keyboard, Copy, Download, FileText, X, Camera } from 'lucide-react';
+import Link from 'next/link';
+import { RefreshCw, Share2, Anchor, Zap, ZapOff, Cpu, Compass, Trash2, FolderOpen, CheckCircle2, Loader2, Sun, Moon, Eraser, Keyboard, Copy, Download, FileText, X, Camera, Info } from 'lucide-react';
 import { useUIStore } from '@/lib/drdpr-horizon/lib/store/useUIStore';
 import { ingestFromFileSystem, getStoredFolderHandle, connectAndStoreFolder, verifyPermission } from '@/lib/drdpr-horizon/lib/ingest-fsa';
 import { db } from '@/lib/drdpr-horizon/lib/db';
@@ -476,6 +477,22 @@ export function Toolbar() {
             {isPaletteOpen ? 'Floating' : 'Hidden'}
           </button>
         </div>
+      </div>
+
+      <div className="flex-1" />
+
+      {/* About Page Link */}
+      <div className="flex flex-col gap-1 pr-2">
+        <span className="text-xs uppercase tracking-widest text-transparent ml-1 select-none">.</span>
+        <Link href="/about">
+          <button
+            title="About Ingestalt"
+            className="flex items-center gap-1.5 px-3 py-1 text-xs uppercase tracking-wider rounded transition-all text-foreground/40 hover:text-foreground/90 hover:bg-secondary/50 border border-transparent hover:border-border/50"
+          >
+            <Info size={14} />
+            About
+          </button>
+        </Link>
       </div>
 
 

@@ -26,6 +26,7 @@ import {
 import { DynamicIcon } from '@/lib/drdpr-horizon/components/DynamicIcon';
 import { PromptModal } from '../PromptModal';
 import { useReactFlow } from '@xyflow/react';
+import Image from 'next/image';
 
 const CORE_TEMPLATES = [
   { id: 'note', title: 'Note', icon: FileText, color: '#94a3b8' },
@@ -431,8 +432,9 @@ export function SpatialSidebar() {
   return (
     <div className="h-screen border-r border-border/5 bg-background flex flex-col shrink-0 select-none overflow-hidden font-mono uppercase">
       {/* Header */}
-      <div className="p-6 flex items-center justify-between border-b border-border/5">
-        <h2 className="text-xs font-black  text-foreground/40">Ingestalt</h2>
+      <div className="p-6 flex items-center justify-start gap-3 border-b border-border/5">
+        <Image src="/Logo.png" alt="Ingestalt Logo" width={20} height={20} className="object-contain opacity-50 hover:opacity-100 transition-opacity cursor-pointer" />
+        <h2 className="text-xs font-black text-foreground/40 mt-0.5">Ingestalt</h2>
       </div>
 
       {/* Filter */}
