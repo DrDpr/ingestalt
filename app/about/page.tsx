@@ -49,7 +49,7 @@ export default function AboutPage() {
           </Button>
           <div className="flex items-center gap-3">
             <Image 
-              src="/Logo.png" 
+              src="/ingestalt/Logo.png" 
               alt="Ingestalt Logo" 
               width={20} 
               height={20} 

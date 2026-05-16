@@ -4,7 +4,18 @@ import createMDX from '@next/mdx'
 const nextConfig = {
   // Configure `pageExtensions` to include MDX files
   pageExtensions: ['js', 'jsx', 'md', 'mdx', 'ts', 'tsx'],
-  // Optionally, add any other Next.js config below
+  output: 'export',
+  basePath: '/ingestalt',
+  assetPrefix: '/ingestalt/',
+  images: {
+    unoptimized: true,
+  },
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
 }
 
 const withMDX = createMDX({

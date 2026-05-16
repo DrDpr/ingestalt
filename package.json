@@ -75,6 +75,7 @@
     "@types/turndown": "^5.0.6",
     "eslint": "^9.39.4",
     "eslint-config-next": "16.1.7",
+    "gh-pages": "^6.3.0",
     "postcss": "^8",
     "prettier": "^3.8.1",
     "prettier-plugin-tailwindcss": "^0.7.2",
