@@ -74,11 +74,12 @@ export function useKeyboardShortcuts(options: KeyboardShortcutsOptions = {}) {
         return;
       }
 
-      // FR-10.2.3: Copy selected node (Ctrl/Cmd+C)
-      if (mod && event.key === 'c' && selectedNodeId) {
+      // FR-10.2.3: Copy selected nodes (Ctrl/Cmd+C)
+      if (mod && event.key === 'c' && selectedNodeIds.size > 0) {
         event.preventDefault();
-        setCopiedNodeIds([selectedNodeId]);
-        options.onCopy?.([selectedNodeId]);
+        const ids = Array.from(selectedNodeIds);
+        setCopiedNodeIds(ids);
+        options.onCopy?.(ids);
         return;
       }
 
@@ -89,10 +90,10 @@ export function useKeyboardShortcuts(options: KeyboardShortcutsOptions = {}) {
         return;
       }
 
-      // FR-10.2.2: Duplicate selected node (Ctrl/Cmd+D)
-      if (mod && event.key === 'd' && selectedNodeId) {
+      // FR-10.2.2: Duplicate selected nodes (Ctrl/Cmd+D)
+      if (mod && event.key === 'd' && selectedNodeIds.size > 0) {
         event.preventDefault();
-        options.onDuplicate?.([selectedNodeId]);
+        options.onDuplicate?.(Array.from(selectedNodeIds));
         return;
       }
 

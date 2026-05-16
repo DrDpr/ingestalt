@@ -3,14 +3,14 @@
 import React, { useState } from 'react';
 import { useUIStore } from '@/lib/drdpr-horizon/lib/store/useUIStore';
 import { db } from '@/lib/drdpr-horizon/lib/db';
-import { X, Trash2, Download, FileText, Copy, Sparkles, Loader2, LayoutGrid, ChevronUp, ChevronDown } from 'lucide-react';
+import { X, Trash2, Download, FileText, Copy, Files, Sparkles, Loader2, LayoutGrid, ChevronUp, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { generateProfessionalWiki } from '@/lib/drdpr-horizon/lib/publish/wikiGenerator';
 import { performAutoLayout, LAYOUT_CONFIG } from '@/lib/drdpr-horizon/lib/ingest-client';
 import { PromptModal } from '../PromptModal';
 
 export function BatchActionToolbar() {
-  const { selectedNodeIds, clearNodeSelection } = useUIStore();
+  const { selectedNodeIds, clearNodeSelection, selectAllNodes, setPrimaryNodeId } = useUIStore();
   const [isGenerating, setIsGenerating] = useState(false);
   const [isLayouting, setIsLayouting] = useState(false);
   const [showLayoutSettings, setShowLayoutSettings] = useState(false);
@@ -164,6 +164,50 @@ export function BatchActionToolbar() {
     });
   };
 
+  const handleDuplicate = async () => {
+    if (selectedNodeIds.size === 0) return;
+    
+    const nodeIds = Array.from(selectedNodeIds);
+    const nodesToDuplicate = await db.nodes.bulkGet(nodeIds);
+    const validNodes = nodesToDuplicate.filter((n): n is any => n !== undefined);
+    const idMap = new Map<string, string>();
+    
+    // 1. Map and create new nodes
+    const newNodes = validNodes.map(node => {
+      const newId = `node_${Math.random().toString(36).substr(2, 9)}`;
+      idMap.set(node.id, newId);
+      return {
+        ...node,
+        id: newId,
+        position: { x: node.position.x + 50, y: node.position.y + 50 },
+        lastModified: Date.now(),
+      };
+    });
+
+    // 2. Find and clone internal edges
+    const allEdges = await db.edges.toArray();
+    const internalEdges = allEdges.filter(e => 
+      idMap.has(e.sourceId) && idMap.has(e.targetId)
+    ).map(e => ({
+      ...e,
+      id: `edge_${idMap.get(e.sourceId)}_${idMap.get(e.targetId)}`,
+      sourceId: idMap.get(e.sourceId)!,
+      targetId: idMap.get(e.targetId)!,
+      workspaceId: e.workspaceId // Keep same workspace for duplication
+    }));
+
+    await db.transaction('rw', [db.nodes, db.edges], async () => {
+      await db.nodes.bulkAdd(newNodes);
+      await db.edges.bulkAdd(internalEdges);
+    });
+
+    // Select the newly created nodes
+    if (newNodes.length > 0) {
+      selectAllNodes(newNodes.map(n => n.id));
+      setPrimaryNodeId(newNodes[0].id);
+    }
+  };
+
   const handleAutoLayout = async () => {
     setIsLayouting(true);
     try {
@@ -189,6 +233,12 @@ export function BatchActionToolbar() {
           onClick={handleCopyContent} 
           icon={<Copy size={16} />} 
           label="Copy Markdown" 
+          color="text-foreground/60"
+        />
+        <ActionButton 
+          onClick={handleDuplicate} 
+          icon={<Files size={16} />} 
+          label="Duplicate Selection" 
           color="text-foreground/60"
         />
         <ActionButton 
