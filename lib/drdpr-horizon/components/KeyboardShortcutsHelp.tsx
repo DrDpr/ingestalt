@@ -67,7 +67,7 @@ export function KeyboardShortcutsHelp() {
         {/* Header */}
         <div className="flex items-center justify-between p-8 border-b border-border/10 bg-secondary/20">
           <div>
-            <h2 className="text-xl font-black uppercase tracking-tight text-foreground">Master Horizon</h2>
+            <h2 className="text-xl font-black uppercase tracking-tight text-foreground">Ingestalt Controls</h2>
             <p className="text-xs font-bold uppercase tracking-widest text-foreground/40 mt-1">
               Keyboard Architecture & Shortcuts
             </p>

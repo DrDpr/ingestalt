@@ -91,7 +91,12 @@ export async function isProbablyProjectRoot(handle: FileSystemDirectoryHandle): 
  * 2. Falls back to prompting the user to pick a folder
  * 3. Reads all .md files and ingests them into IndexedDB
  */
-export async function ingestFromFileSystem(onProgress?: (msg: string) => void, skipRootCheck = false): Promise<{ count: number; nodeIds: string[]; isProjectRoot?: boolean }> {
+export async function ingestFromFileSystem(
+  onProgress?: (msg: string) => void, 
+  skipRootCheck = false,
+  forceNewIds = true,
+  whitelistPaths?: string[]
+): Promise<{ count: number; nodeIds: string[]; isProjectRoot?: boolean }> {
   onProgress?.('Checking stored folder handle...');
 
   let handle = await getStoredFolderHandle();
@@ -125,10 +130,29 @@ export async function ingestFromFileSystem(onProgress?: (msg: string) => void, s
   onProgress?.(`Laying out and persisting ${files.length} file(s)...`);
 
   const workspaceId = handle.name;
-  const result = await layoutAndPersist(files, workspaceId);
+  const result = await layoutAndPersist(files, workspaceId, forceNewIds, whitelistPaths);
 
   onProgress?.(`Done. Ingested ${result.count} nodes from "${handle.name}".`);
   return { ...result, isProjectRoot: false };
+}
+
+/**
+ * Pure Sync entry point:
+ * Only updates documentation for nodes already on the canvas.
+ */
+export async function syncFromFileSystem(workspaceId: string, onProgress?: (msg: string) => void): Promise<{ count: number }> {
+  let handle = await getStoredFolderHandle();
+  if (!handle) return { count: 0 };
+
+  onProgress?.(`Reading files from "${handle.name}" for sync...`);
+  const files = await readFilesFromHandle(handle);
+
+  if (files.length === 0) return { count: 0 };
+
+  const result = await import('./ingest-client').then(m => m.syncNodesFromFiles(files, workspaceId));
+
+  onProgress?.(`Sync complete. Updated ${result.count} nodes.`);
+  return result;
 }
 
 /**

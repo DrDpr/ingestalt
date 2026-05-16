@@ -145,6 +145,28 @@ export function PayloadInterpretersView({ node, hideHeader = false }: { node: an
     setSelectedColumns(next);
   };
 
+  // Virtual Schema Discovery (Heuristic parsing for DB nodes)
+  const discoveredSchema = useMemo(() => {
+    if (node.payload?.type !== 'database' || !node.payload?.content) return null;
+    
+    const schema: { name: string, columns: string[] }[] = [];
+    const interfaceRegex = /interface\s+(\w+)\s*{([\s\S]*?)\n}/g;
+    let match;
+    
+    while ((match = interfaceRegex.exec(node.payload.content)) !== null) {
+      const name = match[1];
+      const body = match[2];
+      const fieldRegex = /^\s*(\w+)(?:\?|:)/gm;
+      let fieldMatch;
+      const columns: string[] = [];
+      while ((fieldMatch = fieldRegex.exec(body)) !== null) {
+        columns.push(fieldMatch[1]);
+      }
+      if (columns.length > 0) schema.push({ name, columns });
+    }
+    return schema;
+  }, [node.payload?.type, node.payload?.content]);
+
   if (!standardDef || !standardDef.fields) {
     return (
       <div className="p-8 text-center text-neutral-600 text-xs italic bg-background h-full">
@@ -247,17 +269,36 @@ export function PayloadInterpretersView({ node, hideHeader = false }: { node: an
                     }}
                   />
                 )}
-                {field.type === 'tables_list' && (
-                  <TablesList 
-                    data={fieldData} 
-                    selectedColumns={selectedColumns}
-                    onToggle={toggleColumn}
-                    onUpdate={async (newData) => {
-                      await handleUpdateField(field.name, newData);
-                      handleUpdateFieldBlur();
-                    }}
-                  />
-                )}
+                {field.type === 'tables_list' && (() => {
+                  // Intelligent Enrichment: Link discovered columns to the primary table list
+                  const enrichedData = (fieldData || []).map((t: any) => {
+                    const tableName = typeof t === 'string' ? t : t.name;
+                    // Fuzzy match: 'nodes' matches 'HorizonNode', 'edges' matches 'HorizonEdge'
+                    const match = discoveredSchema?.find(ds => 
+                      tableName.toLowerCase().includes(ds.name.toLowerCase().replace('horizon', '')) ||
+                      ds.name.toLowerCase().includes(tableName.toLowerCase().replace(/s$/, ''))
+                    );
+                    
+                    if (match) {
+                      const columns = match.columns;
+                      if (typeof t === 'string') return { name: tableName, columns };
+                      if (!t.columns || t.columns.length === 0) return { ...t, columns };
+                    }
+                    return t;
+                  });
+
+                  return (
+                    <TablesList 
+                      data={enrichedData} 
+                      selectedColumns={selectedColumns}
+                      onToggle={toggleColumn}
+                      onUpdate={async (newData) => {
+                        await handleUpdateField(field.name, newData);
+                        handleUpdateFieldBlur();
+                      }}
+                    />
+                  );
+                })()}
                 {field.type === 'interface_list' && (
                   <InterfaceList 
                     data={fieldData} 
@@ -381,6 +422,34 @@ export function PayloadInterpretersView({ node, hideHeader = false }: { node: an
             );
           })}
         </div>
+
+        {/* Discovered Schema Section (Filtered to only show additional/orphaned schemas) */}
+        {(() => {
+          const orphanedSchemas = discoveredSchema?.filter(ds => {
+            const tableField = payload.tables || [];
+            return !tableField.some((t: any) => {
+              const tableName = typeof t === 'string' ? t : t.name;
+              return tableName.toLowerCase().includes(ds.name.toLowerCase().replace('horizon', '')) ||
+                     ds.name.toLowerCase().includes(tableName.toLowerCase().replace(/s$/, ''));
+            });
+          });
+
+          if (!orphanedSchemas || orphanedSchemas.length === 0) return null;
+
+          return (
+            <div className="space-y-4 pt-6 border-t border-border/50">
+              <div className="flex items-center gap-2 text-xs text-blue-400/60 uppercase font-black ml-1">
+                <Sparkles size={13} />
+                Additional Discovered Schemas
+              </div>
+              <TablesList 
+                data={orphanedSchemas} 
+                selectedColumns={selectedColumns}
+                onToggle={toggleColumn}
+              />
+            </div>
+          );
+        })()}
 
         {/* Add Field Section */}
         {missingFields.length > 0 && (

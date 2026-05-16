@@ -22,6 +22,8 @@ interface UIState {
   
   // Perspectives (Graph Views)
   activeGraphId: string | null;
+  refreshRate: number; // 0 = manual, otherwise seconds
+  setRefreshRate: (rate: number) => void;
   
   // App Config & Workspace
   isInspectorOpen: boolean;
@@ -91,6 +93,7 @@ export const useUIStore = create<UIState>()(
       searchQuery: '',
       activeTags: [],
       activeGraphId: null,
+      refreshRate: 0,
       basePath: '',
       
       isInspectorOpen: false,
@@ -163,7 +166,9 @@ export const useUIStore = create<UIState>()(
       
       clearTags: () => set({ activeTags: [] }),
       
-      setActiveGraphId: (id) => set({ activeGraphId: id }),
+      setRefreshRate: (rate) => set({ refreshRate: rate }),
+      
+      setActiveGraphId: (id) => set({ activeGraphId: id, autoSaveEnabled: false }),
       
       setInspectorOpen: (open) => set({ isInspectorOpen: open }),
       setLeftOpen: (open) => set({ isLeftOpen: open }),

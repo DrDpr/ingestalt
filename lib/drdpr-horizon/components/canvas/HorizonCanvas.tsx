@@ -524,19 +524,47 @@ export function HorizonCanvas() {
   }, [clearSelection]);
 
   const handleDuplicate = useCallback(async (nodeIds: string[]) => {
+    if (nodeIds.length === 0) return;
+    
     const nodesToDuplicate = await db.nodes.bulkGet(nodeIds);
-    const newNodes = nodesToDuplicate.filter(Boolean).map(node => ({
-      ...node!,
-      id: `node_${Math.random().toString(36).substr(2, 9)}`,
-      position: { x: node!.position.x + 50, y: node!.position.y + 50 },
-      lastModified: Date.now(),
+    const validNodes = nodesToDuplicate.filter(Boolean);
+    const idMap = new Map<string, string>();
+    
+    // 1. Map and create new nodes
+    const newNodes = validNodes.map(node => {
+      const newId = `node_${Math.random().toString(36).substr(2, 9)}`;
+      idMap.set(node!.id, newId);
+      return {
+        ...node!,
+        id: newId,
+        position: { x: node!.position.x + 50, y: node!.position.y + 50 },
+        lastModified: Date.now(),
+      };
+    });
+
+    // 2. Find and clone internal edges
+    const allEdges = await db.edges.toArray();
+    const internalEdges = allEdges.filter(e => 
+      idMap.has(e.sourceId) && idMap.has(e.targetId)
+    ).map(e => ({
+      ...e,
+      id: `edge_${idMap.get(e.sourceId)}_${idMap.get(e.targetId)}`,
+      sourceId: idMap.get(e.sourceId)!,
+      targetId: idMap.get(e.targetId)!,
+      workspaceId: e.workspaceId // Keep same workspace for duplication
     }));
-    await db.nodes.bulkAdd(newNodes);
-    // Select the first duplicated node
+
+    await db.transaction('rw', [db.nodes, db.edges], async () => {
+      await db.nodes.bulkAdd(newNodes);
+      await db.edges.bulkAdd(internalEdges);
+    });
+
+    // Select the newly created nodes
     if (newNodes.length > 0) {
-      setSelectedNodeId(newNodes[0].id);
+      selectAllNodes(newNodes.map(n => n.id));
+      setPrimaryNodeId(newNodes[0].id);
     }
-  }, [setSelectedNodeId]);
+  }, [selectAllNodes, setPrimaryNodeId]);
 
   const handleCopy = useCallback((nodeIds: string[]) => {
     setCopiedNodeIds(nodeIds);
@@ -544,19 +572,48 @@ export function HorizonCanvas() {
 
   const handlePaste = useCallback(async () => {
     if (copiedNodeIds.length === 0) return;
+    
     const nodesToCopy = await db.nodes.bulkGet(copiedNodeIds);
-    const newNodes = nodesToCopy.filter(Boolean).map(node => ({
-      ...node!,
-      id: `node_${Math.random().toString(36).substr(2, 9)}`,
-      position: { x: node!.position.x + 100, y: node!.position.y + 100 },
-      lastModified: Date.now(),
+    const validNodes = nodesToCopy.filter(Boolean);
+    const idMap = new Map<string, string>();
+    const targetWorkspaceId = workspaceFilter || 'default';
+
+    // 1. Map and create new nodes for the current workspace
+    const newNodes = validNodes.map(node => {
+      const newId = `node_${Math.random().toString(36).substr(2, 9)}`;
+      idMap.set(node!.id, newId);
+      return {
+        ...node!,
+        id: newId,
+        workspaceId: targetWorkspaceId, // CROSS-CANVAS FIX: Adopt current workspace
+        position: { x: node!.position.x + 100, y: node!.position.y + 100 },
+        lastModified: Date.now(),
+      };
+    });
+
+    // 2. Clone internal edges and re-map to current workspace
+    const allEdges = await db.edges.toArray();
+    const internalEdges = allEdges.filter(e => 
+      idMap.has(e.sourceId) && idMap.has(e.targetId)
+    ).map(e => ({
+      ...e,
+      id: `edge_${idMap.get(e.sourceId)}_${idMap.get(e.targetId)}`,
+      sourceId: idMap.get(e.sourceId)!,
+      targetId: idMap.get(e.targetId)!,
+      workspaceId: targetWorkspaceId // CROSS-CANVAS FIX
     }));
-    await db.nodes.bulkAdd(newNodes);
-    // Select the first pasted node
+
+    await db.transaction('rw', [db.nodes, db.edges], async () => {
+      await db.nodes.bulkAdd(newNodes);
+      await db.edges.bulkAdd(internalEdges);
+    });
+
+    // Select the pasted nodes
     if (newNodes.length > 0) {
-      setSelectedNodeId(newNodes[0].id);
+      selectAllNodes(newNodes.map(n => n.id));
+      setPrimaryNodeId(newNodes[0].id);
     }
-  }, [copiedNodeIds, setSelectedNodeId]);
+  }, [copiedNodeIds, workspaceFilter, selectAllNodes, setPrimaryNodeId]);
 
   const getAllNodeIds = useCallback(() => {
     return nodes_transformed.map(n => n.id);

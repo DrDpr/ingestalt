@@ -5,6 +5,7 @@ import { useUIStore } from '@/lib/drdpr-horizon/lib/store/useUIStore';
 import { AppShell } from './AppShell';
 import { SpatialSidebar } from './SpatialSidebar';
 import { SidePull } from '@/lib/drdpr-horizon/components/ui/side-pull';
+import { Toaster } from '@/lib/drdpr-horizon/components/ui/Toaster';
 
 /**
  * WorkspaceLayout - Main layout using AppShell with ResizableSidebar
@@ -71,6 +72,7 @@ export function WorkspaceLayout({
         {canvas}
         {children}
       </AppShell>
+      <Toaster />
     </SidePull>
   );
 }

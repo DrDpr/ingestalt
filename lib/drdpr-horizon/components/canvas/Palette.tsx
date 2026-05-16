@@ -85,64 +85,9 @@ export function Palette() {
       className={`absolute left-6 top-1/2 -translate-y-1/2 z-50 flex flex-col gap-2 p-2 bg-card/40 backdrop-blur-2xl border border-border/10 rounded-2xl shadow-md transition-all duration-500 ease-in-out ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-12 pointer-events-none'
         }`}
     >
-      <div className="flex flex-col items-center gap-2 pb-2 border-b border-border/5 mb-1 group/sync">
-        <button
-          onClick={handleConnect}
-          className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all shadow-xs border ${
-            connectedFolder 
-              ? "bg-blue-600/10 border-blue-500/20 hover:bg-blue-600/20" 
-              : "bg-secondary border-border/10 hover:bg-secondary/80"
-          }`}
-          title={connectedFolder ? `Connected to ${connectedFolder}` : "Connect Local Project Folder"}
-        >
-          {connectedFolder ? (
-            <div className="relative">
-              <FolderOpen size={18} className="text-blue-400" />
-              {permissionState === 'granted' ? (
-                <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-card" />
-              ) : (
-                <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 bg-amber-500 rounded-full border-2 border-card animate-pulse" />
-              )}
-            </div>
-          ) : (
-            <FolderOpen size={18} className="text-foreground/20" />
-          )}
-        </button>
-
-        <div className="flex gap-1">
-          <button
-            onClick={() => setAutoSaveEnabled(!autoSaveEnabled)}
-            className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${autoSaveEnabled
-              ? 'bg-amber-500/20 border border-amber-500/30 text-amber-500 shadow-lg'
-              : 'bg-secondary border border-border/5 text-foreground/30 hover:text-foreground/90'
-              }`}
-            title={autoSaveEnabled ? "Auto-Save Enabled" : "Auto-Save Disabled"}
-          >
-            {autoSaveEnabled ? <Zap size={14} /> : <ZapOff size={14} />}
-          </button>
-
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            className="w-8 h-8 rounded-lg flex items-center justify-center transition-all bg-secondary border border-border/5 text-foreground/30 hover:text-foreground/90 hover:bg-secondary/80"
-            title="Import JSON/Markdown"
-          >
-            <Upload size={14} />
-            <input 
-              type="file" 
-              ref={fileInputRef} 
-              className="hidden" 
-              accept=".json,.md"
-              onChange={handleFileChange}
-            />
-          </button>
-        </div>
-
-        <span className="text-xs uppercase font-black tracking-tighter text-foreground/40">Settings</span>
-      </div>
-
-      <div className="flex flex-col items-center gap-1 pb-2 border-b border-border/5 mb-1">
+      <div className="flex flex-col items-center gap-1 pb-2 border-b border-border/5 mb-2">
         <Plus size={14} className="text-foreground/30" />
-        <span className="text-xs uppercase font-black tracking-tighter text-foreground/40">Palette</span>
+        <span className="text-xs uppercase font-black tracking-tighter text-foreground/40 text-center leading-[0.8]">Palette</span>
       </div>
 
       <div className="flex flex-col gap-3">

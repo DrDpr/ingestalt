@@ -38,14 +38,45 @@ export function getXBase(config: typeof LAYOUT_CONFIG) {
 export async function layoutAndPersist(
   fileContents: { content: string; filepath: string }[],
   workspaceId: string = 'default',
-  forceNewIds: boolean = true
+  forceNewIds: boolean = true,
+  whitelistPaths?: string[]
 ): Promise<{ count: number; nodeIds: string[] }> {
   if (fileContents.length === 0) return { count: 0, nodeIds: [] };
 
-  const parsedResults = fileContents.map((doc) => {
-    const result = parseMarkdownToNode(doc.content, workspaceId, forceNewIds);
+  // Filter by whitelist if provided (STRICT SYNC MODE)
+  const filteredContents = whitelistPaths 
+    ? fileContents.filter(f => whitelistPaths.includes(f.filepath))
+    : fileContents;
+
+  if (filteredContents.length === 0) return { count: 0, nodeIds: [] };
+
+  // Load existing nodes for this workspace to allow filename-based matching (prevents duplicates)
+  const existingNodes = await db.nodes.where('workspaceId').equals(workspaceId).toArray();
+  const filenameMap = new Map(existingNodes.map(n => [n.payload.filename, n.id]));
+
+  const parsedResults = filteredContents.map((doc) => {
+    // If we have an existing node for this filename, don't force a new ID even if requested
+    // unless the user explicitly wants a full fork.
+    const existingId = filenameMap.get(doc.filepath);
+    
+    const result = parseMarkdownToNode(doc.content, workspaceId, forceNewIds && !existingId);
+    
     // Backlink the physical filename so the sync engine writes to the right file
     result.node.payload.filename = doc.filepath;
+
+    // SYNC FIX: If we are in sync mode (no forceNewIds) and we found a matching node by filename,
+    // override the generated ID to ensure we perform an UPDATE instead of an ADD.
+    if (!forceNewIds && existingId) {
+       result.node.id = existingId;
+    }
+    
+    // Final fallback: If still untitled, use the filename (without extension)
+    if (result.node.payload.title === 'Untitled Node' || !result.node.payload.title) {
+      const fileName = doc.filepath.split('/').pop()?.replace('.md', '') || 'Untitled Node';
+      // Clean up common naming patterns
+      result.node.payload.title = fileName.replace(/[_-]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    }
+    
     return result;
   });
 
@@ -99,6 +130,15 @@ export async function layoutAndPersist(
 
     const type = node.payload?.type || 'other';
     const baseX = typeXBase[type] ?? LAYOUT_CONFIG.COLUMN_WIDTH * 4;
+    
+    // SPATIAL PRESERVATION: If we are in sync mode and this node already exists, 
+    // use its existing position instead of calculating a new one.
+    const existingNode = existingNodes.find(n => n.id === node.id);
+    if (!forceNewIds && existingNode) {
+       positionedNodes.set(node.id, { ...node, position: existingNode.position });
+       return;
+    }
+
     const x = baseX + (depth * LAYOUT_CONFIG.NESTING_OFFSET);
 
     const placedParents = (parentsOf.get(node.id) || [])
@@ -151,19 +191,23 @@ export async function layoutAndPersist(
   roots.forEach(root => placeNode(root, 0));
   rawNodes.forEach(node => placeNode(node, 0));
 
-  // Use bulkAdd to ensure we're creating new records, not updating existing ones
-  // This is crucial for data forking - each ingestion creates independent instances
-  try {
-    await db.nodes.bulkAdd(Array.from(positionedNodes.values()));
-    await db.edges.bulkAdd(edges);
-  } catch (error: any) {
-    // If there are duplicate keys (shouldn't happen with forceNewIds), fall back to bulkPut
-    console.warn('bulkAdd failed, falling back to bulkPut:', error);
+  // Persist with the correct strategy: bulkAdd for new (isolation) mode, bulkPut for sync mode
+  if (forceNewIds) {
+    try {
+      await db.nodes.bulkAdd(Array.from(positionedNodes.values()));
+      await db.edges.bulkAdd(edges);
+    } catch (error: any) {
+      console.warn('bulkAdd failed in isolation mode, falling back to bulkPut:', error);
+      await db.nodes.bulkPut(Array.from(positionedNodes.values()));
+      await db.edges.bulkPut(edges);
+    }
+  } else {
+    // SYNC MODE: Always use bulkPut to update existing records efficiently
     await db.nodes.bulkPut(Array.from(positionedNodes.values()));
     await db.edges.bulkPut(edges);
   }
 
-  return { count: positionedNodes.size, nodeIds };
+  return { count: positionedNodes.size, nodeIds: Array.from(positionedNodes.keys()) };
 }
 
 /**
@@ -266,4 +310,49 @@ export async function ingestWorkspace(basePath: string, forceNewIds: boolean = t
     console.error('Workspace ingestion failed:', error);
     throw error;
   }
+}
+
+/**
+ * PURE SYNC: Updates existing nodes in-place without re-calculating layout or edges.
+ */
+export async function syncNodesFromFiles(
+  fileContents: { content: string; filepath: string }[],
+  workspaceId: string
+): Promise<{ count: number }> {
+  if (fileContents.length === 0) return { count: 0 };
+
+  const existingNodes = await db.nodes.where('workspaceId').equals(workspaceId).toArray();
+  const filenameToId = new Map(existingNodes.map(n => [n.payload.filename, n.id]));
+
+  let updatedCount = 0;
+  const updates: any[] = [];
+
+  for (const doc of fileContents) {
+    const existingId = filenameToId.get(doc.filepath);
+    if (!existingId) continue; // Skip files not on canvas
+
+    const existingNode = existingNodes.find(n => n.id === existingId);
+    if (!existingNode) continue;
+
+    const { node } = parseMarkdownToNode(doc.content, workspaceId, false);
+    
+    // Merge new content into existing node, PRESERVING position and ID
+    updates.push({
+      ...existingNode,
+      payload: {
+        ...existingNode.payload,
+        ...node.payload,
+        content: node.payload.content,
+        filename: doc.filepath
+      },
+      lastModified: Date.now()
+    });
+    updatedCount++;
+  }
+
+  if (updates.length > 0) {
+    await db.nodes.bulkPut(updates);
+  }
+
+  return { count: updatedCount };
 }

@@ -434,7 +434,7 @@ export function SpatialSidebar() {
       {/* Header */}
       <div className="p-6 flex items-center justify-start gap-3 border-b border-border/5">
         <Image src="/Logo.png" alt="Ingestalt Logo" width={20} height={20} className="object-contain opacity-50 hover:opacity-100 transition-opacity cursor-pointer" />
-        <h2 className="text-xs font-black text-foreground/40 mt-0.5">Ingestalt</h2>
+        <h2 className="text-xs font-black text-foreground/80 mt-0.5">Ingestalt</h2>
       </div>
 
       {/* Filter */}

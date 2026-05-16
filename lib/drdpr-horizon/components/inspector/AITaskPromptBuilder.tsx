@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, HorizonNode } from '@/lib/drdpr-horizon/lib/db';
 import { Copy, Check, Sparkles, FileText, Link, Wand2, Cpu } from 'lucide-react';
@@ -64,6 +64,120 @@ export function AITaskPromptBuilder({ node, customTemplates = [] }: AITaskPrompt
   const [includeProperties, setIncludeProperties] = useState(true);
   const [includeRelationships, setIncludeRelationships] = useState(true);
 
+  // Field selection state
+  const [selectedFields, setSelectedFields] = useState<Set<string>>(new Set());
+
+  // Get the standard for this node to see available fields
+  const standard = useLiveQuery(async () => {
+    if (!node.configId) return null;
+    return await db.nodes.get(node.configId);
+  }, [node.configId]);
+
+  // Available paths for injection (one level deep for objects and tables)
+  const availablePaths = useMemo(() => {
+    const paths: string[] = [];
+    const keysToIgnore = ['title', 'type', 'content', 'icon', 'color', 'filename', 'tags', 'definitions'];
+
+    Object.entries(node.payload || {}).forEach(([key, value]) => {
+      if (keysToIgnore.includes(key)) return;
+      paths.push(key);
+
+      // Unravel objects
+      if (value && typeof value === 'object' && !Array.isArray(value)) {
+        Object.keys(value).forEach(subKey => {
+          paths.push(`${key}.${subKey}`);
+        });
+      }
+
+      // Unravel tables (Array of Objects)
+      if (Array.isArray(value) && value.length > 0 && typeof value[0] === 'object') {
+        // Get unique keys from all objects in array (up to 5 for performance)
+        const subKeys = new Set<string>();
+        value.slice(0, 5).forEach(item => {
+          Object.keys(item).forEach(k => subKeys.add(k));
+        });
+        subKeys.forEach(subKey => {
+          paths.push(`${key}.${subKey}`);
+        });
+      }
+    });
+
+    return paths;
+  }, [node.payload]);
+
+  // Virtual Schema Scanner (Heuristic parsing of Markdown content for Databases)
+  const virtualSchema = useMemo(() => {
+    if (node.payload?.type !== 'database' || !node.payload?.content) return null;
+    
+    const schema: Record<string, string[]> = {};
+    // More robust regex to handle nested braces (common in DB schemas)
+    const interfaceRegex = /interface\s+(\w+)\s*{([\s\S]*?)\n}/g;
+    let match;
+    
+    while ((match = interfaceRegex.exec(node.payload.content)) !== null) {
+      const name = match[1];
+      const body = match[2];
+      // Match fields (word followed by : or ?)
+      const fieldRegex = /^\s*(\w+)(?:\?|:)/gm;
+      let fieldMatch;
+      const fields: string[] = [];
+      while ((fieldMatch = fieldRegex.exec(body)) !== null) {
+        fields.push(fieldMatch[1]);
+      }
+      if (fields.length > 0) schema[name] = fields;
+    }
+    return schema;
+  }, [node.payload?.type, node.payload?.content]);
+
+  // Merged available paths including virtual ones
+  const allAvailablePaths = useMemo(() => {
+    const paths = [...availablePaths];
+    if (virtualSchema) {
+      Object.entries(virtualSchema).forEach(([tableName, columns]) => {
+        paths.push(`schema.${tableName}`);
+        columns.forEach(col => paths.push(`schema.${tableName}.${col}`));
+      });
+    }
+    return paths;
+  }, [availablePaths, virtualSchema]);
+
+  // Group paths by their parent for cleaner UI
+  const groupedPaths = useMemo(() => {
+    const groups: Record<string, string[]> = {};
+    allAvailablePaths.forEach(path => {
+      const parts = path.split('.');
+      const parent = parts.length > 1 ? parts.slice(0, -1).join('.') : parts[0];
+      
+      // Special grouping for schema
+      if (path.startsWith('schema.')) {
+        const schemaParent = parts.slice(0, 2).join('.');
+        if (!groups[schemaParent]) groups[schemaParent] = [];
+        groups[schemaParent].push(path);
+      } else {
+        const topParent = parts[0];
+        if (!groups[topParent]) groups[topParent] = [];
+        groups[topParent].push(path);
+      }
+    });
+    return groups;
+  }, [allAvailablePaths]);
+
+  // Initialize selected fields when node or available paths change
+  useEffect(() => {
+    if (allAvailablePaths.length > 0) {
+      setSelectedFields(new Set(allAvailablePaths));
+    } else {
+      setSelectedFields(new Set());
+    }
+  }, [node.id, allAvailablePaths]);
+
+  const toggleField = (key: string) => {
+    const newFields = new Set(selectedFields);
+    if (newFields.has(key)) newFields.delete(key);
+    else newFields.add(key);
+    setSelectedFields(newFields);
+  };
+
   // Get all related nodes through edges
   const relatedNodes = useLiveQuery(async () => {
     const edges = await db.edges
@@ -88,7 +202,11 @@ export function AITaskPromptBuilder({ node, customTemplates = [] }: AITaskPrompt
   const contextContent = useMemo(() => {
     let context = `# ARCHITECTURAL CONTEXT: ${node.payload?.title || 'Untitled'}\n`;
     context += `Type: ${node.payload?.type || 'unknown'}\n`;
-    context += `ID: ${node.id}\n\n`;
+    context += `ID: ${node.id}\n`;
+    if (node.payload?.filename) {
+      context += `File: ${node.payload.filename}\n`;
+    }
+    context += `\n`;
 
     if (includeContent && node.payload?.content) {
       context += `## DOCUMENTATION\n${node.payload.content}\n\n`;
@@ -96,13 +214,59 @@ export function AITaskPromptBuilder({ node, customTemplates = [] }: AITaskPrompt
 
     if (includeProperties) {
       const keysToIgnore = ['title', 'type', 'content', 'icon', 'color', 'filename', 'tags', 'definitions'];
-      const properties = Object.entries(node.payload || {})
-        .filter(([key]) => !keysToIgnore.includes(key));
+      const topLevelKeys = Object.keys(node.payload || {}).filter(k => !keysToIgnore.includes(k) && selectedFields.has(k));
 
-      if (properties.length > 0) {
+      if (topLevelKeys.length > 0 || (virtualSchema && Array.from(selectedFields).some(p => p.startsWith('schema.')))) {
         context += `## PROPERTIES / ATTRIBUTES\n`;
-        properties.forEach(([key, value]) => {
-          context += `### ${key}\n${JSON.stringify(value, null, 2)}\n\n`;
+        
+        // Render Virtual Schema first
+        if (virtualSchema) {
+          Object.entries(virtualSchema).forEach(([tableName, columns]) => {
+            const isTableSelected = selectedFields.has(`schema.${tableName}`);
+            const selectedCols = columns.filter(col => selectedFields.has(`schema.${tableName}.${col}`));
+            
+            if (isTableSelected || selectedCols.length > 0) {
+              context += `### [SCHEMA] ${tableName}\n`;
+              if (selectedCols.length > 0 && selectedCols.length < columns.length) {
+                context += `Columns: ${selectedCols.join(', ')}\n\n`;
+              } else {
+                // If all or none specific columns selected, just show the table existence
+                context += `Fields: ${columns.join(', ')}\n\n`;
+              }
+            }
+          });
+        }
+
+        topLevelKeys.forEach(key => {
+          const value = node.payload[key];
+          const subPaths = Array.from(selectedFields).filter(p => p.startsWith(`${key}.`));
+
+          context += `### ${key}\n`;
+
+          // If sub-paths are selected, filter the value
+          if (subPaths.length > 0) {
+            const subKeys = subPaths.map(p => p.split('.')[1]);
+            
+            if (Array.isArray(value)) {
+              // Filter Table Columns
+              const filteredTable = value.map(item => {
+                const newItem: any = {};
+                subKeys.forEach(sk => { if (item[sk] !== undefined) newItem[sk] = item[sk]; });
+                return newItem;
+              });
+              context += `${JSON.stringify(filteredTable, null, 2)}\n\n`;
+            } else if (typeof value === 'object') {
+              // Filter Object Fields
+              const filteredObj: any = {};
+              subKeys.forEach(sk => { if (value[sk] !== undefined) filteredObj[sk] = value[sk]; });
+              context += `${JSON.stringify(filteredObj, null, 2)}\n\n`;
+            } else {
+              context += `${value}\n\n`;
+            }
+          } else {
+            // Full value
+            context += `${typeof value === 'string' ? value : JSON.stringify(value, null, 2)}\n\n`;
+          }
         });
       }
     }
@@ -116,7 +280,7 @@ export function AITaskPromptBuilder({ node, customTemplates = [] }: AITaskPrompt
     }
 
     return context;
-  }, [node, relatedNodes, includeContent, includeProperties, includeRelationships]);
+  }, [node, relatedNodes, includeContent, includeProperties, includeRelationships, selectedFields, allAvailablePaths, virtualSchema]);
 
   // Generate final prompt
   const finalPrompt = useMemo(() => {
@@ -206,6 +370,52 @@ export function AITaskPromptBuilder({ node, customTemplates = [] }: AITaskPrompt
             count={relatedNodes?.length}
           />
         </div>
+
+        {/* Field Selection (Sub-panel) */}
+        {includeProperties && Object.keys(groupedPaths).length > 0 && (
+          <div className="mt-2 p-3 bg-secondary/10 border border-border/20 rounded-lg space-y-4">
+            <label className="text-[10px] font-bold uppercase text-foreground/40 ml-1">Architectural Field Selection</label>
+            
+            <div className="space-y-3 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
+              {Object.entries(groupedPaths).map(([parent, paths]) => (
+                <div key={parent} className="space-y-1.5">
+                  <div className="flex items-center justify-between px-1">
+                    <span className="text-[10px] font-bold text-foreground/50 uppercase tracking-tighter">{parent}</span>
+                    <button 
+                      onClick={() => {
+                        const allSelected = paths.every(p => selectedFields.has(p));
+                        const newFields = new Set(selectedFields);
+                        paths.forEach(p => allSelected ? newFields.delete(p) : newFields.add(p));
+                        setSelectedFields(newFields);
+                      }}
+                      className="text-[9px] text-blue-400 hover:text-blue-300 uppercase font-bold"
+                    >
+                      {paths.every(p => selectedFields.has(p)) ? 'None' : 'All'}
+                    </button>
+                  </div>
+                  <div className="flex flex-wrap gap-1 ml-1">
+                    {paths.map(path => {
+                      const label = path.includes('.') ? path.split('.').pop() : 'Full';
+                      const isActive = selectedFields.has(path);
+                      return (
+                        <button
+                          key={path}
+                          onClick={() => toggleField(path)}
+                          className={`px-2 py-0.5 text-[10px] font-mono rounded-sm border transition-all ${isActive
+                            ? 'bg-blue-500/20 border-blue-500/40 text-blue-300'
+                            : 'bg-secondary/30 border-border/10 text-foreground/30 hover:bg-secondary/50'
+                            }`}
+                        >
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Density Indicator */}

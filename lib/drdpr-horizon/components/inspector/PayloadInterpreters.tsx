@@ -101,16 +101,18 @@ export const TablesList = ({ data, selectedColumns, onToggle, onUpdate }: { data
   return (
     <div className="space-y-3">
       {tables.map((table: any, idx: number) => {
-        const tableData = table.columns || table.indices || [];
+        const isString = typeof table === 'string';
+        const tableName = isString ? table : (table.name || 'untitled');
+        const tableData = isString ? [] : (table.columns || table.indices || []);
 
         return (
           <div key={idx} className="bg-card border border-border rounded-lg overflow-hidden group/table">
             <div className="bg-secondary/50 px-3 py-2 border-b border-border flex items-center justify-between">
               <div className="flex items-center gap-2 flex-1 mr-2">
                 <Layers size={12} className="text-blue-400" />
-                {onUpdate ? (
+                {onUpdate && !isString ? (
                   <LocalInput
-                    value={table.name}
+                    value={tableName}
                     onChange={(val) => {
                       const newData = [...tables];
                       newData[idx] = { ...table, name: val };
@@ -119,7 +121,7 @@ export const TablesList = ({ data, selectedColumns, onToggle, onUpdate }: { data
                     className="bg-transparent border-none outline-none text-xs font-bold text-foreground/60 font-mono focus:ring-1 focus:ring-blue-500/50 rounded w-full uppercase "
                   />
                 ) : (
-                  <span className="text-xs font-bold text-foreground/60 font-mono uppercase ">{table.name}</span>
+                  <span className="text-xs font-bold text-foreground/60 font-mono uppercase ">{tableName}</span>
                 )}
               </div>
               {onUpdate && (

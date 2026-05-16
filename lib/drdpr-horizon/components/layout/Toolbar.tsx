@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { RefreshCw, Share2, Anchor, Zap, ZapOff, Cpu, Compass, Trash2, FolderOpen, CheckCircle2, Loader2, Sun, Moon, Eraser, Keyboard, Copy, Download, FileText, X, Camera, Info } from 'lucide-react';
+import { RefreshCw, Share2, Anchor, Zap, ZapOff, Cpu, Plus, Compass, Trash2, FolderOpen, CheckCircle2, Loader2, Sun, Moon, Eraser, Keyboard, FileText, Camera, Info, ChevronDown } from 'lucide-react';
 import { useUIStore } from '@/lib/drdpr-horizon/lib/store/useUIStore';
-import { ingestFromFileSystem, getStoredFolderHandle, connectAndStoreFolder, verifyPermission } from '@/lib/drdpr-horizon/lib/ingest-fsa';
+import { ingestFromFileSystem, getStoredFolderHandle, connectAndStoreFolder, verifyPermission, syncFromFileSystem } from '@/lib/drdpr-horizon/lib/ingest-fsa';
 import { db } from '@/lib/drdpr-horizon/lib/db';
 import { useTheme } from 'next-themes';
 import { PromptModal } from '../PromptModal';
@@ -12,6 +12,7 @@ import { generateProfessionalWiki } from '@/lib/drdpr-horizon/lib/publish/wikiGe
 import { exportCanvas, exportNodeWithRelationships, exportSelectedNodes } from '@/lib/drdpr-horizon/lib/exportCanvas';
 import { ExportPreviewModal } from '../ExportPreviewModal';
 import { useReactFlow } from '@xyflow/react';
+import { useToast } from '@/lib/drdpr-horizon/lib/store/useToastStore';
 
 export function Toolbar() {
   const {
@@ -25,21 +26,30 @@ export function Toolbar() {
     selectedNodeId,
     clearNodeSelection,
     isPaletteOpen,
-    setPaletteOpen
+    setPaletteOpen,
+    autoSaveEnabled, setAutoSaveEnabled,
+    refreshRate, setRefreshRate
   } = useUIStore();
+  
   const { setTheme, resolvedTheme } = useTheme();
   const { getNodes, getEdges } = useReactFlow();
 
-  const [connectedFolder, setConnectedFolder] = useState<string | null>(null);
-  const [ingestStatus, setIngestStatus] = useState<string | null>(null);
   const [isIngesting, setIsIngesting] = useState(false);
+  const [showRefreshMenu, setShowRefreshMenu] = useState(false);
   const [permissionState, setPermissionState] = useState<'granted' | 'prompt' | 'denied'>('prompt');
+  const [exportTarget, setExportTarget] = useState<'node' | 'selection' | 'canvas' | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [connectedFolder, setConnectedFolder] = useState<string | null>(null);
+  const { toast } = useToast();
   const [promptConfig, setPromptConfig] = useState<{
     show: boolean;
     title: string;
     message: string;
-    options?: { label: string; value: string }[];
+    defaultValue?: string;
+    options?: { label: string; value: string; variant?: 'default' | 'danger' }[];
+    icon?: React.ReactNode;
+    type?: 'default' | 'danger' | 'warning' | 'success' | 'info';
     onConfirm: (val: string) => void;
   }>({
     show: false,
@@ -48,16 +58,25 @@ export function Toolbar() {
     onConfirm: () => { },
   });
 
-  const [exportTarget, setExportTarget] = useState<'node' | 'selection' | 'canvas' | null>(null);
+  // --- AUTO-REFRESH HEARTBEAT ---
+  useEffect(() => {
+    if (refreshRate === 0 || !activeGraphId || isIngesting) return;
 
-  // On mount, check handle and permission
+    const interval = setInterval(() => {
+      if (permissionState === 'granted') {
+         handleSyncCurrent();
+      }
+    }, refreshRate * 1000);
+
+    return () => clearInterval(interval);
+  }, [refreshRate, activeGraphId, permissionState, isIngesting]);
+
   useEffect(() => {
     setMounted(true);
     const checkHandle = async () => {
       const handle = await getStoredFolderHandle();
       if (handle) {
         setConnectedFolder(handle.name);
-        // Verify if we actually have permission or need a pulse (re-auth)
         const hasPerm = await verifyPermission(handle);
         setPermissionState(hasPerm ? 'granted' : 'prompt');
       }
@@ -67,37 +86,26 @@ export function Toolbar() {
 
   const handleIngest = async () => {
     setIsIngesting(true);
-    setIngestStatus('Starting...');
     try {
       const handle = await getStoredFolderHandle();
       if (!handle) {
-        // If no handle, ingestFromFileSystem will prompt for one
-        const result = await ingestFromFileSystem((msg) => setIngestStatus(msg));
-        const newHandle = await getStoredFolderHandle();
-        if (newHandle) setConnectedFolder(newHandle.name);
-        setIngestStatus(`✓ ${result.count} nodes ingested`);
-        setTimeout(() => setIngestStatus(null), 3000);
+        toast({ title: 'Discovery Failed', description: 'Connect folder first', variant: 'destructive' });
         return;
       }
 
-      setConnectedFolder(handle.name);
+      const hasPerm = await verifyPermission(handle);
+      if (!hasPerm) {
+        toast({ title: 'Access Denied', description: 'Authorization required', variant: 'destructive' });
+        return;
+      }
 
-      // Determine target workspace: use current canvas's workspace or create new one
       let targetWorkspaceId: string;
 
       if (activeGraphId) {
-        // If a canvas is active, ingest into its workspace
         const activeGraph = await db.graphs.get(activeGraphId);
-        if (activeGraph) {
-          targetWorkspaceId = activeGraph.workspaceId;
-          setIngestStatus(`Ingesting into "${activeGraph.name}"...`);
-        } else {
-          // activeGraphId might be a workspace ID directly (legacy)
-          targetWorkspaceId = activeGraphId;
-          setIngestStatus(`Ingesting into workspace...`);
-        }
+        targetWorkspaceId = activeGraph?.workspaceId || activeGraphId;
+        toast({ title: 'Scanning Root', description: `Adding docs to ${activeGraph?.name || 'Current'}`, duration: 2000 });
       } else {
-        // No active canvas - create a new workspace and graph
         targetWorkspaceId = `workspace_${handle.name}_${Date.now()}`;
         const newGraph = {
           id: `graph_${Date.now()}`,
@@ -108,34 +116,27 @@ export function Toolbar() {
         };
         await db.graphs.add(newGraph);
         setActiveGraphId(newGraph.id);
-        setIngestStatus(`Creating new canvas "${handle.name}"...`);
+        toast({ title: 'New Canvas', description: `Initialized workspace for ${handle.name}` });
       }
 
-      // Ingest with temporary workspace ID (folder name)
-      let result = await ingestFromFileSystem((msg) => setIngestStatus(msg));
+      let result = await ingestFromFileSystem((msg) => {
+        toast({ title: 'Discovery Progress', description: msg, duration: 1000 });
+      }, false, true);
 
-      // Handle Project Root Warning
       if (result.isProjectRoot) {
-        setIngestStatus('⚠ Potential project root detected');
         setPromptConfig({
           show: true,
           title: 'WIDE INGESTION WARNING',
-          message: `The folder "${handle.name}" contains project files (like node_modules or .git). Ingesting this might result in a lot of noise. Do you want to continue indexing markdown files from this entire project, or cancel and select a more specific documentation folder?`,
+          message: `The folder "${handle.name}" contains project files. Ingesting this will index everything. Continue?`,
           options: [
             { label: 'INGEST ANYWAY', value: 'confirm' },
-            { label: 'SELECT DIFFERENT FOLDER', value: 'change' },
             { label: 'CANCEL', value: 'cancel' }
           ],
           onConfirm: async (val) => {
             setPromptConfig(prev => ({ ...prev, show: false }));
             if (val === 'confirm') {
-              const retryResult = await ingestFromFileSystem((msg) => setIngestStatus(msg), true);
+              const retryResult = await ingestFromFileSystem(() => {}, true, true);
               finalizeIngestion(retryResult, targetWorkspaceId);
-            } else if (val === 'change') {
-              await handleChangeFolder();
-            } else {
-              setIngestStatus('Ingestion cancelled.');
-              setTimeout(() => setIngestStatus(null), 3000);
             }
           }
         });
@@ -143,23 +144,77 @@ export function Toolbar() {
       }
 
       await finalizeIngestion(result, targetWorkspaceId);
-
     } catch (e) {
       console.error('Ingestion error:', e);
-      setIngestStatus('✗ Ingestion failed');
-      setTimeout(() => setIngestStatus(null), 3000);
+      toast({ title: 'Ingestion Error', description: 'Failed to process files', variant: 'destructive' });
+    } finally {
+      setIsIngesting(false);
+    }
+  };
+
+  const handleConnect = async () => {
+    try {
+      const handle = await connectAndStoreFolder();
+      if (handle) {
+        setConnectedFolder(handle.name);
+        setPermissionState('granted');
+        toast({ title: 'Project Linked', description: `Connected to ${handle.name}`, variant: 'success' });
+      }
+    } catch (e) {
+      console.error('Connect error:', e);
+      toast({ title: 'Connection Failed', variant: 'destructive' });
+    }
+  };
+
+  const handleVerify = async () => {
+    const handle = await getStoredFolderHandle();
+    if (!handle) return handleConnect();
+    
+    const hasPerm = await verifyPermission(handle);
+    if (hasPerm) {
+      setPermissionState('granted');
+      toast({ title: 'Authorized', variant: 'success', duration: 1500 });
+    } else {
+      toast({ title: 'Authorization Required', description: 'Please click the badge to grant access', variant: 'destructive' });
+    }
+  };
+
+  const handleSyncCurrent = async () => {
+    if (!activeGraphId) return;
+    
+    setIsIngesting(true);
+    try {
+      const handle = await getStoredFolderHandle();
+      if (!handle) return;
+
+      const activeGraph = await db.graphs.get(activeGraphId);
+      if (!activeGraph) return;
+
+      const targetWorkspaceId = activeGraph.workspaceId || activeGraphId;
+      const result = await syncFromFileSystem(targetWorkspaceId, (msg) => {
+        toast({ title: 'Discovery', description: msg, duration: 3000 });
+      });
+      
+      if (result.count > 0) {
+        toast({ 
+          title: 'Sync Complete', 
+          description: `Updated ${result.count} node${result.count > 1 ? 's' : ''}`, 
+          variant: 'success',
+          duration: 2000
+        });
+      }
+    } catch (e) {
+      toast({ title: 'Sync Failed', variant: 'destructive' });
     } finally {
       setIsIngesting(false);
     }
   };
 
   const finalizeIngestion = async (result: any, targetWorkspaceId: string) => {
-    // Update ONLY the newly ingested nodes to use the target workspace
     for (const nodeId of result.nodeIds) {
       await db.nodes.update(nodeId, { workspaceId: targetWorkspaceId });
     }
 
-    // Update edges for the newly ingested nodes
     const allEdges = await db.edges.toArray();
     const edgesToUpdate = allEdges.filter(e =>
       result.nodeIds.includes(e.sourceId) || result.nodeIds.includes(e.targetId)
@@ -168,36 +223,33 @@ export function Toolbar() {
       await db.edges.update(edge.id, { workspaceId: targetWorkspaceId });
     }
 
-    setIngestStatus(`✓ ${result.count} nodes ingested`);
-    setTimeout(() => setIngestStatus(null), 3000);
+    toast({ title: 'Ingestion Complete', description: `${result.count} nodes added to canvas`, variant: 'success' });
   };
 
   const handleChangeFolder = async () => {
-    const handle = await connectAndStoreFolder();
-    if (handle) {
-      setConnectedFolder(handle.name);
-      setIngestStatus(`Folder changed to "${handle.name}"`);
-      setTimeout(() => setIngestStatus(null), 2500);
-    }
+    await handleConnect();
+  };
+
+  const handleToggleSync = () => {
+    setAutoSaveEnabled(!autoSaveEnabled);
   };
 
   const handleClear = async () => {
-    // Button is now disabled if !activeGraphId, so we just focus on the modal
     setPromptConfig({
       show: true,
       title: 'CLEAR CANVAS',
       message: 'Are you sure you want to clear all nodes and connections from the current canvas? This cannot be undone.',
       options: [
-        { label: 'CLEAR ALL', value: 'confirm' },
+        { label: 'CLEAR ALL', value: 'confirm', variant: 'danger' },
         { label: 'CANCEL', value: 'cancel' }
       ],
       onConfirm: async (val) => {
         if (val === 'confirm') {
           try {
-            const activeGraph = await db.graphs.get(activeGraphId);
+            const activeGraph = await db.graphs.get(activeGraphId!);
             const targetWorkspaceId = activeGraph?.workspaceId || activeGraphId;
-            await db.nodes.where('workspaceId').equals(targetWorkspaceId).delete();
-            await db.edges.where('workspaceId').equals(targetWorkspaceId).delete();
+            await db.nodes.where('workspaceId').equals(targetWorkspaceId!).delete();
+            await db.edges.where('workspaceId').equals(targetWorkspaceId!).delete();
           } catch (e) {
             console.error('Failed to clear canvas:', e);
           }
@@ -205,6 +257,17 @@ export function Toolbar() {
         setPromptConfig(prev => ({ ...prev, show: false }));
       }
     });
+  };
+
+  const handleGenerateWiki = async () => {
+    if (!activeGraphId) return;
+    setIsGenerating(true);
+    try {
+      const activeGraph = await db.graphs.get(activeGraphId);
+      await generateProfessionalWiki(activeGraphId, activeGraph?.name || 'Graph');
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   const handlePurgeOrphans = async () => {
@@ -217,10 +280,10 @@ export function Toolbar() {
       show: true,
       title: orphans.length > 0 ? 'PURGE ORPHANS' : 'DATABASE CLEAN',
       message: orphans.length > 0
-        ? `Found ${orphans.length} orphaned nodes from deleted canvases. These are taking up space in the background. Purge them?`
-        : 'No orphaned nodes found. Your database is fully synchronized.',
+        ? `Found ${orphans.length} orphaned nodes from deleted canvases. Purge them?`
+        : 'No orphaned nodes found. Your database is clean.',
       options: orphans.length > 0
-        ? [{ label: 'PURGE DATABASE', value: 'confirm' }, { label: 'KEEP THEM', value: 'cancel' }]
+        ? [{ label: 'PURGE DATABASE', value: 'confirm', variant: 'danger' }, { label: 'CANCEL', value: 'cancel' }]
         : [{ label: 'EXCELLENT', value: 'close' }],
       onConfirm: async (val) => {
         if (val === 'confirm') {
@@ -235,273 +298,241 @@ export function Toolbar() {
     });
   };
 
-  const handleExportCanvas = async () => {
-    const canvasElement = document.querySelector('.react-flow') as HTMLElement;
-    if (!canvasElement) {
-      console.error('Canvas element not found');
-      return;
-    }
-
-    try {
-      const nodes = getNodes();
-      const edges = getEdges();
-
-      // If a single node is selected, prompt between node or canvas
-      if (selectedNodeId && selectedNodeIds.size === 1) {
-        setPromptConfig({
-          show: true,
-          title: 'EXPORT SCREENSHOT',
-          message: 'Export the selected node with its relationships, or the entire canvas?',
-          options: [
-            { label: 'NODE + RELATIONSHIPS', value: 'node' },
-            { label: 'ENTIRE CANVAS', value: 'canvas' },
-            { label: 'CANCEL', value: 'cancel' }
-          ],
-          onConfirm: async (val) => {
-            if (val === 'node') {
-              setExportTarget('node');
-            } else if (val === 'canvas') {
-              setExportTarget('canvas');
-            }
-            setPromptConfig(prev => ({ ...prev, show: false }));
-          }
-        });
-      }
-      // If multiple nodes are selected, default to selection export
-      else if (selectedNodeIds.size > 1) {
-        setExportTarget('selection');
-      }
-      // Otherwise, default to entire canvas
-      else {
-        setExportTarget('canvas');
-      }
-    } catch (error) {
-      console.error('Export failed:', error);
-      alert('Failed to export canvas. Please try again.');
-    }
-  };
-
-
-
   return (
-    <div className="flex items-center gap-4 p-4">
+    <div className="absolute top-6 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-3">
+      {/* 1. SYSTEM ISLAND */}
+      <Island>
+        <ActionButton
+          onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
+          icon={mounted && resolvedTheme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
+          label={mounted && resolvedTheme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+        />
+        <ActionButton
+          onClick={() => setShortcutsHelpOpen(true)}
+          icon={<Keyboard size={14} />}
+          label="Shortcuts"
+        />
+        <div className="w-px h-3 bg-border/20 mx-0.5" />
+        <ActionButton
+          onClick={handlePurgeOrphans}
+          icon={<Eraser size={14} />}
+          label="Clean Database"
+          color="text-amber-400/60"
+        />
+        <ActionButton
+          onClick={handleClear}
+          disabled={!activeGraphId}
+          icon={<Trash2 size={14} />}
+          label="Nuke Canvas"
+          color="text-red-400"
+        />
+      </Island>
 
-      {/* Action Group */}
-      <div className="flex flex-col gap-1">
-        <div className="flex gap-2 p-1 bg-card/80 backdrop-blur border border-border rounded shadow-xs">
-          <button
-            onClick={handleIngest}
-            disabled={isIngesting}
-            title={
-              isIngesting ? 'Syncing...'
-                : permissionState === 'prompt' && connectedFolder ? `Re-authorize "${connectedFolder}" then sync`
-                  : connectedFolder ? `Re-sync from "${connectedFolder}"`
-                    : 'Connect folder & ingest'
-            }
-            className={`p-2 hover:bg-secondary rounded transition-colors disabled:opacity-50 ${permissionState === 'prompt' && connectedFolder
-                ? 'text-amber-400 hover:text-amber-300'
-                : 'text-foreground/60 hover:text-foreground'
+      {/* 2. GROUNDING ISLAND */}
+      <Island className="px-1.5">
+        <div className="flex items-center gap-1 pr-1">
+          <ActionButton
+            onClick={handleToggleSync}
+            disabled={!connectedFolder}
+            icon={<Zap size={14} className={autoSaveEnabled ? 'fill-current animate-pulse' : ''} />}
+            label={autoSaveEnabled ? "Live Push: Active" : "Enable Live Push"}
+            color={autoSaveEnabled ? "text-amber-400 bg-amber-500/10" : "text-foreground/40"}
+          />
+          
+          <div className="relative flex items-center group/sync">
+            <button
+              onClick={handleSyncCurrent}
+              disabled={isIngesting || !activeGraphId}
+              className={`p-2 rounded-lg transition-all relative group/btn ${
+                activeGraphId ? 'text-green-400/80 hover:text-green-400 hover:bg-green-500/5' : 'text-foreground/20'
               }`}
-          >
-            {isIngesting
-              ? <Loader2 size={16} className="animate-spin" />
-              : permissionState === 'prompt' && connectedFolder
-                ? <RefreshCw size={16} className="opacity-60" />
-                : connectedFolder
-                  ? <RefreshCw size={16} />
-                  : <FolderOpen size={16} />}
-          </button>
-          <button
-            onClick={handleClear}
-            disabled={!activeGraphId}
-            title={activeGraphId ? "Clear All Nodes" : "Select a canvas first"}
-            className="p-2 hover:bg-secondary text-red-400/60 hover:text-red-400 rounded transition-colors disabled:opacity-20 disabled:cursor-not-allowed"
-          >
-            <Trash2 size={16} />
-          </button>
+            >
+              <RefreshCw size={14} className={isIngesting || refreshRate > 0 ? 'animate-spin-slow' : ''} />
+              
+              {/* Tooltip - Adjusted to bottom */}
+              <div className="absolute top-12 left-1/2 -translate-x-1/2 px-2 py-1 rounded bg-background/90 backdrop-blur-md text-xs text-foreground whitespace-nowrap opacity-0 group-hover/btn:opacity-100 transition-opacity uppercase font-black tracking-widest border border-border/20 pointer-events-none z-[120]">
+                {refreshRate > 0 ? `Auto-Pull (${refreshRate}s)` : "Manual Pull"}
+              </div>
+            </button>
+            
+            <button
+              onClick={() => setShowRefreshMenu(!showRefreshMenu)}
+              className={`p-1 -ml-1.5 rounded-full hover:bg-secondary transition-colors z-[110] ${showRefreshMenu ? 'text-green-400' : 'text-foreground/20'}`}
+            >
+              <ChevronDown size={10} className={`transition-transform duration-300 ${showRefreshMenu ? 'rotate-180' : ''}`} />
+            </button>
 
-          <button
-            onClick={handlePurgeOrphans}
-            title="Purge Orphaned Nodes"
-            className="p-2 hover:bg-secondary text-amber-400/60 hover:text-amber-400 rounded transition-colors"
-          >
-            <Eraser size={16} />
-          </button>
-
-          <div className="h-6 w-[1px] bg-border mx-1" />
-          <button
-            onClick={handleExportCanvas}
-            title={
-              selectedNodeId && selectedNodeIds.size === 1
-                ? 'Export node with relationships'
-                : selectedNodeIds.size > 1
-                ? 'Export selected nodes'
-                : 'Export canvas screenshot'
-            }
-            className="p-2 hover:bg-secondary text-foreground/60 hover:text-foreground rounded transition-colors"
-          >
-            <Camera size={16} />
-          </button>
-          <button
-            onClick={() => setShortcutsHelpOpen(true)}
-            title="Keyboard Shortcuts"
-            className="p-2 hover:bg-secondary text-foreground/60 hover:text-foreground rounded transition-colors"
-          >
-            <Keyboard size={16} />
-          </button>
-          <button
-            onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
-            title={`Switch to ${resolvedTheme === 'dark' ? 'light' : 'dark'} mode`}
-            className="p-2 hover:bg-secondary text-foreground/60 hover:text-foreground rounded transition-colors"
-          >
-            {mounted && resolvedTheme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
-          </button>
+            {showRefreshMenu && (
+              <div className="absolute top-10 left-0 p-2 bg-card/90 backdrop-blur-3xl border border-border/40 rounded-xl shadow-2xl min-w-[120px] animate-in slide-in-from-top-2 fade-in duration-200 z-[120]">
+                <h3 className="text-xs font-black uppercase tracking-widest text-foreground/40 mb-2 ml-1">Pull Interval</h3>
+                <div className="flex flex-col gap-1">
+                  {[0, 5, 10, 30].map((rate) => (
+                    <button
+                      key={rate}
+                      onClick={() => {
+                        setRefreshRate(rate);
+                        setShowRefreshMenu(false);
+                      }}
+                      className={`px-2 py-1.5 text-xs font-bold rounded-lg text-left transition-colors ${
+                        refreshRate === rate ? 'bg-green-500/20 text-green-400' : 'hover:bg-secondary text-foreground/60'
+                      }`}
+                    >
+                      {rate === 0 ? 'Manual' : `${rate}s Interval`}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
-        {/* Folder status badge */}
-        {(connectedFolder || ingestStatus) && (
+
+        <div className="w-px h-4 bg-border/20 mx-1" />
+
+        <div className="flex items-center gap-1.5 px-1 pr-2">
+          {/* FOLDER CONNECTION / RE-AUTH */}
           <button
-            onClick={connectedFolder ? handleChangeFolder : undefined}
-            title={connectedFolder ? 'Click to change folder' : undefined}
-            className={`flex items-center gap-1.5 px-2 py-1 bg-card/80 border border-border rounded text-xs font-mono max-w-[220px] transition-colors outline-none ${
-              connectedFolder ? 'cursor-pointer hover:border-blue-500/50 hover:bg-secondary/60 group' : 'cursor-default'
+            onClick={permissionState === 'granted' ? handleChangeFolder : handleVerify}
+            className={`p-2 rounded-lg transition-all flex items-center gap-2 group/folder ${
+              permissionState === 'granted' 
+                ? 'text-blue-400 hover:bg-blue-500/5' 
+                : 'text-amber-400 bg-amber-500/10 animate-pulse'
             }`}
           >
-            {ingestStatus ? (
-              <span className="text-blue-400 truncate font-bold">{ingestStatus}</span>
-            ) : permissionState === 'prompt' && connectedFolder ? (
-              <>
-                <span className="relative flex h-2 w-2 flex-shrink-0">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500" />
-                </span>
-                <span className="text-amber-400/80 truncate" title="Click sync to re-authorize">{connectedFolder}</span>
-              </>
-            ) : (
-              <>
-                <CheckCircle2 size={10} className="text-green-500 flex-shrink-0 group-hover:hidden" />
-                <FolderOpen size={10} className="text-blue-400 flex-shrink-0 hidden group-hover:block" />
-                <span className="text-foreground/40 truncate group-hover:text-blue-400">{connectedFolder}</span>
-              </>
+            <FolderOpen size={14} />
+            {connectedFolder && (
+              <div className="flex items-center gap-2 max-w-[140px]">
+                <span className="text-xs font-mono opacity-60 truncate">{connectedFolder}</span>
+                {permissionState !== 'granted' && (
+                  <span className="text-xs font-black uppercase tracking-widest bg-amber-500/20 px-1 rounded">RE-AUTH</span>
+                )}
+              </div>
             )}
+            
+            <div className="absolute top-12 left-1/2 -translate-x-1/2 px-2 py-1 rounded bg-background/90 backdrop-blur-md text-xs text-foreground whitespace-nowrap opacity-0 group-hover/folder:opacity-100 transition-opacity uppercase font-black tracking-widest border border-border/20 pointer-events-none z-[120]">
+              {permissionState === 'granted' ? 'Change Project Folder' : 'Re-authorize Access'}
+            </div>
           </button>
-        )}
-      </div>
 
-      <div className="h-4 w-[1px] bg-secondary" />
+          <div className="w-px h-3 bg-border/20 mx-0.5" />
 
-      {/* Relationship Visualization Mode */}
-      <div className="flex flex-col gap-1">
-        <span className="text-xs uppercase tracking-widest text-foreground/40  ml-1">Visualization</span>
-        <div className="flex bg-card/80 backdrop-blur border border-border rounded p-1 shadow-xs">
-          {[
-            { id: 'all', label: 'All' },
-            { id: 'selected', label: 'Direct' },
-            { id: 'trace', label: 'Trace' }
-          ].map((mode) => (
-            <button
-              key={mode.id}
-              onClick={() => setRelationshipMode(mode.id as any)}
-              className={`px-3 py-1 text-xs uppercase tracking-wider  rounded transition-all ${relationshipMode === mode.id
-                  ? 'bg-blue-600/50 text-foreground shadow-lg'
-                  : 'text-foreground/40 hover:text-foreground/90'
-                }`}
-            >
-              {mode.label}
-            </button>
-          ))}
+          {/* INGEST ACTION */}
+          <ActionButton
+            onClick={handleIngest}
+            disabled={isIngesting || permissionState !== 'granted'}
+            icon={<Plus size={14} className={isIngesting ? 'animate-bounce' : ''} />}
+            label="Discover New Nodes"
+            color="text-blue-400"
+          />
         </div>
-      </div>
+      </Island>
 
-      {/* Anchor Logic Toggle */}
-      <div className="flex flex-col gap-1">
-        <span className="text-xs uppercase tracking-widest text-foreground/40  ml-1">Anchors</span>
-        <div className="flex bg-card/80 backdrop-blur border border-border rounded p-1 shadow-xs">
-          {[
-            { id: 'fixed', label: 'Fixed', icon: <Anchor size={10} />, title: 'Top/Bottom Only' },
-            { id: 'smart', label: 'Smart', icon: <Zap size={10} />, title: 'Closest 4-Way' }
-          ].map((mode) => (
-            <button
-              key={mode.id}
-              title={mode.title}
-              onClick={() => setEdgeHandleType(mode.id as any)}
-              className={`flex items-center gap-1.5 px-3 py-1 text-xs uppercase tracking-wider  rounded transition-all ${edgeHandleType === mode.id
-                  ? 'bg-purple-600/50 text-foreground shadow-lg'
-                  : 'text-foreground/40 hover:text-foreground/90'
-                }`}
-            >
-              {mode.icon}
-              {mode.label}
-            </button>
-          ))}
+      {/* 3. VIEW ISLAND */}
+      <Island>
+        <div className="flex bg-secondary/30 rounded-lg p-0.5">
+          <ModeButton 
+            active={relationshipMode === 'all'} 
+            onClick={() => setRelationshipMode('all')} 
+            icon={<Share2 size={12} />} 
+            label="All" 
+          />
+          <ModeButton 
+            active={relationshipMode === 'selected'} 
+            onClick={() => setRelationshipMode('selected')} 
+            icon={<Compass size={12} />} 
+            label="Selected" 
+          />
+          <ModeButton 
+            active={relationshipMode === 'trace'} 
+            onClick={() => setRelationshipMode('trace')} 
+            icon={<Anchor size={12} />} 
+            label="Trace" 
+          />
         </div>
-      </div>
 
-      {/* Path Style Toggle */}
-      <div className="flex flex-col gap-1">
-        <span className="text-xs uppercase tracking-widest text-foreground/40  ml-1">Path Style</span>
-        <div className="flex bg-card/80 backdrop-blur border border-border rounded p-1 shadow-xs">
-          {[
-            { id: 'organic', label: 'Organic', icon: <Share2 size={10} />, title: 'Bezier Curves' },
-            { id: 'circuit', label: 'Circuit', icon: <Cpu size={10} />, title: 'Square Steps' },
-            { id: 'smart', label: 'Smart', icon: <Compass size={10} />, title: 'Avoid Nodes' }
-          ].map((mode) => (
-            <button
-              key={mode.id}
-              title={mode.title}
-              onClick={() => setEdgePathType(mode.id as any)}
-              className={`flex items-center gap-1.5 px-3 py-1 text-xs uppercase tracking-wider  rounded transition-all ${edgePathType === mode.id
-                  ? 'bg-emerald-600/50 text-foreground shadow-lg'
-                  : 'text-foreground/40 hover:text-foreground/90'
-                }`}
-            >
-              {mode.icon}
-              {mode.label}
-            </button>
-          ))}
+        <div className="w-px h-3 bg-border/20 mx-1" />
+
+        {/* Edge Styles */}
+        <div className="flex gap-2">
+          <div className="flex bg-secondary/30 rounded-lg p-0.5">
+            <ModeButton 
+              active={edgeHandleType === 'fixed'} 
+              onClick={() => setEdgeHandleType('fixed')} 
+              icon={<Anchor size={12} />} 
+              label="Fixed" 
+            />
+            <ModeButton 
+              active={edgeHandleType === 'smart'} 
+              onClick={() => setEdgeHandleType('smart')} 
+              icon={<Zap size={12} className={edgeHandleType === 'smart' ? 'text-purple-400' : ''} />} 
+              label="Smart" 
+            />
+          </div>
+
+          <div className="flex bg-secondary/30 rounded-lg p-0.5">
+            <ModeButton 
+              active={edgePathType === 'organic'} 
+              onClick={() => setEdgePathType('organic')} 
+              icon={<Share2 size={12} />} 
+              label="Organic" 
+            />
+            <ModeButton 
+              active={edgePathType === 'circuit'} 
+              onClick={() => setEdgePathType('circuit')} 
+              icon={<Cpu size={12} className={edgePathType === 'circuit' ? 'text-emerald-400' : ''} />} 
+              label="Circuit" 
+            />
+            <ModeButton 
+              active={edgePathType === 'smart'} 
+              onClick={() => setEdgePathType('smart')} 
+              icon={<Compass size={12} className={edgePathType === 'smart' ? 'text-blue-400' : ''} />} 
+              label="Avoidance" 
+            />
+          </div>
         </div>
-      </div>
 
-      {/* Floating Palette Toggle */}
-      <div className="flex flex-col gap-1">
-        <span className="text-xs uppercase tracking-widest text-foreground/40 ml-1">Palette</span>
-        <div className="flex bg-card/80 backdrop-blur border border-border rounded p-1 shadow-xs">
-          <button
-            onClick={() => setPaletteOpen(!isPaletteOpen)}
-            title={isPaletteOpen ? "Hide Floating Palette" : "Show Floating Palette"}
-            className={`flex items-center gap-1.5 px-3 py-1 text-xs uppercase tracking-wider rounded transition-all ${isPaletteOpen
-                ? 'bg-amber-600/50 text-foreground shadow-lg'
-                : 'text-foreground/40 hover:text-foreground/90'
-              }`}
-          >
-            {isPaletteOpen ? <Zap size={10} /> : <ZapOff size={10} />}
-            {isPaletteOpen ? 'Floating' : 'Hidden'}
-          </button>
-        </div>
-      </div>
+        <div className="w-px h-3 bg-border/20 mx-1" />
 
-      <div className="flex-1" />
+        <ActionButton
+          onClick={() => setPaletteOpen(!isPaletteOpen)}
+          icon={<ZapOff size={14} className={isPaletteOpen ? 'text-amber-400' : ''} />}
+          label={isPaletteOpen ? "Hide Palette" : "Show Palette"}
+        />
+      </Island>
 
-      {/* About Page Link */}
-      <div className="flex flex-col gap-1 pr-2">
-        <span className="text-xs uppercase tracking-widest text-transparent ml-1 select-none">.</span>
-        <Link href="/about">
-          <button
-            title="About Ingestalt"
-            className="flex items-center gap-1.5 px-3 py-1 text-xs uppercase tracking-wider rounded transition-all text-foreground/40 hover:text-foreground/90 hover:bg-secondary/50 border border-transparent hover:border-border/50"
-          >
-            <Info size={14} />
-            About
-          </button>
+      {/* 4. OUTPUT ISLAND */}
+      <Island>
+        <ActionButton
+          onClick={() => setExportTarget('canvas')}
+          icon={<Camera size={14} />}
+          label="Capture Canvas"
+        />
+        
+        <ActionButton
+          onClick={handleGenerateWiki}
+          disabled={!activeGraphId}
+          icon={isGenerating ? <Loader2 size={14} className="animate-spin" /> : <FileText size={14} />}
+          label="Publish Wiki"
+          color="text-emerald-400"
+        />
+        
+        <div className="w-px h-3 bg-border/20 mx-0.5" />
+        
+        <Link href="/about" className="p-2 hover:bg-secondary rounded-lg transition-all group relative">
+          <Info size={14} className="text-foreground/30 group-hover:text-foreground/60" />
+          <div className="absolute top-12 left-1/2 -translate-x-1/2 px-2 py-1 rounded bg-background/90 backdrop-blur-md text-xs text-foreground whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity uppercase font-black tracking-widest border border-border/20 pointer-events-none z-[120]">
+            About Ingestalt
+          </div>
         </Link>
-      </div>
+      </Island>
 
-
-
+      {/* MODALS */}
       <PromptModal
         show={promptConfig.show}
         title={promptConfig.title}
         message={promptConfig.message}
         options={promptConfig.options}
+        icon={promptConfig.icon}
+        type={promptConfig.type}
         onConfirm={promptConfig.onConfirm}
         onCancel={() => setPromptConfig(prev => ({ ...prev, show: false }))}
       />
@@ -528,5 +559,65 @@ export function Toolbar() {
         }}
       />
     </div>
+  );
+}
+
+function Island({ children, className = "" }: { children: React.ReactNode, className?: string }) {
+  return (
+    <div className={`flex items-center gap-1.5 p-1 bg-card/60 backdrop-blur-2xl border border-border/40 rounded-xl shadow-md ${className}`}>
+      {children}
+    </div>
+  );
+}
+
+function ActionButton({ 
+  onClick, 
+  icon, 
+  label, 
+  color = "text-foreground/60", 
+  disabled = false 
+}: { 
+  onClick: () => void, 
+  icon: React.ReactNode, 
+  label: string, 
+  color?: string, 
+  disabled?: boolean 
+}) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className={`p-2 hover:bg-secondary rounded-lg transition-all group relative disabled:opacity-20 ${color}`}
+    >
+      <div className="group-hover:scale-110 transition-transform">
+        {icon}
+      </div>
+      
+      {/* Tooltip */}
+      <div className="absolute top-12 left-1/2 -translate-x-1/2 px-2 py-1 rounded bg-background/90 backdrop-blur-md text-xs text-foreground whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity uppercase font-black tracking-widest border border-border/20 pointer-events-none z-[120]">
+        {label}
+      </div>
+    </button>
+  );
+}
+
+function ModeButton({ active, onClick, icon, label }: { active: boolean, onClick: () => void, icon: React.ReactNode, label: string }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`p-1.5 px-2.5 rounded-lg flex items-center gap-2 transition-all group relative ${
+        active 
+          ? 'bg-background shadow-sm text-foreground' 
+          : 'text-foreground/30 hover:text-foreground/60'
+      }`}
+    >
+      {icon}
+      <span className="text-xs font-black uppercase tracking-tighter">{label}</span>
+      
+      {/* Tooltip for small icon buttons - Adjusted to bottom */}
+      <div className="absolute top-12 left-1/2 -translate-x-1/2 px-2 py-1 rounded bg-background/90 backdrop-blur-md text-xs text-foreground whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity uppercase font-black tracking-widest border border-border/20 pointer-events-none z-[120]">
+        {label} Mode
+      </div>
+    </button>
   );
 }

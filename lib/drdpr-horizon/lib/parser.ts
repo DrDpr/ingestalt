@@ -23,6 +23,17 @@ export function parseMarkdownToNode(
     : data.id;
   const configId = data.configId || data.config_id || (data.type ? `node_standards_${data.type}` : 'node_standards_other');
   
+  // Intelligent Title Extraction
+  let title = data.title || data.name;
+  
+  if (!title) {
+    // Fallback 1: Try to find the first H1 in the content
+    const h1Match = content.match(/^#\s+(.*)$/m);
+    if (h1Match) {
+      title = h1Match[1].trim();
+    }
+  }
+  
   const node: HorizonNode = {
     id,
     configId,
@@ -30,7 +41,7 @@ export function parseMarkdownToNode(
     position: data.position || { x: 0, y: 0 },
     lastModified: Date.now(),
     payload: {
-      title: data.title || 'Untitled Node',
+      title: title || 'Untitled Node',
       content: content.trim(),
       tags: Array.isArray(data.tags) ? data.tags : [],
       type: data.type || 'other',
