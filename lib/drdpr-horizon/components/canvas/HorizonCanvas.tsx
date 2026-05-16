@@ -31,6 +31,7 @@ const nodeTypes_internal = {
   other: GarnishedNode,
   standards: GarnishedNode,
   horizonDoc: GarnishedNode,
+  'ai-task': GarnishedNode,
 };
 
 const edgeTypes = {
@@ -38,6 +39,7 @@ const edgeTypes = {
 };
 
 import { Palette } from './Palette';
+import { BatchActionToolbar } from './BatchActionToolbar';
 
 import { useSync } from '../../lib/hooks/useSync';
 
@@ -45,7 +47,8 @@ export function HorizonCanvas() {
   const {
     setSelectedNodeId, selectedNodeId,
     relationshipMode, setViewport, viewport,
-    autoSaveEnabled, theme, activeGraphId
+    autoSaveEnabled, theme, activeGraphId,
+    toggleNodeSelection, selectedNodeIds
   } = useUIStore();
   const { screenToFlowPosition } = useReactFlow();
   const { syncNodeToFile } = useSync();
@@ -116,8 +119,9 @@ export function HorizonCanvas() {
       
       return {
         id: node.id,
-        type: ['database', 'api', 'frontend', 'hook', 'standards'].includes(resolvedType) ? resolvedType : 'other',
+        type: ['database', 'api', 'frontend', 'hook', 'standards', 'ai-task'].includes(resolvedType) ? resolvedType : 'other',
         position: node.position,
+        selected: selectedNodeIds.has(node.id),
         data: {
           id: node.id,
           label: node.payload?.title || 'Untitled',
@@ -185,7 +189,14 @@ export function HorizonCanvas() {
   useEffect(() => { setNodes(nodes_transformed); }, [nodes_transformed, setNodes]);
   useEffect(() => { setEdges(filteredEdges); }, [filteredEdges, setEdges]);
 
-  const onNodeClick = useCallback((e: any, node: Node) => setSelectedNodeId(node.id), [setSelectedNodeId]);
+  const onNodeClick = useCallback((e: any, node: Node) => {
+    // Multi-select with Ctrl/Cmd key
+    if (e.ctrlKey || e.metaKey) {
+      toggleNodeSelection(node.id);
+    } else {
+      setSelectedNodeId(node.id);
+    }
+  }, [setSelectedNodeId, toggleNodeSelection]);
   const onPaneClick = useCallback(() => setSelectedNodeId(null), [setSelectedNodeId]);
   const onMoveEnd = useCallback((e: any, vp: any) => setViewport(vp), [setViewport]);
   const onNodeDragStop = useCallback(async (e: any, node: Node) => {
@@ -312,6 +323,7 @@ export function HorizonCanvas() {
   return (
     <div className="w-full h-full relative">
       <Palette />
+      <BatchActionToolbar />
       <ReactFlow
         nodes={nodes} edges={edges}
         onNodesChange={onNodesChange} onEdgesChange={onEdgesChange}

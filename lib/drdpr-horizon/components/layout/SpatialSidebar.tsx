@@ -17,7 +17,11 @@ import {
   ChevronDown,
   Database,
   Trash2,
-  Settings
+  Settings,
+  Save,
+  Download,
+  Upload,
+  RotateCcw
 } from 'lucide-react';
 import { DynamicIcon } from '@/lib/drdpr-horizon/components/DynamicIcon';
 import { PromptModal } from '../PromptModal';
@@ -26,6 +30,7 @@ const CORE_TEMPLATES = [
   { id: 'note', title: 'Note', icon: FileText, color: '#94a3b8' },
   { id: 'database', title: 'Record', icon: Database, color: '#3b82f6' },
   { id: 'standards', title: 'Standards', icon: Settings, color: '#f59e0b' },
+  { id: 'ai-task', title: 'AI Task', icon: CheckSquare, color: '#a855f7' },
 ];
 
 export function SpatialSidebar() {
@@ -133,6 +138,155 @@ export function SpatialSidebar() {
       }
     });
   };
+  // Save canvas snapshot (Atlas)
+  const handleSaveSnapshot = async (graphId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    const graph = await db.graphs.get(graphId);
+    if (!graph) return;
+    
+    // Get all nodes in this workspace
+    const nodes = await db.nodes.where('workspaceId').equals(graph.workspaceId).toArray();
+    
+    // Create snapshot with node positions
+    const snapshot = {
+      nodes: nodes.map(n => ({ id: n.id, position: n.position })),
+      viewport: { x: 0, y: 0, zoom: 1 }, // Will be updated from canvas
+      timestamp: Date.now()
+    };
+    
+    await db.graphs.update(graphId, { snapshot });
+    alert('Canvas snapshot saved!');
+  };
+
+  // Restore canvas from snapshot
+  const handleRestoreSnapshot = async (graphId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    const graph = await db.graphs.get(graphId);
+    if (!graph || !graph.snapshot) {
+      alert('No snapshot found for this canvas.');
+      return;
+    }
+    
+    setPromptConfig({
+      show: true,
+      title: 'RESTORE CANVAS',
+      message: `Restore node positions from snapshot taken on ${new Date(graph.snapshot.timestamp).toLocaleString()}?`,
+      options: [
+        { label: 'RESTORE POSITIONS', value: 'confirm' },
+        { label: 'CANCEL', value: 'cancel' }
+      ],
+      onConfirm: async (val) => {
+        if (val === 'confirm' && graph.snapshot) {
+          // Restore node positions
+          for (const nodeSnapshot of graph.snapshot.nodes) {
+            await db.nodes.update(nodeSnapshot.id, { position: nodeSnapshot.position });
+          }
+          alert('Canvas restored from snapshot!');
+        }
+        setPromptConfig(prev => ({ ...prev, show: false }));
+      }
+    });
+  };
+
+  // Export canvas as Atlas file
+  const handleExportAtlas = async (graphId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    const graph = await db.graphs.get(graphId);
+    if (!graph) return;
+    
+    // Get all data for this canvas
+    const nodes = await db.nodes.where('workspaceId').equals(graph.workspaceId).toArray();
+    const edges = await db.edges.where('workspaceId').equals(graph.workspaceId).toArray();
+    
+    const atlasData = {
+      version: '1.0',
+      graph: {
+        id: graph.id,
+        name: graph.name,
+        description: graph.description,
+        workspaceId: graph.workspaceId,
+        snapshot: graph.snapshot
+      },
+      nodes,
+      edges,
+      exportedAt: Date.now()
+    };
+    
+    // Download as JSON file
+    const blob = new Blob([JSON.stringify(atlasData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${graph.name.replace(/\s+/g, '_')}_atlas.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  // Import Atlas file
+  const handleImportAtlas = async () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    
+    input.onchange = async (e: any) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      try {
+        const text = await file.text();
+        const atlasData = JSON.parse(text);
+        
+        if (!atlasData.version || !atlasData.graph) {
+          alert('Invalid Atlas file format.');
+          return;
+        }
+        
+        // Create new workspace ID to avoid conflicts
+        const newWorkspaceId = `workspace_${Date.now()}`;
+        const newGraphId = `graph_${Date.now()}`;
+        
+        // Import graph
+        await db.graphs.add({
+          id: newGraphId,
+          workspaceId: newWorkspaceId,
+          name: `${atlasData.graph.name} (Imported)`,
+          description: atlasData.graph.description,
+          config: {},
+          snapshot: atlasData.graph.snapshot
+        });
+        
+        // Import nodes with new workspace ID
+        for (const node of atlasData.nodes) {
+          await db.nodes.add({
+            ...node,
+            workspaceId: newWorkspaceId
+          });
+        }
+        
+        // Import edges with new workspace ID
+        for (const edge of atlasData.edges) {
+          await db.edges.add({
+            ...edge,
+            workspaceId: newWorkspaceId
+          });
+        }
+        
+        setActiveGraphId(newGraphId);
+        alert('Atlas imported successfully!');
+      } catch (error) {
+        console.error('Import error:', error);
+        alert('Failed to import Atlas file.');
+      }
+    };
+    
+    input.click();
+  };
+
   // Purge Orphans using PromptModal
   const handlePurgeOrphans = async () => {
     const allGraphs = await db.graphs.toArray();
@@ -210,13 +364,22 @@ export function SpatialSidebar() {
           isOpen={openSections.canvas}
           onToggle={() => toggleSection('canvas')}
           action={
-            <button
-              onClick={() => setIsCreatingGraph(true)}
-              className="text-foreground/20 hover:text-foreground transition-colors p-1"
-              title="Create new canvas"
-            >
-              <Plus className="w-3 h-3" />
-            </button>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={handleImportAtlas}
+                className="text-foreground/20 hover:text-blue-400 transition-colors p-1"
+                title="Import Atlas file"
+              >
+                <Upload className="w-3 h-3" />
+              </button>
+              <button
+                onClick={() => setIsCreatingGraph(true)}
+                className="text-foreground/20 hover:text-foreground transition-colors p-1"
+                title="Create new canvas"
+              >
+                <Plus className="w-3 h-3" />
+              </button>
+            </div>
           }
         >
           <div className="px-4 pb-4 space-y-0.5">
@@ -264,7 +427,7 @@ export function SpatialSidebar() {
                 key={graph.id}
                 onClick={() => handleSwitchGraph(graph.id)}
                 className={cn(
-                  "group flex items-center justify-between gap-3 px-3 py-2 cursor-pointer transition-all border border-transparent",
+                  "group flex items-center justify-between gap-2 px-3 py-2 cursor-pointer transition-all border border-transparent",
                   activeGraphId === graph.id ? "bg-secondary/5 border-border/10 text-foreground" : "text-foreground/40 hover:bg-secondary/[0.02] hover:text-foreground/60"
                 )}
               >
@@ -272,13 +435,38 @@ export function SpatialSidebar() {
                   <Layout size={12} className={activeGraphId === graph.id ? "text-blue-400" : ""} />
                   <span className="text-xs font-bold truncate tracking-wider">{graph.name}</span>
                 </div>
-                <button
-                  onClick={(e) => handleDeleteGraph(graph.id, e)}
-                  className="opacity-0 group-hover:opacity-100 text-foreground/20 hover:text-red-400 transition-all p-1"
-                  title="Delete canvas"
-                >
-                  <Trash2 size={10} />
-                </button>
+                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button
+                    onClick={(e) => handleSaveSnapshot(graph.id, e)}
+                    className="text-foreground/20 hover:text-green-400 transition-colors p-1"
+                    title="Save snapshot"
+                  >
+                    <Save size={10} />
+                  </button>
+                  {graph.snapshot && (
+                    <button
+                      onClick={(e) => handleRestoreSnapshot(graph.id, e)}
+                      className="text-foreground/20 hover:text-blue-400 transition-colors p-1"
+                      title="Restore from snapshot"
+                    >
+                      <RotateCcw size={10} />
+                    </button>
+                  )}
+                  <button
+                    onClick={(e) => handleExportAtlas(graph.id, e)}
+                    className="text-foreground/20 hover:text-purple-400 transition-colors p-1"
+                    title="Export as Atlas file"
+                  >
+                    <Download size={10} />
+                  </button>
+                  <button
+                    onClick={(e) => handleDeleteGraph(graph.id, e)}
+                    className="text-foreground/20 hover:text-red-400 transition-colors p-1"
+                    title="Delete canvas"
+                  >
+                    <Trash2 size={10} />
+                  </button>
+                </div>
               </div>
             ))}
           </div>

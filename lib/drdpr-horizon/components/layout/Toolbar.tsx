@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { RefreshCw, Database, Share2, Anchor, Zap, Cpu, Compass, Trash2, FolderOpen, CheckCircle2, Loader2, Sun, Moon, Eraser } from 'lucide-react';
+import { RefreshCw, Database, Share2, Anchor, Zap, Cpu, Compass, Trash2, FolderOpen, CheckCircle2, Loader2, Sun, Moon, Eraser, Copy, Download, FileText, X } from 'lucide-react';
 import { useUIStore } from '@/lib/drdpr-horizon/lib/store/useUIStore';
 import { ingestFromFileSystem, getStoredFolderHandle, connectAndStoreFolder } from '@/lib/drdpr-horizon/lib/ingest-fsa';
 import { db } from '@/lib/drdpr-horizon/lib/db';
@@ -15,31 +15,30 @@ export function Toolbar() {
     edgePathType, setEdgePathType,
     theme, toggleTheme,
     setActiveGraphId,
-    activeGraphId
+    activeGraphId,
+    selectedNodeIds,
+    clearNodeSelection
   } = useUIStore();
 
   const [connectedFolder, setConnectedFolder] = useState<string | null>(null);
   const [ingestStatus, setIngestStatus] = useState<string | null>(null);
   const [isIngesting, setIsIngesting] = useState(false);
+  const [permissionState, setPermissionState] = useState<'granted' | 'prompt' | 'denied'>('prompt');
+  
+  const { syncAllNodes } = useSync();
 
-  const { theme: appTheme, setTheme, resolvedTheme } = useTheme();
-  const toggleAppTheme = () => {
-    setTheme(resolvedTheme === 'dark' ? 'light' : 'dark');
-  };
-
-  const [promptConfig, setPromptConfig] = useState({
-  show: false,
-  title: '',
-  message: '',
-  options: [] as { label: string; value: string }[] | undefined,
-  onConfirm: (val: string) => {},
-});
-
-  // On mount, check if we already have a stored handle
+  // On mount, check handle and permission
   useEffect(() => {
-    getStoredFolderHandle().then(handle => {
-      if (handle) setConnectedFolder(handle.name);
-    });
+    const checkHandle = async () => {
+      const handle = await getStoredFolderHandle();
+      if (handle) {
+        setConnectedFolder(handle.name);
+        // Verify if we actually have permission or need a pulse (re-auth)
+        const hasPerm = await verifyPermission(handle);
+        setPermissionState(hasPerm ? 'granted' : 'prompt');
+      }
+    };
+    checkHandle();
   }, []);
 
   const handleIngest = async () => {
@@ -183,6 +182,7 @@ export function Toolbar() {
 
   return (
     <div className="flex items-center gap-4 p-4">
+      
       {/* Action Group */}
       <div className="flex flex-col gap-1">
         <div className="flex gap-2 p-1 bg-card/80 backdrop-blur border border-border rounded shadow-xs">
@@ -318,6 +318,25 @@ export function Toolbar() {
           ))}
         </div>
       </div>
+
+      {/* Batch Actions (when nodes selected) */}
+      {selectedNodeIds.size > 0 && (
+        <>
+          <div className="mx-auto"/>
+          <div className="flex items-center gap-2 px-3 py-1 bg-blue-500/20 border border-blue-500/30 rounded-lg">
+            <span className="text-xs font-bold text-blue-400">{selectedNodeIds.size} Selected</span>
+          </div>
+          <div className="flex gap-1 p-1 bg-card/80 backdrop-blur border border-border rounded shadow-xs">
+            <button onClick={async () => { const nodes = await db.nodes.bulkGet(Array.from(selectedNodeIds)); await navigator.clipboard.writeText(nodes.filter(n => n).map(n => `# ${n.payload?.title}\n\n${n.payload?.content}\n\n---\n\n`).join('')); }} className="p-2 hover:bg-secondary text-foreground/60 hover:text-foreground rounded transition-colors" title="Copy content"><Copy size={16} /></button>
+            <button onClick={async () => { const nodes = await db.nodes.bulkGet(Array.from(selectedNodeIds)); const blob = new Blob([JSON.stringify({ nodes: nodes.filter(n => n) }, null, 2)], { type: 'application/json' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `export_${Date.now()}.json`; a.click(); URL.revokeObjectURL(url); }} className="p-2 hover:bg-secondary text-foreground/60 hover:text-foreground rounded transition-colors" title="Export JSON"><Download size={16} /></button>
+            <button onClick={async () => { const nodes = await db.nodes.bulkGet(Array.from(selectedNodeIds)); const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Wiki</title><style>body{font-family:sans-serif;max-width:1200px;margin:0 auto;padding:2rem;background:#0f172a;color:#e5e7eb}.node{background:#1e293b;padding:2rem;margin:1rem 0;border-radius:0.5rem}h2{color:#f1f5f9}</style></head><body>${nodes.filter(n => n).map(n => `<div class="node"><h2>${n.payload?.title}</h2><p>${n.payload?.content}</p></div>`).join('')}</body></html>`; const blob = new Blob([html], { type: 'text/html' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `wiki_${Date.now()}.html`; a.click(); URL.revokeObjectURL(url); }} className="p-2 hover:bg-secondary text-foreground/60 hover:text-foreground rounded transition-colors" title="Generate Wiki"><FileText size={16} /></button>
+            <button onClick={async () => { if (confirm(`Delete ${selectedNodeIds.size} nodes?`)) { await db.nodes.bulkDelete(Array.from(selectedNodeIds)); const edges = await db.edges.toArray(); await db.edges.bulkDelete(edges.filter(e => selectedNodeIds.has(e.sourceId) || selectedNodeIds.has(e.targetId)).map(e => e.id)); clearNodeSelection(); }}} className="p-2 hover:bg-secondary text-red-400/60 hover:text-red-400 rounded transition-colors" title="Delete selected"><Trash2 size={16} /></button>
+            <button onClick={clearNodeSelection} className="p-2 hover:bg-secondary text-foreground/40 hover:text-foreground rounded transition-colors" title="Clear selection"><X size={16} /></button>
+          </div>
+          <div className="h-4 w-[1px] bg-secondary" />
+        </>
+      )}
+
       <PromptModal
         show={promptConfig.show}
         title={promptConfig.title}

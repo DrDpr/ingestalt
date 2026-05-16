@@ -36,6 +36,11 @@ export interface HorizonGraph {
   name: string;
   description?: string;
   config?: Record<string, any>;
+  snapshot?: {
+    nodes: Array<{ id: string; position: { x: number; y: number } }>;
+    viewport?: { x: number; y: number; zoom: number };
+    timestamp: number;
+  };
 }
 
 export interface HorizonConfig {

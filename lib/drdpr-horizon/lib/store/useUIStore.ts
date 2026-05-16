@@ -13,6 +13,7 @@ interface UIState {
   // Global Selection
   selectedNodeId: string | null;
   hoveredNodeId: string | null;
+  selectedNodeIds: Set<string>;
   
   // Search & Filtering
   searchQuery: string;
@@ -41,6 +42,9 @@ interface UIState {
   // Actions
   setSelectedNodeId: (id: string | null) => void;
   setHoveredNodeId: (id: string | null) => void;
+  toggleNodeSelection: (id: string) => void;
+  clearNodeSelection: () => void;
+  selectAllNodes: (nodeIds: string[]) => void;
   setAutoSaveEnabled: (enabled: boolean) => void;
   setSearchQuery: (query: string) => void;
   toggleTag: (tag: string) => void;
@@ -68,6 +72,7 @@ export const useUIStore = create<UIState>()(
       // Initial State
       selectedNodeId: null,
       hoveredNodeId: null,
+      selectedNodeIds: new Set<string>(),
       isLeftOpen: true,
       searchQuery: '',
       activeTags: [],
@@ -89,6 +94,17 @@ export const useUIStore = create<UIState>()(
       // Actions
       setSelectedNodeId: (id) => set({ selectedNodeId: id, isInspectorOpen: !!id }),
       setHoveredNodeId: (id) => set({ hoveredNodeId: id }),
+      toggleNodeSelection: (id) => set((state) => {
+        const newSelection = new Set(state.selectedNodeIds);
+        if (newSelection.has(id)) {
+          newSelection.delete(id);
+        } else {
+          newSelection.add(id);
+        }
+        return { selectedNodeIds: newSelection };
+      }),
+      clearNodeSelection: () => set({ selectedNodeIds: new Set<string>() }),
+      selectAllNodes: (nodeIds) => set({ selectedNodeIds: new Set(nodeIds) }),
       setAutoSaveEnabled: (enabled) => set({ autoSaveEnabled: enabled }),
       setSearchQuery: (query) => set({ searchQuery: query }),
       

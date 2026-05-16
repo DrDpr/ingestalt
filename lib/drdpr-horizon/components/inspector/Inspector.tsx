@@ -4,7 +4,7 @@ import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useUIStore } from '@/lib/drdpr-horizon/lib/store/useUIStore';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/lib/drdpr-horizon/lib/db';
-import { X, Eye, Edit2, ChevronDown, ChevronRight, Share2, ShieldAlert, Cpu, FileText, Settings2, HardDrive, Loader2, Palette, Tag, Plus, XCircle } from 'lucide-react';
+import { X, Eye, Edit2, ChevronDown, ChevronRight, Share2, ShieldAlert, Cpu, FileText, Settings2, HardDrive, Loader2, Palette, Tag, Plus, XCircle, Sparkles } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { useSync } from '@/lib/drdpr-horizon/lib/hooks/useSync';
 import { LocalInput } from '@/lib/drdpr-horizon/components/ui/LocalInput';
@@ -17,6 +17,7 @@ import { RelationshipPanel } from './RelationshipPanel';
 import { GovernanceEditor } from './GovernanceEditor';
 import { PayloadInterpretersView } from './PayloadInterpretersView';
 import { HorizonEditor } from './Editor';
+import { AITaskPromptBuilder } from './AITaskPromptBuilder';
 
 export function Inspector() {
   const { selectedNodeId, setSelectedNodeId, autoSaveEnabled } = useUIStore();
@@ -29,6 +30,7 @@ export function Inspector() {
     relationships: true,
     governance: true,
     payload: true,
+    aiTask: true,
     documentation: true
   });
 
@@ -109,6 +111,7 @@ export function Inspector() {
   // --- Logic for Visibility ---
   const showGovernance = type === 'standards';
   const showPayload = !!(standardDef && standardDef.fields);
+  const showAITask = type === 'ai-task';
 
   const handleManualSave = async () => {
     if (!selectedNodeId) return;
@@ -404,23 +407,36 @@ export function Inspector() {
 
         {/* 3. Payload / Interpretation (Only if standard matches) */}
         {showPayload && (
-          <CollapsibleSection 
-            id="payload" 
-            title="Properties" 
-            icon={<Cpu size={14} className="text-purple-500" />} 
-            isOpen={openPanels.payload} 
+          <CollapsibleSection
+            id="payload"
+            title="Properties"
+            icon={<Cpu size={14} className="text-purple-500" />}
+            isOpen={openPanels.payload}
             onToggle={() => togglePanel('payload')}
           >
             <PayloadInterpretersView node={activeNode} hideHeader />
           </CollapsibleSection>
         )}
 
+        {/* 3.5. AI Task Prompt Builder (Only for AI Task nodes) */}
+        {showAITask && (
+          <CollapsibleSection
+            id="aiTask"
+            title="AI Prompt Builder"
+            icon={<Sparkles size={14} className="text-purple-500" />}
+            isOpen={openPanels.aiTask}
+            onToggle={() => togglePanel('aiTask')}
+          >
+            <AITaskPromptBuilder node={activeNode} />
+          </CollapsibleSection>
+        )}
+
         {/* 4. Documentation (Always Visible) */}
-        <CollapsibleSection 
-          id="documentation" 
-          title="Documentation" 
-          icon={<FileText size={14} className="text-green-500" />} 
-          isOpen={openPanels.documentation} 
+        <CollapsibleSection
+          id="documentation"
+          title="Documentation"
+          icon={<FileText size={14} className="text-green-500" />}
+          isOpen={openPanels.documentation}
           onToggle={() => togglePanel('documentation')}
           isLast
         >

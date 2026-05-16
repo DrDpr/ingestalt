@@ -214,7 +214,7 @@ export function HorizonEditor({ nodeId, initialContent }: EditorProps) {
     <div className="relative h-full flex flex-col bg-background">
       {isSaving && (
         <div className="absolute top-2 right-4 z-10 text-xs text-neutral-500 uppercase tracking-widest animate-pulse">
-          Syncing...
+          {autoSaveEnabled ? 'Syncing to Disk...' : 'Saving to Database...'}
         </div>
       )}
       
