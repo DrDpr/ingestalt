@@ -177,8 +177,8 @@ export function BatchActionToolbar() {
   const isVisible = selectedNodeIds.size > 0;
 
   return (
-    <div className={`absolute bottom-8 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-1.5 p-1.5 bg-card/60 backdrop-blur-2xl border border-border/40 rounded-2xl shadow-2xl transition-all duration-500 ease-in-out ${
-      isVisible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-12 scale-95 pointer-events-none'
+    <div className={`absolute top-28 md:top-auto md:bottom-8 bottom-auto left-1/2 -translate-x-1/2 z-[100] flex items-center gap-1.5 p-1.5 bg-card/60 backdrop-blur-2xl border border-border/40 rounded-2xl shadow-2xl transition-all duration-500 ease-in-out ${
+      isVisible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 -translate-y-12 md:translate-y-12 scale-95 pointer-events-none'
     }`}>
       {/* Selection Count Badge */}
       <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/10 border border-blue-500/20 rounded-xl mr-1">
@@ -229,7 +229,7 @@ export function BatchActionToolbar() {
           </button>
 
           {showLayoutSettings && (
-            <div className="absolute bottom-16 left-0 p-4 bg-card/90 backdrop-blur-3xl border border-border/40 rounded-3xl shadow-2xl min-w-[220px] animate-in slide-in-from-bottom-4 fade-in duration-300 z-[120]">
+            <div className="absolute top-14 md:top-auto md:bottom-16 left-0 p-4 bg-card/90 backdrop-blur-3xl border border-border/40 rounded-3xl shadow-2xl min-w-[220px] animate-in slide-in-from-top-4 md:slide-in-from-bottom-4 fade-in duration-300 z-[120]">
               <h3 className="text-[10px] font-black uppercase tracking-widest text-foreground/40 mb-4 ml-1">Layout Parameters</h3>
               <div className="space-y-4">
                 <LayoutParam 
@@ -275,7 +275,7 @@ export function BatchActionToolbar() {
           className="p-2 hover:bg-secondary rounded-xl transition-colors text-foreground/30 hover:text-foreground group relative"
         >
           <X size={16} />
-          <div className="absolute bottom-12 left-1/2 -translate-x-1/2 px-2 py-1 rounded bg-background/80 backdrop-blur-md text-xs text-foreground whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity uppercase font-bold tracking-widest border border-border/10 pointer-events-none">
+          <div className="absolute top-12 md:top-auto md:bottom-12 left-1/2 -translate-x-1/2 px-2 py-1 rounded bg-background/80 backdrop-blur-md text-xs text-foreground whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity uppercase font-bold tracking-widest border border-border/10 pointer-events-none">
             Cancel
           </div>
         </button>
@@ -446,7 +446,7 @@ function ActionButton({ onClick, icon, label, color, disabled }: { onClick: () =
       </div>
       
       {/* Tooltip */}
-      <div className="absolute bottom-12 left-1/2 -translate-x-1/2 px-3 py-1.5 rounded-lg bg-background/80 backdrop-blur-md text-xs text-foreground whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-200 border border-border/10 uppercase tracking-widest translate-y-2 group-hover:translate-y-0 shadow-2xl pointer-events-none z-[110]">
+      <div className="absolute top-12 md:top-auto md:bottom-12 left-1/2 -translate-x-1/2 px-3 py-1.5 rounded-lg bg-background/80 backdrop-blur-md text-xs text-foreground whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-200 border border-border/10 uppercase tracking-widest -translate-y-2 md:translate-y-2 group-hover:translate-y-0 shadow-2xl pointer-events-none z-[110]">
         {label}
       </div>
     </button>

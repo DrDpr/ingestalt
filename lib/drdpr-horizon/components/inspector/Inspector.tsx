@@ -11,6 +11,7 @@ import { LocalInput } from '@/lib/drdpr-horizon/components/ui/LocalInput';
 import { DynamicIcon } from '@/lib/drdpr-horizon/components/DynamicIcon';
 import { IconPickerModal } from '@/lib/drdpr-horizon/components/IconPickerModal';
 import { ConfirmDialog } from '@/lib/drdpr-horizon/components/ConfirmDialog';
+import { useMediaQuery } from '@/lib/drdpr-horizon/lib/hooks/useMediaQuery';
 
 // --- Modular Imports ---
 import { RelationshipPanel } from './RelationshipPanel';
@@ -23,6 +24,7 @@ export function Inspector() {
   const { selectedNodeId, setSelectedNodeId, autoSaveEnabled } = useUIStore();
   const { syncNodeToFile } = useSync();
   const [mode, setMode] = useState<'preview' | 'edit'>('edit');
+  const isDesktop = useMediaQuery('(min-width: 768px)');
   const [isSavingManual, setIsSavingManual] = useState(false);
   
   // Panel States

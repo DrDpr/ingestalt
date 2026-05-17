@@ -10,6 +10,13 @@ import { useSync } from '@/lib/drdpr-horizon/lib/hooks/useSync';
 import { useUIStore } from '@/lib/drdpr-horizon/lib/store/useUIStore';
 import { getStoredFolderHandle, connectAndStoreFolder, verifyPermission } from '@/lib/drdpr-horizon/lib/ingest-fsa';
 
+const CORE_TEMPLATES = [
+  { id: 'note', type: 'note', label: 'Note', icon: 'FileText', color: '#94a3b8', description: 'Create a general text note' },
+  { id: 'database', type: 'database', label: 'Record', icon: 'Database', color: '#3b82f6', description: 'Model a structured system component or database record' },
+  { id: 'standards', type: 'standards', label: 'Standards', icon: 'Settings', color: '#f59e0b', description: 'Define metadata schemas and configuration guidelines' },
+  { id: 'ai-task', type: 'ai-task', label: 'AI Task', icon: 'CheckSquare', color: '#a855f7', description: 'Assign autonomous action steps or prompts' },
+];
+
 export function Palette() {
   const { autoSaveEnabled, setAutoSaveEnabled, isLeftOpen, isPaletteOpen, activeGraphId } = useUIStore();
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -112,9 +119,9 @@ export function Palette() {
   };
 
   const availableTypes = React.useMemo(() => {
-    if (!activeStandards) return [];
-    const types: any[] = [];
-    const seen = new Set<string>();
+    const types: any[] = [...CORE_TEMPLATES];
+    if (!activeStandards) return types;
+    const seen = new Set<string>(CORE_TEMPLATES.map(t => t.id));
 
     activeStandards.forEach(s => {
       const wsId = s.workspaceId;
@@ -152,6 +159,98 @@ export function Palette() {
     event.dataTransfer.setData('application/reactflow', nodeType);
     event.dataTransfer.setData('application/horizon-config', configId);
     event.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleTouchStart = (
+    e: React.TouchEvent,
+    nodeType: string,
+    configId: string,
+    label: string
+  ) => {
+    setHoveredType(null);
+    document.body.classList.add('dragging');
+    const touch = e.touches[0];
+
+    // Extract SVG markup dynamically from the touched DOM element
+    const svgElement = e.currentTarget.querySelector('svg');
+    const svgMarkup = svgElement ? svgElement.outerHTML : '<div style="color: #60a5fa; font-size: 20px;">📦</div>';
+
+    // Create a lightweight custom drag preview
+    const dragImage = document.createElement('div');
+    dragImage.id = 'drag-image-temp';
+    dragImage.innerHTML = `
+      <div style="
+        padding: 12px 16px;
+        background-color: var(--card, #1e1e1e);
+        border: 2px solid oklch(0.627 0.265 303.9);
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        font-family: monospace;
+        pointer-events: none;
+      ">
+        <div style="display: flex; align-items: center; justify-content: center; width: 24px; height: 24px; margin-bottom: 4px;">
+           ${svgMarkup}
+        </div>
+        <div style="font-size: 10px; font-weight: bold; color: #f3f4f6; text-align: center; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 4px;">
+            ${label.replace(/_/g, ' ')}
+        </div>
+      </div>
+    `;
+    dragImage.style.position = 'fixed';
+    dragImage.style.left = `${touch.clientX - 50}px`;
+    dragImage.style.top = `${touch.clientY - 50}px`;
+    dragImage.style.opacity = '0.95';
+    dragImage.style.pointerEvents = 'none';
+    dragImage.style.zIndex = '10000';
+    dragImage.style.transition = 'none';
+    document.body.appendChild(dragImage);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    e.preventDefault(); // Prevent scrolling while dragging
+    const touch = e.touches[0];
+
+    const dragImage = document.getElementById('drag-image-temp');
+    if (dragImage) {
+      dragImage.style.transform = `translate(${touch.clientX - 50}px, ${touch.clientY - 50}px)`;
+      dragImage.style.left = '0';
+      dragImage.style.top = '0';
+    }
+  };
+
+  const handleTouchEnd = (
+    e: React.TouchEvent,
+    nodeType: string,
+    configId: string
+  ) => {
+    document.body.classList.remove('dragging');
+    const touch = e.changedTouches[0];
+
+    const dragImage = document.getElementById('drag-image-temp');
+    if (dragImage) dragImage.remove();
+
+    const elementAtPoint = document.elementFromPoint(touch.clientX, touch.clientY);
+    const dropTarget = elementAtPoint?.closest('.react-flow');
+
+    if (dropTarget) {
+      const customEvent = new CustomEvent('horizon-mobile-drop', {
+        detail: {
+          type: nodeType,
+          configId: configId,
+          existingNodeId: null,
+          position: {
+            x: touch.clientX,
+            y: touch.clientY,
+          },
+        },
+        bubbles: true,
+      });
+      dropTarget.dispatchEvent(customEvent);
+    }
   };
 
   const isVisible = !isLeftOpen && isPaletteOpen;
@@ -248,6 +347,10 @@ export function Palette() {
               key={type.id}
               draggable
               onDragStart={(e) => onDragStart(e, type.type || type.id, type.id)}
+              onTouchStart={(e) => handleTouchStart(e, type.type || type.id, type.id, type.label || type.title || type.type || type.id.split('_')[0])}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={(e) => handleTouchEnd(e, type.type || type.id, type.id)}
+              onTouchCancel={(e) => handleTouchEnd(e, type.type || type.id, type.id)}
               onMouseDown={(e) => e.stopPropagation()}
               onMouseEnter={(e) => {
                 const rect = e.currentTarget.getBoundingClientRect();

@@ -175,3 +175,16 @@
   transition: none !important;
   animation: none !important;
 }
+
+/* Prevent text selection during drag on touch devices */
+.dragging * {
+  -webkit-user-select: none !important;
+  user-select: none !important;
+}
+
+#drag-image-temp {
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  will-change: transform;
+  /* Use GPU acceleration for smooth dragging */
+  transform: translateZ(0);
+}

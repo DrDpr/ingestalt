@@ -3,6 +3,7 @@
 import React, { useState, useMemo } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/lib/drdpr-horizon/lib/db';
+import { CORE_BASE_TYPES } from '@/lib/drdpr-horizon/lib/constants';
 import { marked } from 'marked';
 import Link from 'next/link';
 import {
@@ -32,6 +33,57 @@ export default function LiveWikiPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [collapsedNodes, setCollapsedNodes] = useState<Record<string, boolean>>({});
   const [activeHeadingId, setActiveHeadingId] = useState<string | null>(null);
+  const [projectRoot, setProjectRoot] = useState('');
+
+  // Load Project Root
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('horizon_local_root') || localStorage.getItem('horizon-wiki-base-path') || '';
+      setProjectRoot(stored);
+    }
+  }, []);
+
+  const handleProjectRootChange = (val: string) => {
+    const clean = val.replace(/\\/g, '/').replace(/\/$/, '');
+    setProjectRoot(clean);
+    localStorage.setItem('horizon_local_root', clean);
+  };
+
+  const handleAutoGuessPath = () => {
+    let path = window.location.pathname;
+    if (path.startsWith('/')) path = path.substring(1);
+    
+    const parts = path.split('/');
+    parts.pop(); // Remove filename
+    
+    // If in subfolder, suggest parent
+    if (parts.length > 0 && ['docs', 'wiki', 'out', 'dist'].includes(parts[parts.length-1].toLowerCase())) {
+      parts.pop();
+    }
+    
+    const guessed = parts.join('/');
+    handleProjectRootChange(guessed);
+  };
+
+  const handleJumpToMethod = async (methodName: string, relativePath?: string) => {
+    const path = relativePath || activeNode?.payload?.filepath;
+    if (!path) {
+      alert("No file path associated with this document.");
+      return;
+    }
+    const root = projectRoot || localStorage.getItem('horizon_local_root') || '';
+    if (!root) {
+      alert("Please configure your Project Root path at the top of the page first!");
+      return;
+    }
+    
+    // Construct VS Code protocol URI
+    const cleanPath = path.replace(/^[/\\]/, '');
+    const fullPath = `${root}/${cleanPath}`.replace(/\\/g, '/');
+    const vscodeUrl = `vscode://file/${fullPath}`;
+    
+    window.open(vscodeUrl, '_self');
+  };
 
   // 1. Live subscribe to Dexie DB
   const nodes = useLiveQuery(() => db.nodes.toArray()) || [];
@@ -99,6 +151,22 @@ export default function LiveWikiPage() {
   const activeNode = useMemo(() => {
     return docNodes.find(n => n.id === activeNodeId) || null;
   }, [docNodes, activeNodeId]);
+
+  // Find standard definition for the active node
+  const activeStandardDef = useMemo(() => {
+    if (!activeNode?.configId) return null;
+    
+    // 1. Search in live standards nodes in DEXIE DB
+    const standardsNodes = docNodes.filter(n => n.payload?.type === 'standards');
+    for (const s of standardsNodes) {
+      const def = (s.payload?.definitions || []).find((d: any) => d.id === activeNode.configId);
+      if (def) return def;
+      if (s.id === activeNode.configId) return s.payload;
+    }
+    
+    // 2. Fallback to CORE_BASE_TYPES from constants
+    return CORE_BASE_TYPES.find(c => c.id === activeNode.configId) || null;
+  }, [activeNode, docNodes]);
 
   // Outbound (forward) and Inbound (backward) relationships
   const relations = useMemo(() => {
@@ -434,32 +502,280 @@ export default function LiveWikiPage() {
     );
   };
 
-  // Render node-specific custom field schema
-  const renderCustomProperties = () => {
+  // Premium custom field interpreter suite matching static/canvas workspace
+  const renderPropertiesSection = () => {
     if (!activeNode?.payload) return null;
 
-    // Filter out standard payload keys to find custom metadata
+    // Define standard payload keys to exclude from custom rendering
     const standardKeys = ['title', 'content', 'type', 'tags', 'definitions', 'id', 'color', 'icon', 'filename', 'configId', 'relations'];
-    const customEntries = Object.entries(activeNode.payload).filter(([k]) => !standardKeys.includes(k));
+    
+    // Find fields defined in the active standard definition
+    const standardFields = activeStandardDef?.fields || [];
+    const standardFieldNames = standardFields.map((f: any) => f.name);
 
-    if (customEntries.length === 0) return null;
+    // Filter out custom attributes that are NOT in standardFields
+    const customEntries = Object.entries(activeNode.payload).filter(
+      ([k]) => !standardKeys.includes(k) && !standardFieldNames.includes(k)
+    );
+
+    // Check if there is anything to render at all
+    const hasStandardFields = standardFields.some((f: any) => activeNode.payload[f.name] !== undefined);
+    const hasCustomEntries = customEntries.length > 0;
+
+    if (!hasStandardFields && !hasCustomEntries) return null;
+
+    // Field visual interpreter dispatch
+    const renderFieldContent = (type: string, data: any, fieldColor?: string) => {
+      if (data === undefined || data === null) return null;
+
+      switch (type) {
+        case 'schema_table': {
+          const tableData = Array.isArray(data) ? data : [];
+          if (tableData.length === 0) return <div className="text-muted-foreground italic text-[11px] uppercase tracking-wider font-mono pl-1">No columns defined</div>;
+          return (
+            <div className="border border-border/10 bg-background/30 overflow-hidden font-mono text-xs">
+              <div className="grid grid-cols-2 gap-2 bg-secondary/[0.04] px-4 py-2 border-b border-border/10 font-bold text-muted-foreground tracking-widest uppercase text-[10px]">
+                <div>Field / Column</div>
+                <div>Details</div>
+              </div>
+              {tableData.map((col: any, idx: number) => {
+                const colString = typeof col === 'string' ? col : col.name;
+                const match = colString.match(/^(.*?)(?:\s*\((.*?)\))?$/);
+                const name = match?.[1]?.trim() || colString;
+                const details = match?.[2]?.trim() || '';
+                return (
+                  <div key={idx} className="grid grid-cols-2 gap-2 px-4 py-2 border-b border-border/5 last:border-none items-center hover:bg-secondary/[0.01]">
+                    <div className="font-bold text-foreground/80">{name}</div>
+                    <div className="text-muted-foreground tracking-wider">{details || '-'}</div>
+                  </div>
+                );
+              })}
+            </div>
+          );
+        }
+
+        case 'tables_list': {
+          const tables = Array.isArray(data) ? data : [];
+          if (tables.length === 0) return <div className="text-muted-foreground italic text-[11px] uppercase tracking-wider font-mono pl-1">No tables defined</div>;
+          return (
+            <div className="space-y-4">
+              {tables.map((table: any, idx: number) => {
+                const isString = typeof table === 'string';
+                const tableName = isString ? table : (table.name || 'untitled');
+                const columns = isString ? [] : (table.columns || table.indices || []);
+                return (
+                  <div key={idx} className="border border-border/10 bg-secondary/[0.01] rounded-none overflow-hidden space-y-2 p-3">
+                    <div className="flex items-center gap-2 border-b border-border/15 pb-2 text-[11px] font-bold text-blue-400 font-mono tracking-widest uppercase">
+                      <Layers className="w-3.5 h-3.5" />
+                      TABLE: {tableName}
+                    </div>
+                    {renderFieldContent('schema_table', columns)}
+                  </div>
+                );
+              })}
+            </div>
+          );
+        }
+
+        case 'interface_list': {
+          const list = Array.isArray(data) ? data : [];
+          if (list.length === 0) return <div className="text-muted-foreground italic text-[11px] uppercase tracking-wider font-mono pl-1">No methods defined</div>;
+          return (
+            <div className="space-y-3 font-mono">
+              {list.map((item: any, i: number) => {
+                const name = typeof item === 'string' ? item : (item.name || 'unknown');
+                const desc = typeof item === 'string' ? '' : (item.description || '');
+                return (
+                  <div key={i} className="border border-border/10 bg-secondary/[0.01] hover:bg-secondary/[0.04] transition-all p-3.5 rounded-none flex items-start justify-between group">
+                    <div className="space-y-1.5 flex-1 min-w-0">
+                      <div className="font-bold text-xs text-emerald-400 tracking-wide uppercase">
+                        {name}()
+                      </div>
+                      {desc && (
+                        <div className="text-[11px] text-muted-foreground tracking-wider normal-case">
+                          {desc}
+                        </div>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => handleJumpToMethod(name, activeNode.payload?.filepath)}
+                      className="p-1 text-muted-foreground/60 hover:text-emerald-400 hover:bg-emerald-500/10 border border-transparent hover:border-emerald-500/20 rounded-none transition-all flex items-center justify-center shadow-none shrink-0"
+                      title="Jump to code in editor"
+                    >
+                      <Sparkles className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          );
+        }
+
+        case 'code_list': {
+          const snippets = Array.isArray(data) ? data : [];
+          if (snippets.length === 0) return <div className="text-muted-foreground italic text-[11px] uppercase tracking-wider font-mono pl-1">No snippets defined</div>;
+          return (
+            <div className="space-y-3 font-mono">
+              {snippets.map((snip: any, idx: number) => (
+                <div key={idx} className="border border-border/10 bg-secondary/[0.01] rounded-none overflow-hidden">
+                  <div className="bg-secondary/[0.04] px-4 py-2 border-b border-border/10 flex justify-between items-center text-[10px] font-bold tracking-widest text-muted-foreground">
+                    <span>{snip.name?.toUpperCase() || 'SNIPPET'}</span>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(snip.code || '');
+                        alert('Code snippet copied to clipboard!');
+                      }}
+                      className="text-[10px] hover:text-foreground font-mono transition-colors border border-border/10 px-1.5 py-0.5 hover:bg-secondary/[0.08]"
+                    >
+                      COPY
+                    </button>
+                  </div>
+                  <pre className="p-4 overflow-x-auto bg-background/50 text-[11px] leading-relaxed text-blue-300">
+                    <code>{snip.code}</code>
+                  </pre>
+                </div>
+              ))}
+            </div>
+          );
+        }
+
+        case 'story_list': {
+          const stories = Array.isArray(data) ? data : [];
+          if (stories.length === 0) return <div className="text-muted-foreground italic text-[11px] uppercase tracking-wider font-mono pl-1">No user stories defined</div>;
+          return (
+            <div className="space-y-2 font-mono">
+              {stories.map((story: any, idx: number) => {
+                const text = typeof story === 'string' ? story : story.text;
+                const isDone = typeof story === 'string' ? false : !!story.done;
+                return (
+                  <div key={idx} className="flex gap-3 items-center bg-secondary/[0.01] border border-border/5 p-3 hover:border-amber-500/20 transition-all">
+                    <div className={`w-3.5 h-3.5 border flex items-center justify-center shrink-0 ${isDone ? 'bg-amber-500 border-amber-500 text-black' : 'border-border/30'}`}>
+                      {isDone && <span className="text-[10px] font-bold font-sans">✓</span>}
+                    </div>
+                    <span className={`text-[11px] tracking-wide normal-case ${isDone ? 'text-muted-foreground/60 line-through' : 'text-foreground/80'}`}>
+                      {text}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          );
+        }
+
+        case 'flow_list': {
+          const steps = Array.isArray(data) ? data : [];
+          if (steps.length === 0) return <div className="text-muted-foreground italic text-[11px] uppercase tracking-wider font-mono pl-1">No process steps defined</div>;
+          return (
+            <div className="space-y-4 font-mono relative pl-4 border-l border-border/10 ml-2">
+              {steps.map((step: any, idx: number) => (
+                <div key={idx} className="relative space-y-1">
+                  <div className="absolute -left-[27px] top-0.5 w-[20px] h-[20px] rounded-none bg-blue-500 text-black flex items-center justify-center font-bold text-[9px] tracking-normal">
+                    {idx + 1}
+                  </div>
+                  <div className="text-xs font-bold text-blue-400 tracking-wide uppercase">
+                    {step.action}
+                  </div>
+                  {step.description && (
+                    <div className="text-[11px] text-muted-foreground tracking-wider leading-relaxed normal-case">
+                      {step.description}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          );
+        }
+
+        case 'file_path': {
+          const path = String(data || '');
+          if (!path) return <div className="text-muted-foreground italic text-[11px] uppercase tracking-wider font-mono pl-1">No path defined</div>;
+          return (
+            <div className="flex items-center gap-2 font-mono">
+              <div className="flex-1 bg-secondary/[0.04] border border-border/10 p-2.5 text-xs text-muted-foreground truncate rounded-none uppercase tracking-wider select-all">
+                {path}
+              </div>
+              <button
+                onClick={() => handleJumpToMethod('', path)}
+                className="p-2.5 bg-secondary/[0.08] hover:bg-secondary/[0.15] text-muted-foreground hover:text-foreground border border-border/10 hover:border-border/20 transition-all shrink-0 flex items-center justify-center shadow-none rounded-none"
+                title="Open file in VSCode editor"
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          );
+        }
+
+        default: {
+          if (Array.isArray(data)) {
+            return (
+              <div className="flex flex-wrap gap-1.5 font-mono pl-1">
+                {data.map((t, idx) => (
+                  <span key={idx} className="px-2.5 py-0.5 border border-border/15 bg-secondary/[0.02] text-muted-foreground text-[10px] tracking-wider uppercase">
+                    {String(t)}
+                  </span>
+                ))}
+              </div>
+            );
+          }
+          if (typeof data === 'object' && data !== null) {
+            return (
+              <pre className="bg-background/50 border border-border/10 p-3.5 text-[11px] text-blue-300 overflow-x-auto whitespace-pre-wrap font-mono leading-relaxed">
+                {JSON.stringify(data, null, 2)}
+              </pre>
+            );
+          }
+          return (
+            <div className="text-[11px] tracking-wider text-foreground/80 leading-relaxed pl-1 select-text normal-case font-mono">
+              {String(data)}
+            </div>
+          );
+        }
+      }
+    };
 
     return (
-      <div className="mt-12 border border-border/10 bg-secondary/[0.02] p-5 rounded-none space-y-4">
+      <div className="mt-12 space-y-6">
         <div className="text-xs tracking-widest text-muted-foreground font-mono uppercase border-b border-border/10 pb-2">
-          PROPERTY SCHEMA // DATA METADATA
+          PROPERTY SCHEMA // DATA INTERPRETERS
         </div>
-        <div className="space-y-2">
-          {customEntries.map(([key, val]: any) => (
-            <div key={key} className="flex flex-col gap-1 py-2 border-b border-border/5 last:border-none">
-              <span className="font-mono text-xs font-black text-muted-foreground uppercase tracking-widest">
-                {key.replace(/_/g, ' ')}
-              </span>
-              <span className="text-xs font-bold text-foreground pl-1">
-                {typeof val === 'object' ? JSON.stringify(val) : String(val)}
-              </span>
+        
+        <div className="space-y-6">
+          {/* Render standard fields sequentially */}
+          {standardFields.map((field: any, idx: number) => {
+            const fieldData = activeNode.payload[field.name];
+            if (fieldData === undefined) return null;
+
+            return (
+              <div key={`std-${idx}`} className="space-y-2.5">
+                <div 
+                  className="text-xs font-black uppercase tracking-widest font-mono flex items-center gap-2"
+                  style={{ color: field.color || 'var(--accent)' }}
+                >
+                  <span className="text-[10px] opacity-60">■</span>
+                  {field.name.replace(/_/g, ' ')}
+                </div>
+                {renderFieldContent(field.type, fieldData, field.color)}
+              </div>
+            );
+          })}
+
+          {/* Render extra custom attributes that were not defined in standard */}
+          {hasCustomEntries && (
+            <div className="space-y-6 pt-4 border-t border-border/5">
+              <div className="text-[10px] font-black text-muted-foreground/60 tracking-widest uppercase font-mono">
+                ADDITIONAL PROPERTIES
+              </div>
+              {customEntries.map(([key, val]: any) => (
+                <div key={`cust-${key}`} className="space-y-2.5">
+                  <div className="text-xs font-black text-foreground/75 uppercase tracking-widest font-mono flex items-center gap-2">
+                    <span className="text-[10px] opacity-40">□</span>
+                    {key.replace(/_/g, ' ')}
+                  </div>
+                  {renderFieldContent('default', val)}
+                </div>
+              ))}
             </div>
-          ))}
+          )}
         </div>
       </div>
     );
@@ -675,6 +991,32 @@ export default function LiveWikiPage() {
             </div>
           </div>
 
+          {/* Project Root Configuration matching Static Publication */}
+          <div className="hidden lg:flex items-center gap-2.5">
+            <span className="text-[10px] font-black text-muted-foreground tracking-widest uppercase font-mono">
+              PROJECT ROOT
+            </span>
+            <div className="flex items-center bg-secondary/[0.04] border border-border/10 h-7 text-xs font-mono overflow-hidden">
+              <span className="px-2.5 text-[10px] text-muted-foreground/50 border-r border-border/10 flex items-center h-full select-none lowercase">
+                vscode://file/
+              </span>
+              <input
+                type="text"
+                placeholder="e.g. d:/Desktop/ingestalt"
+                value={projectRoot}
+                onChange={(e) => handleProjectRootChange(e.target.value)}
+                className="w-48 xl:w-64 bg-transparent border-none px-2 h-full text-foreground/90 placeholder:text-muted-foreground/30 text-[11px] focus:outline-none uppercase font-mono tracking-wider"
+              />
+              <button
+                onClick={handleAutoGuessPath}
+                title="Guess path from location"
+                className="px-2 bg-secondary/[0.08] hover:bg-secondary/[0.15] text-muted-foreground hover:text-foreground text-[10px] font-bold border-l border-border/10 h-full transition-all shrink-0"
+              >
+                AUTO
+              </button>
+            </div>
+          </div>
+
           <div className="flex items-center gap-4">
             <div className="hidden sm:flex flex-col items-end font-mono">
               <span className="text-xs font-black tracking-widest text-foreground/80">INGESTALT</span>
@@ -726,7 +1068,7 @@ export default function LiveWikiPage() {
                 />
 
                 {/* Node Custom Field Properties Table */}
-                {renderCustomProperties()}
+                {renderPropertiesSection()}
 
                 {/* Governance Standards Manifest */}
                 {activeNode.payload?.type === 'standards' && renderStandardsManifest(activeNode.payload?.definitions)}

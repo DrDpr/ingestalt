@@ -7,6 +7,8 @@ import { SpatialSidebar } from './SpatialSidebar';
 import { Toaster } from '@/lib/drdpr-horizon/components/ui/Toaster';
 import { cn } from '@/lib/drdpr-horizon/lib/utils';
 
+import { useMediaQuery } from '@/lib/drdpr-horizon/lib/hooks/useMediaQuery';
+
 /**
  * WorkspaceLayout - Main layout using AppShell with ResizableSidebar
  *
@@ -33,6 +35,22 @@ export function WorkspaceLayout({
   const setToolbarOpen = useUIStore((state) => state.setToolbarOpen);
   const isLeftOpen = useUIStore((state) => state.isLeftOpen);
   const setLeftOpen = useUIStore((state) => state.setLeftOpen);
+
+  const isDesktop = useMediaQuery('(min-width: 768px)');
+  const prevLeftOpen = React.useRef(isLeftOpen);
+  const prevInspectorOpen = React.useRef(isInspectorOpen);
+
+  React.useEffect(() => {
+    if (!isDesktop) {
+      if (isLeftOpen && !prevLeftOpen.current && isInspectorOpen) {
+        setInspectorOpen(false);
+      } else if (isInspectorOpen && !prevInspectorOpen.current && isLeftOpen) {
+        setLeftOpen(false);
+      }
+    }
+    prevLeftOpen.current = isLeftOpen;
+    prevInspectorOpen.current = isInspectorOpen;
+  }, [isLeftOpen, isInspectorOpen, isDesktop, setLeftOpen, setInspectorOpen]);
   
   return (
     <div className="relative h-screen w-screen overflow-hidden">

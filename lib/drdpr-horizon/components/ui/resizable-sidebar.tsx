@@ -150,12 +150,46 @@ export function ResizableSidebar({
             side={side}
             className={cn('p-0 w-full border-none rounded-none', !animate && 'transition-none', className)}
             overlayClassName={cn(!animate && 'duration-200')}
-            showCloseButton={true}
+            showCloseButton={side === 'left'}
             style={{ width: '100%', maxWidth: '100%' }}
           >
             <div className={cn('h-full w-full', panelClassName)}>{panel}</div>
           </SheetContent>
         </Sheet>
+        {!open && (
+          <button
+            type="button"
+            title={`Open ${side} sidebar`}
+            onClick={() => onOpenChange(true)}
+            className={cn(
+              "fixed z-40 flex items-center justify-center",
+              "bg-background/90 backdrop-blur-md active:bg-background/100 shadow-2xl",
+              "border border-border/40 transition-all duration-300",
+              "top-1/2 -translate-y-1/2 h-36 w-6 rounded-lg",
+              side === 'left' 
+                ? "left-0 -translate-x-1 border-l-0 rounded-l-none pl-1 text-blue-400 hover:text-blue-300 hover:w-7" 
+                : "right-0 translate-x-1 border-r-0 rounded-r-none pr-1 text-foreground/40 hover:text-foreground/60 hover:w-7"
+            )}
+          >
+            {side === 'left' ? (
+              <div className="flex flex-col gap-0.5 items-center text-blue-500/80 font-black text-[9px] leading-none tracking-tighter">
+                <span>T</span>
+                <span>O</span>
+                <span>O</span>
+                <span>L</span>
+                <div className="w-0.5 h-8 bg-blue-500/30 rounded-full mt-2" />
+              </div>
+            ) : (
+              <div className="flex flex-col gap-0.5 items-center text-foreground/40 font-black text-[9px] leading-none tracking-tighter">
+                <span>I</span>
+                <span>N</span>
+                <span>F</span>
+                <span>O</span>
+                <div className="w-0.5 h-8 bg-foreground/20 rounded-full mt-2" />
+              </div>
+            )}
+          </button>
+        )}
         <div className={cn('h-full w-full', contentClassName)}>{children}</div>
       </>
     );

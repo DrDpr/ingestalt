@@ -58,7 +58,8 @@ export function HorizonCanvas() {
     relationshipMode, setViewport, viewport,
     autoSaveEnabled, activeGraphId,
     copiedNodeIds, setCopiedNodeIds,
-    toggleNodeSelection, selectedNodeIds, selectAllNodes, setPrimaryNodeId
+    toggleNodeSelection, selectedNodeIds, selectAllNodes, setPrimaryNodeId,
+    isSelectionModeActive, setSelectionModeActive
   } = useUIStore();
   const [promptConfig, setPromptConfig] = React.useState<{
     show: boolean;
@@ -77,7 +78,13 @@ export function HorizonCanvas() {
   });
   const { resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  const [isTouchDevice, setIsTouchDevice] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+    setIsTouchDevice('ontouchstart' in window || navigator.maxTouchPoints > 0);
+  }, []);
+
+  // Mobile hold-select state handles declared below the nodes state to avoid hoisting temporal dead-zone errors
   const { screenToFlowPosition, getNodes } = useReactFlow();
   const { syncNodeToFile } = useSync();
 
@@ -191,6 +198,8 @@ export function HorizonCanvas() {
       window.removeEventListener('import-file', handleImport);
     };
   }, [setHighlightNodeId, handleFileImport]);
+
+
 
   // 1. Fetch agnostic data (filtered by active graph's workspace)
   const dbNodesData = useLiveQuery(() => {
@@ -315,11 +324,132 @@ export function HorizonCanvas() {
     return edges_transformed;
   }, [edges_transformed, relationshipMode, selectedNodeId]);
 
-  const [nodes, setNodes, onNodesChange] = useNodesState([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
 
   useEffect(() => { setNodes(nodes_transformed); }, [nodes_transformed, setNodes]);
   useEffect(() => { setEdges(filteredEdges); }, [filteredEdges, setEdges]);
+
+  // No custom viewport touch listeners; React Flow native selectionOnDrag handles panning & selection seamlessly!
+
+  // Listen for mobile touch drop events
+  useEffect(() => {
+    const handleMobileDrop = async (e: Event) => {
+      const customEvent = e as CustomEvent<{
+        type: string | null;
+        configId: string | null;
+        existingNodeId: string | null;
+        position: { x: number; y: number };
+      }>;
+      const { type, configId, existingNodeId, position: touchPosition } = customEvent.detail;
+
+      const position = screenToFlowPosition({
+        x: touchPosition.x,
+        y: touchPosition.y,
+      });
+
+      // Handle dragging existing node from sidebar
+      if (existingNodeId) {
+        await db.nodes.update(existingNodeId, { position });
+        return;
+      }
+
+      if (!type) return;
+
+      const id = `node_${Math.random().toString(36).substr(2, 9)}`;
+      const standard = activeStandardsMap.get(configId);
+      const nodeType = type || standard?.type || 'other';
+      const typeLabel = standard?.label || standard?.title || type;
+      const title = `New ${typeLabel.charAt(0).toUpperCase() + typeLabel.slice(1)}`;
+
+      const nodeWorkspaceId = workspaceFilter || 'default';
+
+      const payload: any = {
+        title,
+        type: nodeType,
+        content: `# ${title}\nSpawned from palette.`,
+        tags: []
+      };
+
+      if (nodeType === 'standards') {
+        payload.definitions = [];
+        payload.icon = 'Settings';
+        payload.color = '#f59e0b';
+      }
+
+      await db.nodes.add({
+        id,
+        configId: configId || '',
+        workspaceId: nodeWorkspaceId,
+        position,
+        lastModified: Date.now(),
+        payload
+      });
+
+      if (autoSaveEnabled) {
+        await syncNodeToFile(id);
+      }
+
+      setSelectedNodeId(id);
+    };
+
+    const handleMobileClickSpawn = async (e: Event) => {
+      const customEvent = e as CustomEvent<{
+        type: string;
+        configId: string | null;
+      }>;
+      const { type, configId } = customEvent.detail;
+
+      // Spawn at the center of the screen
+      const position = screenToFlowPosition({
+        x: window.innerWidth / 2,
+        y: window.innerHeight / 2,
+      });
+
+      const id = `node_${Math.random().toString(36).substr(2, 9)}`;
+      const standard = activeStandardsMap.get(configId || '');
+      const nodeType = type || standard?.type || 'other';
+      const typeLabel = standard?.label || standard?.title || type;
+      const title = `New ${typeLabel.charAt(0).toUpperCase() + typeLabel.slice(1)}`;
+
+      const nodeWorkspaceId = workspaceFilter || 'default';
+
+      const payload: any = {
+        title,
+        type: nodeType,
+        content: `# ${title}\nSpawned from palette.`,
+        tags: []
+      };
+
+      if (nodeType === 'standards') {
+        payload.definitions = [];
+        payload.icon = 'Settings';
+        payload.color = '#f59e0b';
+      }
+
+      await db.nodes.add({
+        id,
+        configId: configId || '',
+        workspaceId: nodeWorkspaceId,
+        position,
+        lastModified: Date.now(),
+        payload
+      });
+
+      if (autoSaveEnabled) {
+        await syncNodeToFile(id);
+      }
+
+      setSelectedNodeId(id);
+    };
+
+    document.addEventListener('horizon-mobile-drop', handleMobileDrop);
+    document.addEventListener('horizon-mobile-click-spawn', handleMobileClickSpawn);
+    return () => {
+      document.removeEventListener('horizon-mobile-drop', handleMobileDrop);
+      document.removeEventListener('horizon-mobile-click-spawn', handleMobileClickSpawn);
+    };
+  }, [screenToFlowPosition, activeStandardsMap, setSelectedNodeId, syncNodeToFile, autoSaveEnabled, workspaceFilter]);
 
   const onNodeClick = useCallback((e: any, node: Node) => {
     // Multi-select with Ctrl/Cmd/Shift key
@@ -333,17 +463,26 @@ export function HorizonCanvas() {
   // Handle drag-selection at the END of the drag action to avoid infinite loops
   const onSelectionEnd = useCallback(() => {
     const selectedNodes = getNodes().filter(n => n.selected);
+    
+    document.body.classList.remove('mobile-selection-active');
+
     if (selectedNodes.length === 0) return;
     
     const ids = selectedNodes.map(n => n.id);
     selectAllNodes(ids);
-    // Focus the last node in the group
-    setPrimaryNodeId(ids[ids.length - 1]);
+    // Only open details inspector if a single node is selected
+    if (ids.length === 1) {
+      setPrimaryNodeId(ids[0]);
+    } else {
+      setPrimaryNodeId(null);
+    }
   }, [getNodes, selectAllNodes, setPrimaryNodeId]);
 
   const onPaneClick = useCallback(() => {
     clearSelection();
-  }, [clearSelection]);
+    setSelectionModeActive(false);
+    document.body.classList.remove('mobile-selection-active');
+  }, [clearSelection, setSelectionModeActive]);
   const onMoveEnd = useCallback((e: any, vp: any) => setViewport(vp), [setViewport]);
   const onNodeDragStop = useCallback(async (e: any, node: Node) => {
     // If multiple nodes are selected, they all move together.
@@ -632,11 +771,27 @@ export function HorizonCanvas() {
   
   
   return (
-    <div className="w-full h-full relative">
+    <div 
+      className="w-full h-full relative"
+      style={{ touchAction: isSelectionModeActive ? 'none' : 'auto' }}
+    >
       <Palette />
       <KeyboardShortcutsHelp />
       <BatchActionToolbar />
       <CommandSearch />
+
+      {isSelectionModeActive && (
+        <>
+          {/* Beautiful glowing, pulsing boundary overlay to signal multi-selection state visually */}
+          <div className="absolute inset-0 border-4 border-dashed border-blue-500/40 pointer-events-none z-50 animate-pulse rounded-md" />
+          
+          <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-2.5 px-4 py-2 bg-blue-500/90 backdrop-blur-md text-white rounded-full text-xs font-black shadow-lg animate-bounce pointer-events-none uppercase tracking-widest border border-blue-400/20">
+            <span className="w-2 h-2 rounded-full bg-white animate-ping" />
+            <span>DRAG TO MULTI-SELECT</span>
+          </div>
+        </>
+      )}
+
       <ReactFlow
         nodes={nodes} edges={edges}
         onNodesChange={onNodesChange} onEdgesChange={onEdgesChange}
@@ -649,11 +804,16 @@ export function HorizonCanvas() {
         nodeTypes={nodeTypes_internal} edgeTypes={edgeTypes}
         fitView
         className="bg-background"
+        minZoom={0.02}
+        maxZoom={4}
         defaultViewport={viewport}
         proOptions={{ hideAttribution: true }}
-        panOnDrag={[1, 2]}
+        panOnDrag={isSelectionModeActive ? false : [1, 2]}
+        zoomOnPinch={!isSelectionModeActive}
+        zoomOnScroll={!isSelectionModeActive}
+        zoomOnDoubleClick={!isSelectionModeActive}
         panActivationKeyCode="Space"
-        selectionOnDrag
+        selectionOnDrag={isSelectionModeActive || !isTouchDevice}
         selectionMode={SelectionMode.Partial}
         multiSelectionKeyCode={['Shift', 'Control', 'Meta']}
         deleteKeyCode={null}

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { RefreshCw, Share2, Anchor, Zap, ZapOff, Cpu, Plus, Compass, Trash2, FolderOpen, CheckCircle2, Loader2, Sun, Moon, Eraser, Keyboard, FileText, Camera, Info, ChevronDown, BookOpen } from 'lucide-react';
+import { RefreshCw, Share2, Anchor, Zap, ZapOff, Cpu, Plus, Compass, Trash2, FolderOpen, CheckCircle2, Loader2, Sun, Moon, Eraser, Keyboard, FileText, Camera, Info, ChevronDown, BookOpen, MousePointerClick } from 'lucide-react';
 import { useUIStore } from '@/lib/drdpr-horizon/lib/store/useUIStore';
 import { ingestFromFileSystem, getStoredFolderHandle, connectAndStoreFolder, verifyPermission, syncFromFileSystem, readFilesFromHandle } from '@/lib/drdpr-horizon/lib/ingest-fsa';
 import { db } from '@/lib/drdpr-horizon/lib/db';
@@ -31,7 +31,8 @@ export function Toolbar() {
     setPaletteOpen,
     autoSaveEnabled, setAutoSaveEnabled,
     refreshRate, setRefreshRate,
-    isLeftOpen, isInspectorOpen
+    isLeftOpen, isInspectorOpen,
+    isSelectionModeActive, setSelectionModeActive
   } = useUIStore();
   
   const isDesktop = useMediaQuery('(min-width: 768px)');
@@ -494,6 +495,15 @@ export function Toolbar() {
 
       {/* 3. VIEW ISLAND */}
       <Island className="px-2">
+        {/* Selection Mode Toggle */}
+        <ActionButton
+          onClick={() => setSelectionModeActive(!isSelectionModeActive)}
+          icon={<MousePointerClick size={14} className={isSelectionModeActive ? 'text-blue-400 animate-pulse' : 'text-foreground/60'} />}
+          label={isSelectionModeActive ? "Exit Multi-select" : "Enter Multi-select"}
+          color={isSelectionModeActive ? "text-blue-400 bg-blue-500/10" : "text-foreground/60"}
+        />
+        <div className="w-px h-3 bg-border/20 mx-0.5" />
+
         {/* Relationship Mode Dropdown */}
         <div className="relative flex items-center">
           <button

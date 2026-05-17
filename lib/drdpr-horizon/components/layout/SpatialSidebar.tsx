@@ -27,6 +27,7 @@ import { DynamicIcon } from '@/lib/drdpr-horizon/components/DynamicIcon';
 import { PromptModal } from '../PromptModal';
 import { useReactFlow } from '@xyflow/react';
 import Image from 'next/image';
+import { useMediaQuery } from '@/lib/drdpr-horizon/lib/hooks/useMediaQuery';
 
 const CORE_TEMPLATES = [
   { id: 'note', title: 'Note', icon: FileText, color: '#94a3b8' },
@@ -38,6 +39,7 @@ const CORE_TEMPLATES = [
 export function SpatialSidebar() {
   const { activeGraphId, setActiveGraphId, setSelectedNodeId } = useUIStore();
   const { setCenter, fitView } = useReactFlow();
+  const isDesktop = useMediaQuery('(min-width: 768px)');
   const [searchQuery, setSearchQuery] = React.useState('');
   const [isCreatingGraph, setIsCreatingGraph] = React.useState(false);
   const [newGraphName, setNewGraphName] = React.useState('');
@@ -429,6 +431,174 @@ export function SpatialSidebar() {
     event.dataTransfer.effectAllowed = 'move';
   };
 
+  const handleTypeTouchStart = (
+    e: React.TouchEvent,
+    typeId: string,
+    configId: string | undefined,
+    label: string
+  ) => {
+    document.body.classList.add('dragging');
+    const touch = e.touches[0];
+
+    // Extract SVG markup dynamically from the touched DOM element
+    const svgElement = e.currentTarget.querySelector('svg');
+    const svgMarkup = svgElement ? svgElement.outerHTML : '<div style="color: #a855f7; font-size: 20px;">🧱</div>';
+
+    // Create a lightweight custom drag preview
+    const dragImage = document.createElement('div');
+    dragImage.id = 'drag-image-temp';
+    dragImage.innerHTML = `
+      <div style="
+        padding: 12px 16px;
+        background-color: var(--card, #1e1e1e);
+        border: 2px solid oklch(0.627 0.265 303.9);
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        font-family: monospace;
+        pointer-events: none;
+      ">
+        <div style="display: flex; align-items: center; justify-content: center; width: 24px; height: 24px; margin-bottom: 4px;">
+           ${svgMarkup}
+        </div>
+        <div style="font-size: 10px; font-weight: bold; color: #f3f4f6; text-align: center; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 4px;">
+            ${label.replace(/_/g, ' ')}
+        </div>
+      </div>
+    `;
+    dragImage.style.position = 'fixed';
+    dragImage.style.left = `${touch.clientX - 50}px`;
+    dragImage.style.top = `${touch.clientY - 50}px`;
+    dragImage.style.opacity = '0.95';
+    dragImage.style.pointerEvents = 'none';
+    dragImage.style.zIndex = '10000';
+    dragImage.style.transition = 'none';
+    document.body.appendChild(dragImage);
+  };
+
+  const handleTypeTouchEnd = (
+    e: React.TouchEvent,
+    typeId: string,
+    configId?: string
+  ) => {
+    document.body.classList.remove('dragging');
+    const touch = e.changedTouches[0];
+
+    const dragImage = document.getElementById('drag-image-temp');
+    if (dragImage) dragImage.remove();
+
+    const elementAtPoint = document.elementFromPoint(touch.clientX, touch.clientY);
+    const dropTarget = elementAtPoint?.closest('.react-flow');
+
+    if (dropTarget) {
+      const customEvent = new CustomEvent('horizon-mobile-drop', {
+        detail: {
+          type: typeId,
+          configId: configId || null,
+          existingNodeId: null,
+          position: {
+            x: touch.clientX,
+            y: touch.clientY,
+          },
+        },
+        bubbles: true,
+      });
+      dropTarget.dispatchEvent(customEvent);
+    }
+  };
+
+  const handleNodeTouchStart = (
+    e: React.TouchEvent,
+    nodeId: string,
+    label: string
+  ) => {
+    document.body.classList.add('dragging');
+    const touch = e.touches[0];
+
+    // Extract SVG markup dynamically from the touched DOM element
+    const svgElement = e.currentTarget.querySelector('svg');
+    const svgMarkup = svgElement ? svgElement.outerHTML : '<div style="color: #f59e0b; font-size: 20px;">📄</div>';
+
+    // Create a lightweight custom drag preview
+    const dragImage = document.createElement('div');
+    dragImage.id = 'drag-image-temp';
+    dragImage.innerHTML = `
+      <div style="
+        padding: 12px 16px;
+        background-color: var(--card, #1e1e1e);
+        border: 2px solid oklch(0.627 0.265 303.9);
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        font-family: monospace;
+        pointer-events: none;
+      ">
+        <div style="display: flex; align-items: center; justify-content: center; width: 24px; height: 24px; margin-bottom: 4px;">
+           ${svgMarkup}
+        </div>
+        <div style="font-size: 10px; font-weight: bold; color: #f3f4f6; text-align: center; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 4px;">
+            ${label.replace(/_/g, ' ')}
+        </div>
+      </div>
+    `;
+    dragImage.style.position = 'fixed';
+    dragImage.style.left = `${touch.clientX - 50}px`;
+    dragImage.style.top = `${touch.clientY - 50}px`;
+    dragImage.style.opacity = '0.95';
+    dragImage.style.pointerEvents = 'none';
+    dragImage.style.zIndex = '10000';
+    dragImage.style.transition = 'none';
+    document.body.appendChild(dragImage);
+  };
+
+  const handleNodeTouchEnd = (
+    e: React.TouchEvent,
+    nodeId: string
+  ) => {
+    document.body.classList.remove('dragging');
+    const touch = e.changedTouches[0];
+
+    const dragImage = document.getElementById('drag-image-temp');
+    if (dragImage) dragImage.remove();
+
+    const elementAtPoint = document.elementFromPoint(touch.clientX, touch.clientY);
+    const dropTarget = elementAtPoint?.closest('.react-flow');
+
+    if (dropTarget) {
+      const customEvent = new CustomEvent('horizon-mobile-drop', {
+        detail: {
+          type: null,
+          configId: null,
+          existingNodeId: nodeId,
+          position: {
+            x: touch.clientX,
+            y: touch.clientY,
+          },
+        },
+        bubbles: true,
+      });
+      dropTarget.dispatchEvent(customEvent);
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    e.preventDefault(); // Prevent scrolling while dragging
+    const touch = e.touches[0];
+
+    const dragImage = document.getElementById('drag-image-temp');
+    if (dragImage) {
+      dragImage.style.transform = `translate(${touch.clientX - 50}px, ${touch.clientY - 50}px)`;
+      dragImage.style.left = '0';
+      dragImage.style.top = '0';
+    }
+  };
+
   return (
     <div className="h-screen border-r border-border/5 bg-background flex flex-col shrink-0 select-none overflow-hidden font-mono uppercase">
       {/* Header */}
@@ -565,9 +735,24 @@ export function SpatialSidebar() {
               {CORE_TEMPLATES.map(type => (
                 <div
                   key={type.id}
-                  draggable
+                  draggable={isDesktop}
                   onDragStart={(e) => onTypeDragStart(e, type.id)}
-                  className="flex flex-col items-center justify-center aspect-square rounded-none bg-secondary/[0.03] border border-border/5 hover:border-border/20 hover:bg-secondary/[0.05] transition-all cursor-grab active:cursor-grabbing group"
+                  onTouchStart={isDesktop ? (e) => handleTypeTouchStart(e, type.id, undefined, type.title || type.id) : undefined}
+                  onTouchMove={isDesktop ? handleTouchMove : undefined}
+                  onTouchEnd={isDesktop ? (e) => handleTypeTouchEnd(e, type.id) : undefined}
+                  onTouchCancel={isDesktop ? (e) => handleTypeTouchEnd(e, type.id) : undefined}
+                  onClick={() => {
+                    if (!isDesktop) {
+                      window.dispatchEvent(new CustomEvent('horizon-mobile-click-spawn', {
+                        detail: { type: type.id, configId: null }
+                      }));
+                      useUIStore.getState().setLeftOpen(false);
+                    }
+                  }}
+                  className={cn(
+                    "flex flex-col items-center justify-center aspect-square rounded-none bg-secondary/[0.03] border border-border/5 hover:border-border/20 hover:bg-secondary/[0.05] transition-all group",
+                    isDesktop ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"
+                  )}
                   title={type.title}
                 >
                   <type.icon size={14} style={{ color: type.color }} className="group-hover:scale-110 transition-transform" />
@@ -584,9 +769,24 @@ export function SpatialSidebar() {
                   {autoregisteredTypes.map(type => (
                     <div
                       key={type.id}
-                      draggable
+                      draggable={isDesktop}
                       onDragStart={(e) => onTypeDragStart(e, type.type, type.id)}
-                      className="flex flex-col items-center justify-center aspect-square rounded-none bg-secondary/[0.03] border border-border/5 hover:border-border/20 hover:bg-secondary/[0.05] transition-all cursor-grab active:cursor-grabbing group"
+                      onTouchStart={isDesktop ? (e) => handleTypeTouchStart(e, type.type, type.id, type.title || type.type || type.id) : undefined}
+                      onTouchMove={isDesktop ? handleTouchMove : undefined}
+                      onTouchEnd={isDesktop ? (e) => handleTypeTouchEnd(e, type.type, type.id) : undefined}
+                      onTouchCancel={isDesktop ? (e) => handleTypeTouchEnd(e, type.type, type.id) : undefined}
+                      onClick={() => {
+                        if (!isDesktop) {
+                          window.dispatchEvent(new CustomEvent('horizon-mobile-click-spawn', {
+                            detail: { type: type.type, configId: type.id }
+                          }));
+                          useUIStore.getState().setLeftOpen(false);
+                        }
+                      }}
+                      className={cn(
+                        "flex flex-col items-center justify-center aspect-square rounded-none bg-secondary/[0.03] border border-border/5 hover:border-border/20 hover:bg-secondary/[0.05] transition-all group",
+                        isDesktop ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"
+                      )}
                       title={type.title}
                     >
                       <DynamicIcon name={type.icon || 'Box'} size={14} style={{ color: type.color }} className="group-hover:scale-110 transition-transform" />
@@ -632,10 +832,13 @@ export function SpatialSidebar() {
             return (
               <div
                 key={node.id}
-                draggable
+                draggable={isDesktop}
                 onDragStart={(e) => onNodeDragStart(e, node.id)}
+                onTouchStart={isDesktop ? (e) => handleNodeTouchStart(e, node.id, node.payload?.title || 'Untitled Node') : undefined}
+                onTouchMove={isDesktop ? handleTouchMove : undefined}
+                onTouchEnd={isDesktop ? (e) => handleNodeTouchEnd(e, node.id) : undefined}
+                onTouchCancel={isDesktop ? (e) => handleNodeTouchEnd(e, node.id) : undefined}
                 onClick={() => {
-                  // Highlight and Select Node
                   setSelectedNodeId(node.id);
                   if (node.position) {
                     setCenter(node.position.x, node.position.y, { zoom: 0.8, duration: 800 });
@@ -643,8 +846,14 @@ export function SpatialSidebar() {
                     fitView({ nodes: [{ id: node.id }], duration: 800, padding: 0.5 });
                   }
                   window.dispatchEvent(new CustomEvent('highlight-node', { detail: { id: node.id } }));
+                  if (!isDesktop) {
+                    useUIStore.getState().setLeftOpen(false);
+                  }
                 }}
-                className="group flex flex-col p-3 hover:bg-secondary/[0.03] border border-transparent hover:border-border/5 transition-all cursor-grab active:cursor-grabbing relative overflow-hidden"
+                className={cn(
+                  "group flex flex-col p-3 hover:bg-secondary/[0.03] border border-transparent hover:border-border/5 transition-all relative overflow-hidden",
+                  isDesktop ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"
+                )}
               >
                 {/* Edge accent based on registered color */}
                 <div className="absolute left-0 top-0 bottom-0 w-0.5 opacity-40" style={{ backgroundColor: nodeColor }} />
