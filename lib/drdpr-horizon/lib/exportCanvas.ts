@@ -105,10 +105,39 @@ async function captureViewportBounds(
 
     // Auto-download if not explicitly disabled
     if (options.download !== false) {
-      const link = document.createElement('a');
-      link.download = `${filename}.${format}`;
-      link.href = dataUrl;
-      link.click();
+      try {
+        if ('showSaveFilePicker' in window) {
+          const response = await fetch(dataUrl);
+          const blob = await response.blob();
+          
+          const mimeType = format === 'jpeg' ? 'image/jpeg' : format === 'svg' ? 'image/svg+xml' : 'image/png';
+          
+          const fileHandle = await (window as any).showSaveFilePicker({
+            suggestedName: `${filename}.${format}`,
+            types: [{
+              description: `${format.toUpperCase()} Image`,
+              accept: { [mimeType]: [`.${format}`] },
+            }],
+          });
+          const writable = await fileHandle.createWritable();
+          await writable.write(blob);
+          await writable.close();
+        } else {
+          const link = document.createElement('a');
+          link.download = `${filename}.${format}`;
+          link.href = dataUrl;
+          link.click();
+        }
+      } catch (err: any) {
+        if (err.name !== 'AbortError') {
+          console.error('File save failed or aborted:', err);
+          // Fallback to standard download if File System Access API fails (e.g., security constraints)
+          const link = document.createElement('a');
+          link.download = `${filename}.${format}`;
+          link.href = dataUrl;
+          link.click();
+        }
+      }
     }
     
     return { dataUrl, filename, format };
