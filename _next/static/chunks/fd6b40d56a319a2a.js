@@ -1211,8 +1211,9 @@ ${e.payload?.content||""}
             if (idx !== -1) {
               const start = Math.max(0, idx - 40);
               const end = Math.min(content.length, idx + 80);
+              const escapedFilter = filter.replace(/[.*+?^\${}()|[\\]\\\\]/g, '\\\\$&');
               snippet = (start > 0 ? '...' : '') + 
-                content.substring(start, end).replace(new RegExp(filter, 'gi'), match => \`<span class="highlight">${match}</span>\`) +
+                content.substring(start, end).replace(new RegExp(escapedFilter, 'gi'), match => \`<span class="highlight">${match}</span>\`) +
                 (end < content.length ? '...' : '');
             }
 
