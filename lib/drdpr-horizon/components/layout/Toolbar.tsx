@@ -665,14 +665,23 @@ export function Toolbar() {
           const nodes = getNodes();
           const edges = getEdges();
           const bg = transparent ? 'transparent' : (resolvedTheme === 'dark' ? '#09090b' : '#ffffff');
+          
+          let graphName = 'Canvas';
+          if (activeGraphId) {
+             const activeGraph = await db.graphs.get(activeGraphId);
+             if (activeGraph?.name) {
+                graphName = activeGraph.name.replace(/[<>:"/\\|?*]+/g, '').trim() || 'Canvas';
+             }
+          }
+          
           const options = { format: 'png' as const, backgroundColor: bg, download: false };
 
           if (exportTarget === 'node' && selectedNodeId) {
             return await exportNodeWithRelationships(canvasElement, nodes, edges, selectedNodeId, options);
           } else if (exportTarget === 'selection' && selectedNodeIds.size > 1) {
-            return await exportSelectedNodes(canvasElement, nodes, edges, Array.from(selectedNodeIds), options);
+            return await exportSelectedNodes(canvasElement, nodes, edges, Array.from(selectedNodeIds), { ...options, filename: `${graphName} (Selection)` });
           } else {
-            return await exportCanvas(canvasElement, nodes, options);
+            return await exportCanvas(canvasElement, nodes, { ...options, filename: graphName });
           }
         }}
       />

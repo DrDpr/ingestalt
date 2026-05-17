@@ -68,12 +68,40 @@ export function ExportPreviewModal({ show, generateImage, onCancel }: ExportPrev
         return () => document.removeEventListener('keydown', handleKeyDown);
     }, [show, onCancel, preview, isGenerating]);
 
-    const handleDownload = () => {
+    const handleDownload = async () => {
         if (preview) {
-            const link = document.createElement('a');
-            link.download = `${preview.filename}.${preview.format}`;
-            link.href = preview.url;
-            link.click();
+            try {
+                if ('showSaveFilePicker' in window) {
+                    const response = await fetch(preview.url);
+                    const blob = await response.blob();
+                    
+                    const mimeType = preview.format === 'jpeg' ? 'image/jpeg' : preview.format === 'svg' ? 'image/svg+xml' : 'image/png';
+                    
+                    const fileHandle = await (window as any).showSaveFilePicker({
+                        suggestedName: `${preview.filename}.${preview.format}`,
+                        types: [{
+                            description: `${preview.format.toUpperCase()} Image`,
+                            accept: { [mimeType]: [`.${preview.format}`] },
+                        }],
+                    });
+                    const writable = await fileHandle.createWritable();
+                    await writable.write(blob);
+                    await writable.close();
+                } else {
+                    const link = document.createElement('a');
+                    link.download = `${preview.filename}.${preview.format}`;
+                    link.href = preview.url;
+                    link.click();
+                }
+            } catch (err: any) {
+                if (err.name !== 'AbortError') {
+                    console.error('File save failed or aborted:', err);
+                    const link = document.createElement('a');
+                    link.download = `${preview.filename}.${preview.format}`;
+                    link.href = preview.url;
+                    link.click();
+                }
+            }
             onCancel();
         }
     };
