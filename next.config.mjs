@@ -1,12 +1,16 @@
 import createMDX from '@next/mdx'
 
+const isVercel = process.env.VERCEL === '1';
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Configure `pageExtensions` to include MDX files
   pageExtensions: ['js', 'jsx', 'md', 'mdx', 'ts', 'tsx'],
-  output: 'export',
-  basePath: '/ingestalt',
-  assetPrefix: '/ingestalt/',
+  ...(!isVercel && {
+    output: 'export',
+    basePath: '/ingestalt',
+    assetPrefix: '/ingestalt/',
+  }),
   images: {
     unoptimized: true,
   },
