@@ -5,15 +5,15 @@
   "start_url": "/ingestalt/canvas",
   "scope": "/ingestalt/",
   "display": "standalone",
-  "background_color": "#161616",
-  "theme_color": "#161616",
+  "background_color": "#000000",
+  "theme_color": "#000000",
   "orientation": "any",
   "icons": [
     {
       "src": "/ingestalt/Logo.png",
       "type": "image/png",
       "sizes": "512x512",
-      "purpose": "any"
+      "purpose": "any maskable"
     }
   ]
 }
