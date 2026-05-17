@@ -30,10 +30,10 @@ export default function Page() {
   };
 
   return (
-    <div className="min-h-screen bg-background relative text-foreground font-mono uppercase selection:bg-foreground/20 text-xs tracking-wider">
+    <div className="min-h-screen bg-background text-foreground transition-colors duration-300 relative font-mono uppercase selection:bg-foreground/20 text-xs tracking-wider">
       {/* Stark Technical Grid Background */}
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden opacity-[0.03]">
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff_1px,transparent_1px),linear-gradient(to_bottom,#ffffff_1px,transparent_1px)] bg-[size:30px_30px]" />
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,currentColor_1px,transparent_1px),linear-gradient(to_bottom,currentColor_1px,transparent_1px)] bg-[size:30px_30px]" />
       </div>
 
       <div className="relative z-10 flex flex-col min-h-screen max-w-6xl mx-auto border-x border-border/10 bg-background/50 backdrop-blur-sm">
@@ -100,20 +100,25 @@ export default function Page() {
                 variants={itemVariants}
                 className="text-4xl md:text-6xl lg:text-7xl font-black tracking-widest leading-none uppercase"
               >
-                <span className="block text-foreground/90">MAKE THE</span>
+                <span className="block text-foreground/90">"I HAVE NO IDEA</span>
                 <span className="block text-transparent bg-clip-text bg-gradient-to-r from-foreground to-foreground/60 pb-1">
-                  HIDDEN STRUCTURE
+                  WHAT THIS CODE DOES."
                 </span>
-                <span className="block text-foreground/90">VISIBLE.</span>
+                <span className="block text-foreground/45 text-[10px] md:text-xs tracking-widest font-black mt-2 mb-4">
+                  — YOU, YESTERDAY.
+                </span>
+                <span className="block text-foreground/95 text-3xl md:text-5xl lg:text-6xl mt-4">
+                  VISUALIZE THE GESTALT.
+                </span>
               </motion.h1>
 
               {/* Stark Subtitle Tagline */}
               <motion.p 
                 variants={itemVariants}
-                className="text-xs md:text-sm text-muted-foreground max-w-3xl leading-relaxed tracking-wider uppercase font-medium"
+                className="text-xs md:text-sm text-muted-foreground max-w-3xl leading-relaxed tracking-wider uppercase font-medium animate-pulse"
               >
-                A LOCAL-FIRST SPATIAL DOCUMENTATION ENGINE FOR SOFTWARE ARCHITECTURE. 
-                SEE THE WHOLE SYSTEM, NOT JUST THE SCATTERED FRAGMENTS.
+                THE PROBLEM IS, WE ARE BUILDING SYSTEMS FASTER THAN WE CAN COMPREHEND THEM. 
+                INGESTALT IS A LOCAL-FIRST SPATIAL WORKSPACE BUILT TO UNTANGLE THE MASSIVE CODEBASES WE DON'T ACTUALLY UNDERSTAND.
               </motion.p>
 
               {/* Action Buttons */}
@@ -187,7 +192,7 @@ export default function Page() {
                     </div>
                   </div>
 
-                  {/* Step 3: Live Sync */}
+                  {/* Step 3: Bidirectional Loop */}
                   <div className="relative border border-border/10 p-6 rounded-none bg-secondary/[0.01] pl-8">
                     <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-foreground/20" />
                     <div className="flex flex-col space-y-4">
@@ -195,20 +200,20 @@ export default function Page() {
                         <Zap className="w-5 h-5" />
                       </div>
                       <div className="text-[10px] tracking-widest text-muted-foreground font-black">STEP_03 // PERSISTENCE</div>
-                      <h3 className="text-xs font-black tracking-widest text-foreground">LIVE SYNC</h3>
+                      <h3 className="text-xs font-black tracking-widest text-foreground">BIDIRECTIONAL LOOP</h3>
                       <p className="text-[10px] text-muted-foreground leading-relaxed">
-                        EDITS SYNC BACK AUTOMATICALLY TO LOCAL MARKDOWN FILES INSTANTLY.
+                        OPT-IN TO LIVE PUSH WRITING TO DISK AND AUTOMATE INDEXING WITH ACTIVE HEARTBEAT PULLS.
                       </p>
                       <div className="pt-2">
                         <span className="inline-flex items-center gap-1.5 text-[9px] font-mono px-3 py-1 bg-secondary/[0.04] border border-border/10 rounded-none text-muted-foreground">
-                          AUTO_PERSIST
+                          LIVE_PUSH_&_HEARTBEAT
                         </span>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Local-First Banner */}
+                {/* Local-First Secure Banner */}
                 <motion.div 
                   variants={itemVariants}
                   className="mt-8 border border-border/10 bg-secondary/[0.01] p-6 rounded-none relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-4"
@@ -219,7 +224,7 @@ export default function Page() {
                     <span className="font-black text-[10px] tracking-widest text-foreground">LOCAL-FIRST // WORKSPACE_SECURE</span>
                   </div>
                   <span className="text-[10px] text-muted-foreground tracking-widest uppercase">
-                    ALL GRAPH DATA AND ASSETS RESIDE PERMANENTLY ON YOUR MACHINE. NO EXTERNAL DATABASES.
+                    ALL GRAPH DATA AND ASSETS RESIDE PERMANENTLY ON YOUR MACHINE. NO EXTERNAL CLOUD DATABASES.
                   </span>
                 </motion.div>
               </div>
@@ -228,12 +233,43 @@ export default function Page() {
             {/* Editorial Manifesto Quote */}
             <motion.div 
               variants={itemVariants}
-              className="border border-border/10 bg-secondary/[0.02] p-8 md:p-12 text-center rounded-none relative overflow-hidden my-12"
+              className="border border-border/10 bg-secondary/[0.02] p-8 md:p-12 text-center rounded-none relative overflow-hidden my-6"
             >
-              <div className="text-[10px] tracking-widest text-muted-foreground mb-4">SYSTEM_STATEMENT</div>
-              <h2 className="text-xl md:text-2xl font-black leading-relaxed tracking-widest uppercase">
+              <div className="text-[10px] tracking-widest text-muted-foreground mb-4">SYSTEM_STATEMENT // GESTALT_CONSTITUTION</div>
+              <h2 className="text-xl md:text-2xl font-black leading-relaxed tracking-widest uppercase text-foreground/90">
                 "SEEING SOMETHING AS A WHOLE RATHER THAN THE SUM OF ITS PARTS — THAT'S WHAT INGESTALT IS ALL ABOUT. ONE NODE CONNECTING TO TWO OTHERS — IT'S THE PRODUCT'S CORE IDEA DRAWN TO THE SIMPLEST."
               </h2>
+            </motion.div>
+
+            {/* Modern Development Chronicles */}
+            <motion.div 
+              variants={itemVariants}
+              className="grid grid-cols-1 lg:grid-cols-2 gap-6 my-6"
+            >
+              {/* The AI Hook Card */}
+              <div className="border border-border/10 bg-secondary/[0.02] p-6 md:p-8 text-left rounded-none relative overflow-hidden pl-10 flex flex-col gap-3">
+                <div className="absolute left-0 top-0 bottom-0 w-1 bg-amber-500" />
+                <div className="text-[10px] tracking-widest text-amber-500 font-black">THE_HOOK // AN_ALL_TOO_FAMILIAR_STORY</div>
+                <h3 className="text-sm font-black leading-normal tracking-widest uppercase">
+                  "YOU HAVE AN IDEA, AND YOU WANT TO BUILD AN APP. BEFORE 2023, YOU WOULD HAVE NEEDED TO STUDY THE ARCHITECTURE. NOW? WE JUST BLAST IT WITH AI UNTIL IT COMPILES."
+                </h3>
+                <p className="text-[10px] text-muted-foreground leading-relaxed uppercase">
+                  THE CONGENITAL DEBT OF HIGH-SPEED CODE GENERATION IS THAT WE ARE BUILDING SYSTEMS FASTER THAN WE CAN COMPREHEND THEM. INGESTALT IS THE REVEAL. IT MAPS THE SCATTERED ARCHITECTURE SO YOU ACTUALLY UNDERSTAND THE CODEBASE.
+                </p>
+              </div>
+
+              {/* IBM Bob Cooperation Card */}
+              <div className="border border-border/10 bg-secondary/[0.02] p-6 md:p-8 text-left rounded-none relative overflow-hidden pl-10 flex flex-col gap-3">
+                <div className="absolute left-0 top-0 bottom-0 w-1 bg-purple-500" />
+                <div className="text-[10px] tracking-widest text-purple-400 font-black">THE_HUMBLEBRAG // IBM_BOB_COOPERATION</div>
+                <h3 className="text-sm font-black leading-normal tracking-widest uppercase flex items-center gap-1.5">
+                  <Bot className="w-4 h-4 text-purple-400 shrink-0 animate-bounce" />
+                  "BOB WRITES THE TERRITORY; INGESTALT DRAWS THE MAP."
+                </h3>
+                <p className="text-[10px] text-muted-foreground leading-relaxed uppercase">
+                  HONESTLY? WE EXHAUSTED OUR BOB TOKEN QUOTA JUST TRYING TO KEEP UP. BOB IS AN EXCEPTIONAL CODING PARTNER, BUT ITS REAL POWER UNLOCKS WITH INGESTALT. BECAUSE INGESTALT READS DIRECTLY FROM YOUR LOCAL FILES, WHATEVER BOB EDITS IN YOUR IDE INSTANTLY SYNCS TO THE VISUAL MAP HERE ON THE CANVAS.
+                </p>
+              </div>
             </motion.div>
             
             {/* Stark Use Cases Section */}
@@ -253,9 +289,9 @@ export default function Page() {
                   <div className="w-10 h-10 rounded-none border border-border/10 bg-secondary/[0.03] flex items-center justify-center text-foreground/60 mb-6 shrink-0">
                     <Users className="w-5 h-5" />
                   </div>
-                  <h3 className="text-xs font-black tracking-widest mb-3 uppercase text-foreground">DEVELOPER ONBOARDING</h3>
+                  <h3 className="text-xs font-black tracking-widest mb-3 uppercase text-foreground">THE UNEMPLOYED STARTUP BUILDER</h3>
                   <p className="text-[10px] text-muted-foreground leading-relaxed uppercase">
-                    STOP HANDING NEW TEAMMATES FLAT MARKDOWN FOLDERS. PROVIDE A SPATIAL ARCHITECTURAL MAP WHERE THEY CAN VISUALLY TRACE SYSTEM COMPONENTS.
+                    BLASTING CODE OUT AT 100MPH WITH AI ASSISTANTS? USE INGESTALT AS YOUR SPATIAL COMMAND CENTER TO PREVENT YOUR CODEBASE FROM COLLAPSING INTO A BLACK HOLE OF TECHNICAL DEBT BEFORE YOU EVEN LAUNCH.
                   </p>
                 </div>
 
@@ -265,9 +301,9 @@ export default function Page() {
                   <div className="w-10 h-10 rounded-none border border-border/10 bg-secondary/[0.03] flex items-center justify-center text-foreground/60 mb-6 shrink-0">
                     <Bot className="w-5 h-5" />
                   </div>
-                  <h3 className="text-xs font-black tracking-widest mb-3 uppercase text-foreground">AI CONTEXT MAPPING</h3>
+                  <h3 className="text-xs font-black tracking-widest mb-3 uppercase text-foreground">THE EMPLOYED LEGACY UNTANGLE-ER</h3>
                   <p className="text-[10px] text-muted-foreground leading-relaxed uppercase">
-                    AI AGENTS STRUGGLE WITH FLAT FRAGMENTED CONTEXT. BY STRUCTURING WORKSPACES SPATIALLY, YOU GIVE AI PARTNERS AN EXPLICIT SYSTEM TOPOLOGY.
+                    INHERITED A SPRAWLING, UNDOCUMENTED LEGACY MONSTER? MAP YOUR LOCAL FILES ONTO THE INFINITE CANVAS, TRACE RELATIONSHIP HANDLES, AND FINALLY UNDERSTAND HOW THE SYSTEM IS PUT TOGETHER.
                   </p>
                 </div>
 
@@ -277,9 +313,9 @@ export default function Page() {
                   <div className="w-10 h-10 rounded-none border border-border/10 bg-secondary/[0.03] flex items-center justify-center text-foreground/60 mb-6 shrink-0">
                     <GitBranch className="w-5 h-5" />
                   </div>
-                  <h3 className="text-xs font-black tracking-widest mb-3 uppercase text-foreground">ARCHITECTURE PLANNING</h3>
+                  <h3 className="text-xs font-black tracking-widest mb-3 uppercase text-foreground">THE GRAPH LOVER (SPATIAL WIKI)</h3>
                   <p className="text-[10px] text-muted-foreground leading-relaxed uppercase">
-                    PROPOSE CHANGES OR MAP MICROSERVICES DIRECTLY ON AN ACTIVE CANVAS. SPOT STRUCTURAL BOTTLENECKS BEFORE WRITING A SINGLE LINE OF CODE.
+                    HONESTLY? SOME OF US JUST LIKE GRAPHS. CONVERT YOUR FLAT, BORING MARKDOWN FILES INTO A GORGEOUS, FULLY INTERACTIVE SPATIAL KNOWLEDGE WEB THAT IS ACTUALLY FUN TO BROWSE.
                   </p>
                 </div>
 
@@ -289,9 +325,9 @@ export default function Page() {
                   <div className="w-10 h-10 rounded-none border border-border/10 bg-secondary/[0.03] flex items-center justify-center text-foreground/60 mb-6 shrink-0">
                     <ShieldCheck className="w-5 h-5" />
                   </div>
-                  <h3 className="text-xs font-black tracking-widest mb-3 uppercase text-foreground">SYSTEM AUDITING</h3>
+                  <h3 className="text-xs font-black tracking-widest mb-3 uppercase text-foreground">AI TASK CONTEXT ENGINEERING</h3>
                   <p className="text-[10px] text-muted-foreground leading-relaxed uppercase">
-                    BECAUSE IT RUNS DIRECTLY FROM LOCAL FILES, VISUALIZE WHICH COMPONENT DIRECTORIES ARE UNDOCUMENTED, ORPHANED, OR DISCONNECTED.
+                    STOP DUMPING MASSIVE, IRRELEVANT FILE CONTEXT INTO LLMS. SURGICALLY WIRE ONLY THE NECESSARY DEPENDENCIES, SCHEMAS, AND MARKDOWN SPECS TO COMPILE PERFECT AI TASKS.
                   </p>
                 </div>
 
@@ -303,9 +339,9 @@ export default function Page() {
                       <Component className="w-5 h-5" />
                     </div>
                     <div>
-                      <h3 className="text-xs font-black tracking-widest mb-2 uppercase text-foreground">ISOLATE CRITICAL COMPONENTS</h3>
+                      <h3 className="text-xs font-black tracking-widest mb-2 uppercase text-foreground">PORTABLE ATLAS SPECIFICATION</h3>
                       <p className="text-[10px] text-muted-foreground leading-relaxed uppercase">
-                        FILTER COMPLEXITY INSTANTLY. ISOLATE A SINGLE MODULE AND VISUALIZE ONLY ITS IMMEDIATE UPSTREAM DEPENDENTS AND DOWNSTREAM API EFFECTS.
+                        EXPORT AND SHARE ENTIRE VISUAL SYSTEMS ARCHITECTURES. BUNDLE MAP COORDINATES AND CONNECTIONS INTO PORTABLE, ZERO-DEPENDENCY ATLAS JSON CONFIGURATIONS TO SHARE WITH TEAMMATES INSTANTLY.
                       </p>
                     </div>
                   </div>

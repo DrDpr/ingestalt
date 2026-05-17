@@ -3,11 +3,11 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import {
-  X, ArrowRight, BookOpen, Sparkles, Layers, Zap, Users, Bot, FolderOpen,
+  X, BookOpen, Sparkles, Layers, Zap, Bot, FolderOpen,
   ShieldCheck, Component, Network, FileText, Camera, Keyboard,
-  RefreshCw, Copy, Check, Compass, Anchor, Cpu, Share2, Info, ChevronRight,
+  RefreshCw, Copy, Check, Compass, Cpu, Share2, Info,
   ZapOff, Moon, Files, Upload, Plus, Save, RotateCcw, Trash2, Search, Download,
-  HardDrive, Settings2
+  HardDrive, Settings2, Database, Wifi
 } from 'lucide-react';
 import { useUIStore } from '@/lib/drdpr-horizon/lib/store/useUIStore';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -15,10 +15,17 @@ import { motion, AnimatePresence } from 'framer-motion';
 export function UserGuide() {
   const isGuideOpen = useUIStore((state) => state.isGuideOpen);
   const setGuideOpen = useUIStore((state) => state.setGuideOpen);
-  const [activeTab, setActiveTab] = useState<'getting-started' | 'canvas' | 'inspector' | 'interface' | 'standards' | 'ai' | 'prompts' | 'sync' | 'export'>('getting-started');
+  const [activeTab, setActiveTab] = useState<'getting-started' | 'canvas' | 'inspector' | 'interface' | 'standards' | 'ai'>('getting-started');
   const [copiedPrompt, setCopiedPrompt] = useState(false);
+  const [copiedColor, setCopiedColor] = useState<string | null>(null);
   const [workflowPath, setWorkflowPath] = useState<'scratch' | 'wiki' | 'atlas' | 'schema' | 'ai' | 'publish'>('scratch');
   const [mounted, setMounted] = useState(false);
+
+  const copyColorToClipboard = (hex: string) => {
+    navigator.clipboard.writeText(hex);
+    setCopiedColor(hex);
+    setTimeout(() => setCopiedColor(null), 1500);
+  };
 
   useEffect(() => {
     setMounted(true);
@@ -44,16 +51,199 @@ export function UserGuide() {
     setTimeout(() => setCopiedPrompt(false), 2000);
   };
 
+  const downloadReferenceGuide = () => {
+    const content = `# Ingestalt Dynamic Schema & YAML Frontmatter Reference Guide
+
+This document serves as the official dynamic schema reference for the Ingestalt spatial mapping engine. Configure these fields in your note's frontmatter to unlock custom, interactive parameter panels in the Properties Workspace.
+
+---
+
+## 1. Core Header & Identity Attributes
+Every physical note inside your workspace supports these identity, spatial, and visual layout variables:
+
+\`\`\`yaml
+title: "User Profile Controller"
+type: "api"
+icon: "Cpu"
+color: "#3b82f6"
+tags:
+  - "auth"
+  - "controller"
+filepath: "src/controllers/UserController.ts"
+filename: "UserController.ts"
+configId: "microservice"
+position:
+  x: 250
+  y: 420
+\`\`\`
+
+### Attributes Breakdown:
+- \`title\`: (String) The visual card name on the spatial flow canvas. If omitted, falls back to the first H1 heading (\`# Title\`) parsed from the Markdown content.
+- \`type\`: (String) Core base classification (e.g. \`api\`, \`database\`, \`frontend\`, \`hook\`, \`note\`, \`ai-task\`).
+- \`configId\` (or \`config_id\`): (String) Binds the node card to a specific custom Standards Blueprint configuration definitions schema.
+- \`position\`: (Object) Holds absolute canvas \`x\` and \`y\` grid offsets to persist note card positions on the spatial board.
+
+---
+
+## 2. Dynamic Field Types Reference
+Ingestalt's Node Types Editor supports 7 distinct data types, mapping frontmatter parameters to structured visual interfaces.
+
+### A. Plain Text (\`type: text\`)
+Standard single-line text input fields or custom parameters.
+\`\`\`yaml
+description: "Standard string representation or custom configuration payload."
+\`\`\`
+
+### B. File Path (\`type: file_path\`)
+Deep-linked local file paths. Renders with an active lightning bolt (\`⚡\`) launch trigger to open the code directly inside your IDE.
+\`\`\`yaml
+filepath: "src/components/layout/AppHeader.tsx"
+\`\`\`
+
+### C. Method & Interface List (\`type: interface_list\`)
+Structured table for API methods, controller routines, or handler classes.
+\`\`\`yaml
+methods:
+  - name: "fetchUsers"
+    params: "limit: number, offset: number"
+    returns: "Promise<User[]>"
+    line: 45
+  - name: "createUser"
+    params: "data: CreateUserDto"
+    returns: "Promise<User>"
+    line: 110
+\`\`\`
+
+### D. Database Tables List (\`type: tables_list\`)
+Manage table definitions, schemas, typing constraints, and primary or unique index keys.
+\`\`\`yaml
+tables:
+  - name: "users"
+    columns:
+      - name: "id"
+        type: "uuid"
+        primary: true
+      - name: "email"
+        type: "varchar(255)"
+        unique: true
+      - name: "created_at"
+        type: "timestamp"
+\`\`\`
+
+### E. Code Snippet Cards (\`type: code_list\`)
+Interactive container blocks to store and visually display code snippets.
+\`\`\`yaml
+snippets:
+  - label: "Query Filter"
+    language: "typescript"
+    code: "const activeUsers = users.filter(u => u.status === 'active');"
+\`\`\`
+
+### F. User Story Checklist (\`type: story_list\`)
+Tickable checkboxes mapping development features, stories, or functional goals. Checkbox state writes back directly to YAML booleans.
+\`\`\`yaml
+stories:
+  - text: "User can successfully authenticate using OAuth credentials."
+    completed: true
+  - text: "System enforces strict session expiration after 30 minutes."
+    completed: false
+\`\`\`
+
+### G. Process Flow List (\`type: flow_list\`)
+Numbered sequence of steps mapping controller actions, data loading cycles, or hooks execution flow.
+\`\`\`yaml
+process:
+  - step: 1
+    label: "Decrypt Auth Token"
+    desc: "Authenticate signature via decrypting standard RSA JWT keys."
+  - step: 2
+    label: "Authorize Scopes"
+    desc: "Validate scope permissions block against requested route attributes."
+\`\`\`
+
+---
+
+## 3. Visual Coordination Attributes (\`icon\`, \`color\`)
+Ingestalt uses custom aesthetic decorators to color-code cards and fields dynamically:
+
+### A. Lucide Icons (\`icon\`)
+Pass any valid Lucide icon string identifier to draw the icon at the top of the node card or field header.
+*Popular Examples:*
+- \`Database\`, \`Wifi\`, \`Layout\`, \`Activity\`, \`BookOpen\`, \`Cpu\`, \`Layers\`, \`Settings\`, \`Bot\`, \`HardDrive\`, \`Share2\`, \`FileText\`
+
+### B. Theme Accent Colors (\`color\`)
+Define visual border and header brand colors in Hex values.
+*Recommended Palette:*
+- Blue: \`"#3b82f6"\`
+- Green: \`"#22c55e"\`
+- Purple: \`"#a855f7"\`
+- Orange/Amber: \`"#f59e0b"\`
+- Teal: \`"#14b8a6"\`
+- Rose: \`"#f43f5e"\`
+
+---
+
+## 4. Custom Standards Blueprint Schema (\`type: standards\`)
+To define custom note schemas that teammates can load and share, design a standard definition blueprint note using this exact frontmatter syntax:
+
+\`\`\`yaml
+title: "Custom Templates Blueprint"
+type: "standards"
+definitions:
+  - id: "microservice"
+    type: "Backend Microservice"
+    icon: "Cpu"
+    color: "#a855f7"
+    fields:
+      - name: "endpoints"
+        type: "interface_list"
+        icon: "Zap"
+        color: "#a855f7"
+      - name: "filepath"
+        type: "file_path"
+        icon: "FileText"
+        color: "#94a3b8"
+\`\`\`
+
+---
+
+## 5. Spatial Board Connection Linkages (\`relations\`)
+Bi-directional canvas connection edges are automatically persisted inside the note's frontmatter under the \`relations\` key:
+
+\`\`\`yaml
+relations:
+  - targetId: "node_db_postgres"
+    type: "depends_on"
+  - targetId: "node_api_auth"
+    type: "references"
+\`\`\`
+
+Each relation object specifies:
+- \`targetId\` (or \`target\`): The unique ID of the target note card.
+- \`type\`: The relationship type (e.g. \`depends_on\`, \`implements\`, \`references\`).
+- \`metadata\`: Optional additional key-value annotations mapping the relation.
+
+---
+*Ingestalt Visual Workspace Engine • High-Fidelity Systems Engineering*
+`;
+
+    const blob = new Blob([content], { type: 'text/markdown;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'ingestalt_standards_reference.md');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const tabs = [
-    { id: 'getting-started', label: '01 // GETTING STARTED', icon: <Sparkles size={13} /> },
-    { id: 'interface', label: '02 // LAYOUT & INTERFACE', icon: <Layers size={13} /> },
-    { id: 'canvas', label: '03 // SPATIAL CANVAS', icon: <Compass size={13} /> },
-    { id: 'inspector', label: '04 // MODULAR INSPECTOR', icon: <Info size={13} /> },
-    { id: 'standards', label: '05 // DATA STANDARDS', icon: <Component size={13} /> },
+    { id: 'getting-started', label: '01 // INGESTALT', icon: <Sparkles size={13} /> },
+    { id: 'interface', label: '02 // ALL THE BUTTONS', icon: <Layers size={13} /> },
+    { id: 'canvas', label: '03 // USING THE CANVAS', icon: <Compass size={13} /> },
+    { id: 'inspector', label: '04 // INSPECTOR PANEL', icon: <Info size={13} /> },
+    { id: 'standards', label: '05 // CREATING STANDARDS', icon: <Component size={13} /> },
     { id: 'ai', label: '06 // AI TASK ENGINEERING', icon: <Bot size={13} /> },
-    { id: 'prompts', label: '07 // PROMPTS LIBRARY', icon: <FileText size={13} /> },
-    { id: 'sync', label: '08 // GROUNDING & SYNC', icon: <RefreshCw size={13} /> },
-    { id: 'export', label: '09 // PORTABILITY & OUTPUTS', icon: <Camera size={13} /> },
   ] as const;
 
   const systemConstitution = `# MISSION
@@ -153,7 +343,7 @@ Ask me to provide the contents of a specific node in \`_ingestalt\` if you are u
                         A local-first canvas that turns your Markdown files into a living, visual map of your project.
                       </p>
                       <p className="text-foreground/80 text-xs leading-relaxed max-w-xl mt-1">
-                        Works with any kind of documentation — software, research, planning. If it can be a Markdown file, it belongs here.
+                        Your data never leaves your machine. Ingestalt reads directly from your disk using secure sandboxed browser handles, ensuring complete offline privacy.
                       </p>
                     </div>
 
@@ -176,8 +366,7 @@ Ask me to provide the contents of a specific node in \`_ingestalt\` if you are u
                             <FileText className="w-4 h-4 text-foreground/70" />
                           </div>
                           <div>
-                            <div className="text-xs font-black text-foreground/60 tracking-widest">SCENARIO A</div>
-                            <div className="text-sm font-black text-foreground uppercase tracking-wide">You already have docs</div>
+                            <div className="text-sm font-black text-foreground uppercase tracking-wide">"I have an existing project folder"</div>
                           </div>
                         </div>
 
@@ -187,10 +376,7 @@ Ask me to provide the contents of a specific node in \`_ingestalt\` if you are u
                             You have existing Markdown files — component specs, API notes, user stories, anything.
                           </div>
                           <div className="px-4 py-3 border border-border/10 bg-secondary/[0.01] text-xs text-foreground/85 leading-relaxed">
-                            Connect your folder. Ingestalt maps every file onto the canvas automatically.
-                          </div>
-                          <div className="px-4 py-3 border border-border/10 bg-secondary/[0.01] text-xs text-foreground/85 leading-relaxed">
-                            Use the inspector to add structured properties — schemas, endpoints, flows — saved as YAML frontmatter alongside your content.
+                            Use the inspector to add structured properties—schemas, endpoints, flows—saved as clean frontmatter YAML.
                           </div>
                         </div>
 
@@ -209,8 +395,7 @@ Ask me to provide the contents of a specific node in \`_ingestalt\` if you are u
                             <Sparkles className="w-4 h-4 text-foreground/70" />
                           </div>
                           <div>
-                            <div className="text-xs font-black text-foreground/60 tracking-widest">SCENARIO B</div>
-                            <div className="text-sm font-black text-foreground uppercase tracking-wide">Starting from scratch</div>
+                            <div className="text-sm font-black text-foreground uppercase tracking-wide">"I am starting fresh from scratch"</div>
                           </div>
                         </div>
 
@@ -229,57 +414,100 @@ Ask me to provide the contents of a specific node in \`_ingestalt\` if you are u
 
                         <div className="border-t border-border/10 pt-3 flex items-start gap-2.5">
                           <Bot className="w-4 h-4 text-foreground/70 mt-0.5 shrink-0" />
-                          <span className="text-xs text-foreground/90 font-black">Use the Prompts Library (Ch. 07) to get your AI up to speed fast.</span>
+                          <span className="text-xs text-foreground/90 font-black">Use the Prompts Library inside Ch. 06 to get your AI assistant aligned fast.</span>
                         </div>
                       </div>
                     </div>
 
-                    {/* Divider label */}
-                    <div className="flex items-center gap-3">
-                      <div className="h-px flex-1 bg-border/15" />
-                      <span className="text-xs font-black tracking-widest text-foreground/70">THE THREE THINGS IT DOES</span>
-                      <div className="h-px flex-1 bg-border/15" />
+                    {/* The Three Things it Does Section */}
+                    <div className="space-y-6">
+                      <div className="flex items-center gap-3">
+                        <div className="h-px flex-1 bg-border/15" />
+                        <span className="text-xs font-black tracking-widest text-foreground/70">THE THREE THINGS IT DOES</span>
+                        <div className="h-px flex-1 bg-border/15" />
+                      </div>
+
+                      <div className="space-y-4">
+                        {/* Item 1 */}
+                        <div className="relative border border-border/10 p-5 bg-secondary/[0.01] pl-7">
+                          <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-foreground/20" />
+                          <h4 className="font-black text-xs text-foreground mb-2 flex items-center gap-2">
+                            <Layers size={14} className="text-muted-foreground" />
+                            LOCAL FILES, ALWAYS
+                          </h4>
+                          <p className="text-xs text-muted-foreground leading-relaxed">
+                            Your code lives on your computer. Ingestalt reads directly from your hard drive, keeping everything 100% offline, private, and secure.
+                          </p>
+                        </div>
+
+                        {/* Item 2 */}
+                        <div className="relative border border-border/10 p-5 bg-secondary/[0.01] pl-7">
+                          <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-foreground/20" />
+                          <h4 className="font-black text-xs text-foreground mb-2 flex items-center gap-2">
+                            <Compass size={14} className="text-muted-foreground" />
+                            CANVAS WORKSPACE
+                          </h4>
+                          <p className="text-xs text-muted-foreground leading-relaxed">
+                            Visualize connections between components, schemas, requirements, and AI prompts. Move beyond flat folders and see the architecture.
+                          </p>
+                        </div>
+
+                        {/* Item 3 */}
+                        <div className="relative border border-border/10 p-5 bg-secondary/[0.01] pl-7">
+                          <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-foreground/20" />
+                          <h4 className="font-black text-xs text-foreground mb-2 flex items-center gap-2">
+                            <RefreshCw size={14} className="text-muted-foreground" />
+                            BIDIRECTIONAL SYNC
+                          </h4>
+                          <p className="text-xs text-muted-foreground leading-relaxed">
+                            Edit in Ingestalt, and it saves to disk. Edit in VS Code, and Ingestalt updates. It's a living visual map of your physical codebase.
+                          </p>
+                        </div>
+                      </div>
                     </div>
 
-                    {/* Three feature strips */}
-                    <div className="flex flex-col gap-2.5">
+                    {/* Grounding & Sync Section */}
+                    <div className="space-y-6">
+                      <div className="flex items-center gap-3">
+                        <div className="h-px flex-1 bg-border/15" />
+                        <span className="text-xs font-black tracking-widest text-foreground/70">AUTHORIZATION & LOCAL FILE SYNC</span>
+                        <div className="h-px flex-1 bg-border/15" />
+                      </div>
 
-                      <div className="flex items-start gap-5 border border-border/12 p-5 bg-secondary/[0.01] hover:bg-secondary/[0.03] transition-colors">
-                        <div className="p-2.5 border border-border/10 bg-secondary/[0.04] shrink-0 mt-0.5">
-                          <FolderOpen className="w-4 h-4 text-foreground/70" />
+                      <div className="space-y-4">
+                        <div className="relative border border-border/10 p-5 bg-secondary/[0.01] pl-7">
+                          <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-foreground/20" />
+                          <h4 className="font-black text-xs text-foreground mb-2 flex items-center gap-2">
+                            <Network size={14} className="text-muted-foreground" />
+                            FILE SYSTEM ACCESS (FSA) PERMISSIONS
+                          </h4>
+                          <p className="text-xs text-muted-foreground leading-relaxed">
+                            Ingestalt leverages secure W3C drivers. Grant permissions once, and the app reads directly from your hard drive without any external cloud syncing.
+                          </p>
                         </div>
-                        <div className="flex flex-col gap-1">
-                          <div className="font-black text-xs text-foreground tracking-wide">LOCAL FILES, ALWAYS</div>
-                          <p className="text-xs text-foreground/90 leading-relaxed">
-                            Your data never leaves your machine. Reads directly from disk via the browser's File System Access API.
+
+                        <div className="relative border border-border/10 p-5 bg-secondary/[0.01] pl-7">
+                          <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-foreground/20" />
+                          <h4 className="font-black text-xs text-foreground mb-2 flex items-center gap-2">
+                            <ShieldCheck size={14} className="text-amber-400" />
+                            THE ORANGE "RE-AUTH" DE-COUPLING BADGE
+                          </h4>
+                          <p className="text-xs text-muted-foreground leading-relaxed">
+                            For security, browser engines scrub filesystem handles when you refresh. Simply click the amber <strong className="text-amber-400 bg-amber-500/10 px-1 py-0.5">RE-AUTH</strong> badge to instantly restore the connection.
+                          </p>
+                        </div>
+
+                        <div className="relative border border-border/10 p-5 bg-secondary/[0.01] pl-7">
+                          <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-foreground/20" />
+                          <h4 className="font-black text-xs text-foreground mb-2 flex items-center gap-2">
+                            <RefreshCw size={14} className="text-muted-foreground" />
+                            HEARTBEAT SCAN RATE
+                          </h4>
+                          <p className="text-xs text-muted-foreground leading-relaxed">
+                            Sync changes without manual refreshing. Set a heartbeat sync rate (<strong className="text-foreground">5S</strong>, <strong className="text-foreground">10S</strong>, <strong className="text-foreground">30S</strong>) in the top dropdown to automatically scan for IDE modifications.
                           </p>
                         </div>
                       </div>
-
-                      <div className="flex items-start gap-5 border border-border/12 p-5 bg-secondary/[0.01] hover:bg-secondary/[0.03] transition-colors">
-                        <div className="p-2.5 border border-border/10 bg-secondary/[0.04] shrink-0 mt-0.5">
-                          <Layers className="w-4 h-4 text-foreground/70" />
-                        </div>
-                        <div className="flex flex-col gap-1">
-                          <div className="font-black text-xs text-foreground tracking-wide">CANVAS WORKSPACE</div>
-                          <p className="text-xs text-foreground/90 leading-relaxed">
-                            Place nodes, draw edges, build visual maps of how your files relate. A spatial mind-map for your project.
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-start gap-5 border border-border/12 p-5 bg-secondary/[0.01] hover:bg-secondary/[0.03] transition-colors">
-                        <div className="p-2.5 border border-border/10 bg-secondary/[0.04] shrink-0 mt-0.5">
-                          <RefreshCw className="w-4 h-4 text-foreground/70" />
-                        </div>
-                        <div className="flex flex-col gap-1">
-                          <div className="font-black text-xs text-foreground tracking-wide">BIDIRECTIONAL SYNC — OPT-IN</div>
-                          <p className="text-xs text-foreground/90 leading-relaxed">
-                            Edits here write back to your files. IDE changes pull back in. Set a heartbeat rate to keep both sides current.
-                          </p>
-                        </div>
-                      </div>
-
                     </div>
                   </div>
                 )}
@@ -490,7 +718,7 @@ Ask me to provide the contents of a specific node in \`_ingestalt\` if you are u
                           <p className="text-xs text-foreground/80 leading-normal">Forces Ingestalt to write back node changes directly to local Markdown files.</p>
                         </div>
                         <div className="px-4 py-3 border border-border/10 bg-secondary/[0.01] space-y-1">
-                          <div className="text-xs font-black text-foreground flex items-center gap-2">
+                          <div className="text-xs font-black text-green-400 flex items-center gap-2">
                             <RefreshCw className="w-3.5 h-3.5 text-green-400" />
                             AUTO-PULL SYNC
                           </div>
@@ -504,7 +732,7 @@ Ask me to provide the contents of a specific node in \`_ingestalt\` if you are u
                           <p className="text-xs text-foreground/80 leading-normal">Grants File System directory permissions. Shows a pulsing orange badge if authorization needs approval.</p>
                         </div>
                         <div className="px-4 py-3 border border-border/10 bg-secondary/[0.01] space-y-1">
-                          <div className="text-xs font-black text-foreground flex items-center gap-2">
+                          <div className="text-xs font-black text-purple-400 flex items-center gap-2">
                             <Share2 className="w-3.5 h-3.5 text-purple-400" />
                             EDGE ROUTING ENGINE
                           </div>
@@ -572,7 +800,7 @@ Ask me to provide the contents of a specific node in \`_ingestalt\` if you are u
                       </p>
                     </div>
 
-                    {/* Dynamic Choose Your Own Path Selector */}
+                    {/* Dynamic Choose Your Path Selector */}
                     <div className="space-y-4">
                       <div className="flex flex-col gap-1">
                         <h3 className="font-black text-xs text-foreground uppercase tracking-widest">
@@ -889,6 +1117,44 @@ Ask me to provide the contents of a specific node in \`_ingestalt\` if you are u
                       </div>
                     </div>
 
+                    {/* Portability & Outputs Section */}
+                    <div className="space-y-6">
+                      <div className="flex items-center gap-3">
+                        <div className="h-px flex-1 bg-border/15" />
+                        <span className="text-xs font-black tracking-widest text-foreground/70">EXPORTING, SHARING & PORTABILITY</span>
+                        <div className="h-px flex-1 bg-border/15" />
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                        <div className="relative border border-border/10 p-5 bg-secondary/[0.01] pl-7">
+                          <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-foreground/20" />
+                          <Camera className="w-5 h-5 text-foreground/50 mb-3" />
+                          <h4 className="font-black text-xs text-foreground mb-2">CANVAS SCREENSHOTS</h4>
+                          <p className="text-xs text-muted-foreground leading-relaxed">
+                            Click the camera icon to save high-fidelity PNG captures. The system isolates and disables canvas filters/blurs for clean publications.
+                          </p>
+                        </div>
+
+                        <div className="relative border border-border/10 p-5 bg-secondary/[0.01] pl-7">
+                          <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-foreground/20" />
+                          <Network className="w-5 h-5 text-foreground/50 mb-3" />
+                          <h4 className="font-black text-xs text-foreground mb-2">INTERACTIVE WIKIS</h4>
+                          <p className="text-xs text-muted-foreground leading-relaxed">
+                            Select nodes and click the "Standalone Wiki" icon on the bottom toolbar. Generates a standalone, zero-dependency HTML site with active navigation.
+                          </p>
+                        </div>
+
+                        <div className="relative border border-border/10 p-5 bg-secondary/[0.01] pl-7">
+                          <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-foreground/20" />
+                          <Layers className="w-5 h-5 text-foreground/50 mb-3" />
+                          <h4 className="font-black text-xs text-foreground mb-2">BATCH CONTEXT</h4>
+                          <p className="text-xs text-muted-foreground leading-relaxed">
+                            Shift+Drag to select multiple nodes. Click "Copy Markdown" on the bottom toolbar to compile a clean continuous thread to your clipboard.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
                     {/* Verified Keyboard Shortcuts Grid */}
                     <div className="border border-border/10 p-5 bg-secondary/[0.02]">
                       <h3 className="font-black text-xs text-foreground mb-3.5 flex items-center gap-2">
@@ -1194,61 +1460,375 @@ Ask me to provide the contents of a specific node in \`_ingestalt\` if you are u
                 )}
 
                 {activeTab === 'standards' && (
-                  <div className="space-y-6">
+                  <div className="space-y-8">
+                    {/* Header */}
                     <div>
-                      <div className="text-xs tracking-widest text-muted-foreground font-black mb-1">CHAPTER_05 // INTERPRET</div>
-                      <h1 className="text-3xl font-black tracking-widest text-foreground/90 uppercase leading-none pb-1">
+                      <div className="text-xs tracking-widest text-foreground/70 font-black mb-3">CHAPTER_05 // INTERPRET</div>
+                      <h1 className="text-3xl font-black tracking-widest text-foreground uppercase leading-none">
                         SUPPORTED DYNAMIC DATA STANDARDS
                       </h1>
-                      <p className="text-muted-foreground text-xs leading-relaxed max-w-2xl mt-3">
-                        INGESTALT OPERATES AN ADVANCED DYNAMIC SCHEMA SYSTEM. DEFINE ATTRIBUTES IN NODE CONFIGS AND THE PROPERTIES INSPECTOR RENDERS TAILORED DOCK CONSOLE VIEWS.
+                      <p className="text-xs text-foreground/80 leading-relaxed max-w-2xl mt-3">
+                        Ingestalt operates a dynamic, metadata-driven schema interpreter. Visually design custom node templates inside the visual editor, or customize raw Markdown files to instantly sync interactive properties panels with your source code.
                       </p>
                     </div>
 
-                    <div className="border border-border/10 overflow-hidden rounded-none">
-                      <table className="w-full text-left text-xs leading-normal uppercase">
-                        <thead>
-                          <tr className="bg-secondary/[0.03] border-b border-border/10 font-black text-foreground">
-                            <th className="p-3">DATA TYPE</th>
-                            <th className="p-3">VISUAL INTERPRETER</th>
-                            <th className="p-3">BEHAVIOR & CAPABILITIES</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-border/10 text-muted-foreground font-mono">
-                          <tr>
-                            <td className="p-3 font-bold text-foreground">TABLES_LIST</td>
-                            <td className="p-3">DATABASE COLUMN EDITOR</td>
-                            <td className="p-3 leading-relaxed">MANAGE TARGET DATABASE SCHEMAS, TYPING DIRECTIVES, AND INDIVIDUAL SCHEMATIC INDEX KEYS.</td>
-                          </tr>
-                          <tr>
-                            <td className="p-3 font-bold text-foreground">INTERFACE_LIST</td>
-                            <td className="p-3">API INTERACTION VIEWER</td>
-                            <td className="p-3 leading-relaxed">COMPILES METHODS, ROUTE PATHS, AND JUMP-TO-CODE TRIGGER BADGES (⚡) LINKED TO SOURCE FILES.</td>
-                          </tr>
-                          <tr>
-                            <td className="p-3 font-bold text-foreground">FLOW_LIST</td>
-                            <td className="p-3">LOGIC PROCESS TRACKER</td>
-                            <td className="p-3 leading-relaxed">SEQUENTIALLY RENDERS LOGIC EXECUTION SEQUENCES OR STEP-BY-STEP CONTROL FLOW PIPELINES.</td>
-                          </tr>
-                          <tr>
-                            <td className="p-3 font-bold text-foreground">STORY_LIST</td>
-                            <td className="p-3">REQS & USER CHECKLIST</td>
-                            <td className="p-3 leading-relaxed">RNDERS INTERACTIVE CHECKBOXES MAPPED TO THE SOURCE MARKDOWN FILE TO TRACK DEVELOPMENT.</td>
-                          </tr>
-                          <tr>
-                            <td className="p-3 font-bold text-foreground">FILE_PATH</td>
-                            <td className="p-3">IDE BINDING DIRECTIVE</td>
-                            <td className="p-3 leading-relaxed">DIRECT CONNECTION ATTRIBUTE BINDING THE DESIGN NODE TO AN ACTUAL SOURCE FILE ON DISK.</td>
-                          </tr>
-                        </tbody>
-                      </table>
+                    {/* Download Button Component */}
+                    <div className="flex flex-col sm:flex-row gap-3">
+                      <button
+                        onClick={downloadReferenceGuide}
+                        className="group flex items-center justify-center gap-2 px-5 py-3 border border-border/10 hover:border-amber-400/40 bg-secondary/[0.03] text-foreground hover:text-amber-400 transition-all font-bold text-xs uppercase rounded-none tracking-widest"
+                      >
+                        <Download size={14} className="text-amber-400 group-hover:translate-y-0.5 transition-transform" />
+                        Download Standards Reference Guide (.md)
+                      </button>
+                    </div>
+
+                    {/* PART 1: VISUAL STANDARDS DESIGN GUIDE */}
+                    <div className="border border-border/10 p-6 bg-secondary/[0.01] relative pl-8">
+                      <div className="absolute left-0 top-0 bottom-0 w-1 bg-amber-500" />
+                      
+                      <div className="flex items-center gap-2 mb-3">
+                        <Settings2 className="text-amber-500 w-5 h-5" />
+                        <h2 className="text-sm font-black tracking-wider text-foreground uppercase">
+                          PART 01: VISUAL STANDARDS DESIGN (THE NODE TYPES EDITOR)
+                        </h2>
+                      </div>
+                      
+                      <p className="text-xs text-muted-foreground leading-relaxed mb-4">
+                        When editing a node with <strong className="text-foreground">type: standards</strong>, the Inspector opens the visual <strong className="text-foreground">Node Types Editor</strong>. Instead of writing raw files manually, you can visually customize note properties here using simple form fields.
+                      </p>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        <div className="border border-border/10 p-4 bg-background/30 rounded-sm">
+                          <h3 className="font-bold text-xs text-foreground uppercase mb-2 flex items-center gap-1.5">
+                            <span className="w-1.5 h-1.5 bg-amber-400 rounded-full" />
+                            Core Header Customization
+                          </h3>
+                          <ul className="space-y-2 text-xs text-foreground/80 leading-relaxed">
+                            <li><strong className="text-foreground">Type ID:</strong> The shorthand key (e.g. <code className="text-amber-300 font-mono">microservice</code>) targeted by notes inside their frontmatter <code className="text-amber-300 font-mono">configId</code> to inherit this style.</li>
+                            <li><strong className="text-foreground">Category:</strong> The visual card title displayed in active headers (e.g., <span className="italic text-foreground">Backend Service</span>).</li>
+                            <li><strong className="text-foreground">Accent & Icon:</strong> Choose custom border accent colors and Lucide icons to brand your node.</li>
+                          </ul>
+                        </div>
+
+                        <div className="border border-border/10 p-4 bg-background/30 rounded-sm">
+                          <h3 className="font-bold text-xs text-foreground uppercase mb-2 flex items-center gap-1.5">
+                            <span className="w-1.5 h-1.5 bg-amber-400 rounded-full" />
+                            AI System Prompt Templates
+                          </h3>
+                          <p className="text-xs text-foreground/80 leading-relaxed">
+                            Define reusable system context prompts (e.g., <span className="italic text-foreground">"Generate Database Migration"</span>) inside your template. Any card using this Standard inherits these prompt shortcuts inside the AI Task console instantly!
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Dropdown Options Table */}
+                      <h3 className="font-bold text-xs text-foreground uppercase mb-2">
+                        Supported Property Types (Dropdown Options)
+                      </h3>
+                      <p className="text-xs text-muted-foreground leading-relaxed mb-3">
+                        Choose from 7 visual field types in the dropdown. Each choice maps directly to an interactive, user-friendly editor widget inside the Inspector:
+                      </p>
+                      
+                      <div className="border border-border/10 rounded-sm overflow-hidden bg-background/30 text-xs">
+                        <table className="w-full text-left uppercase leading-normal">
+                          <thead>
+                            <tr className="bg-secondary/[0.04] border-b border-border/15 font-black text-foreground">
+                              <th className="p-3 w-1/4">DROPDOWN OPTION TEXT</th>
+                              <th className="p-3 w-1/5">INTERNAL YML ID</th>
+                              <th className="p-3">WORKSPACE INTERFACE BEHAVIOR</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-border/10 text-foreground/80">
+                            <tr>
+                              <td className="p-3 font-bold text-amber-400">Plain Text / JSON</td>
+                              <td className="p-3 font-mono">text</td>
+                              <td className="p-3 leading-relaxed">Standard single-line text box for normal configuration settings.</td>
+                            </tr>
+                            <tr>
+                              <td className="p-3 font-bold text-amber-400">File Path</td>
+                              <td className="p-3 font-mono">file_path</td>
+                              <td className="p-3 leading-relaxed">Renders a clickable link with a lightning bolt (⚡). Clicking it opens the target file inside your IDE instantly!</td>
+                            </tr>
+                            <tr>
+                              <td className="p-3 font-bold text-amber-400">Method List</td>
+                              <td className="p-3 font-mono">interface_list</td>
+                              <td className="p-3 leading-relaxed">Displays an interactive methods table to map function names, parameter scopes, and return values.</td>
+                            </tr>
+                            <tr>
+                              <td className="p-3 font-bold text-amber-400">Database Tables</td>
+                              <td className="p-3 font-mono">tables_list</td>
+                              <td className="p-3 leading-relaxed">A visual database editor where you can specify columns, data types, keys, and index configurations.</td>
+                            </tr>
+                            <tr>
+                              <td className="p-3 font-bold text-amber-400">Code Snippets</td>
+                              <td className="p-3 font-mono">code_list</td>
+                              <td className="p-3 leading-relaxed">Displays interactive, copyable containers to organize and retrieve isolated snippets of code.</td>
+                            </tr>
+                            <tr>
+                              <td className="p-3 font-bold text-amber-400">User Stories</td>
+                              <td className="p-3 font-mono">story_list</td>
+                              <td className="p-3 leading-relaxed">An interactive checklist of milestones or requirement states that syncs back to your files as booleans.</td>
+                            </tr>
+                            <tr>
+                              <td className="p-3 font-bold text-amber-400">Process Flow</td>
+                              <td className="p-3 font-mono">flow_list</td>
+                              <td className="p-3 leading-relaxed">A numbered sequence timeline to map hook pipelines, controller loops, or hook execution cycles.</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+
+                    {/* Section Separator */}
+                    <div className="border-t border-border/10 my-4" />
+
+                    {/* PART 2: UNDER-THE-HOOD SCHEMA SPECIFICATION */}
+                    <div className="space-y-6">
+                      <div>
+                        <div className="flex items-center gap-2 mb-2">
+                          <Layers className="text-sky-400 w-5 h-5" />
+                          <h2 className="text-sm font-black tracking-wider text-foreground uppercase">
+                            PART 02: UNDER-THE-HOOD SCHEMA SPECIFICATION
+                          </h2>
+                        </div>
+                        <p className="text-xs text-muted-foreground leading-relaxed">
+                          Ingestalt stores visual configurations directly inside the note's Markdown frontmatter on your local disk. Below are the visual decorators, pre-wired system types, and physical disk properties parsed by the engine.
+                        </p>
+                      </div>
+
+                      {/* Hidden Parsing Variables (Position, Relations, configId) */}
+                      <div className="border border-border/10 p-5 bg-secondary/[0.01] pl-7 relative">
+                        <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-rose-400" />
+                        <h4 className="font-black text-xs text-foreground uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                          <Plus size={13} className="text-rose-400" />
+                          03. Core Internal Parsing Fields (YAML Schema)
+                        </h4>
+                        <p className="text-xs text-muted-foreground leading-relaxed mb-3">
+                          Ingestalt's file loaders read and preserve these system properties directly inside the frontmatter:
+                        </p>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs uppercase font-mono">
+                          <div className="border border-border/10 bg-background/40 p-3 rounded-sm">
+                            <div className="font-bold text-rose-400 mb-1">configId (or config_id)</div>
+                            <p className="text-muted-foreground font-sans leading-relaxed text-xs">Binds normal markdown nodes to custom Standard configurations template definitions.</p>
+                          </div>
+                          <div className="border border-border/10 bg-background/40 p-3 rounded-sm">
+                            <div className="font-bold text-rose-400 mb-1">position (x / y offsets)</div>
+                            <p className="text-muted-foreground font-sans leading-relaxed text-xs">Holds board coordinate position variables to lock and persist visual placement on the canvas.</p>
+                          </div>
+                          <div className="border border-border/10 bg-background/40 p-3 rounded-sm">
+                            <div className="font-bold text-rose-400 mb-1">relations (targetId / type)</div>
+                            <p className="text-muted-foreground font-sans leading-relaxed text-xs">Stores a list of visual source-to-target connect wires directly inside the card frontmatter list.</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Visual Coordination Decorators (Icons & Colors) */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="border border-border/10 p-5 bg-secondary/[0.02] pl-7 relative">
+                        <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-sky-400" />
+                        <h4 className="font-black text-xs text-foreground uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                          <Plus size={13} className="text-sky-400" />
+                          01. Visual Icon Options (Lucide Mappings)
+                        </h4>
+                        <p className="text-xs text-foreground/80 leading-relaxed mb-3">
+                          Customize node templates by assigning standard Lucide icon names inside your standards blueprint configurations:
+                        </p>
+                        <div className="grid grid-cols-4 gap-2 font-mono text-xs uppercase leading-none">
+                          <div className="p-2 border border-border/10 bg-background/50 flex flex-col items-center justify-center gap-1.5 text-center rounded-sm">
+                            <Database size={14} className="text-sky-400/80" />
+                            <span className="font-bold text-foreground/75">Database</span>
+                          </div>
+                          <div className="p-2 border border-border/10 bg-background/50 flex flex-col items-center justify-center gap-1.5 text-center rounded-sm">
+                            <Wifi size={14} className="text-sky-400/80" />
+                            <span className="font-bold text-foreground/75">Wifi</span>
+                          </div>
+                          <div className="p-2 border border-border/10 bg-background/50 flex flex-col items-center justify-center gap-1.5 text-center rounded-sm">
+                            <Layers size={14} className="text-sky-400/80" />
+                            <span className="font-bold text-foreground/75">Layers</span>
+                          </div>
+                          <div className="p-2 border border-border/10 bg-background/50 flex flex-col items-center justify-center gap-1.5 text-center rounded-sm">
+                            <Compass size={14} className="text-sky-400/80" />
+                            <span className="font-bold text-foreground/75">Compass</span>
+                          </div>
+                          <div className="p-2 border border-border/10 bg-background/50 flex flex-col items-center justify-center gap-1.5 text-center rounded-sm">
+                            <Cpu size={14} className="text-sky-400/80" />
+                            <span className="font-bold text-foreground/75">Cpu</span>
+                          </div>
+                          <div className="p-2 border border-border/10 bg-background/50 flex flex-col items-center justify-center gap-1.5 text-center rounded-sm">
+                            <Bot size={14} className="text-sky-400/80" />
+                            <span className="font-bold text-foreground/75">Bot</span>
+                          </div>
+                          <div className="p-2 border border-border/10 bg-background/50 flex flex-col items-center justify-center gap-1.5 text-center rounded-sm">
+                            <Settings2 size={14} className="text-sky-400/80" />
+                            <span className="font-bold text-foreground/75">Settings</span>
+                          </div>
+                          <div className="p-2 border border-border/10 bg-background/50 flex flex-col items-center justify-center gap-1.5 text-center rounded-sm">
+                            <FileText size={14} className="text-sky-400/80" />
+                            <span className="font-bold text-foreground/75">FileText</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="border border-border/10 p-5 bg-secondary/[0.02] pl-7 relative">
+                        <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-emerald-400" />
+                        <h4 className="font-black text-xs text-foreground uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                          <Plus size={13} className="text-emerald-400" />
+                          02. Theme Color Palette (Click to Copy)
+                        </h4>
+                        <p className="text-xs text-foreground/80 leading-relaxed mb-3">
+                          Copy hex codes instantly to style visual node borders and matching dynamic input headers:
+                        </p>
+                        <div className="grid grid-cols-3 gap-2 font-mono text-xs leading-relaxed">
+                          {[
+                            { name: 'Blue', hex: '#3b82f6' },
+                            { name: 'Green', hex: '#22c55e' },
+                            { name: 'Purple', hex: '#a855f7' },
+                            { name: 'Amber', hex: '#f59e0b' },
+                            { name: 'Teal', hex: '#14b8a6' },
+                            { name: 'Rose', hex: '#f43f5e' }
+                          ].map((color) => (
+                            <button
+                              key={color.hex}
+                              onClick={() => copyColorToClipboard(color.hex)}
+                              className="group p-1.5 border border-border/10 bg-background hover:border-emerald-500/40 flex items-center gap-2 rounded-sm transition-all relative overflow-hidden"
+                            >
+                              <div className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ backgroundColor: color.hex }} />
+                              {copiedColor === color.hex ? (
+                                <span className="font-bold text-emerald-500 animate-pulse">COPIED!</span>
+                              ) : (
+                                <span className="font-bold text-foreground/75 transition-colors group-hover:text-foreground">{color.hex}</span>
+                              )}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Predefined Built-in Schemas Reference */}
+                    <div className="border border-border/10 p-5 bg-secondary/[0.01] pl-7 relative">
+                      <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-amber-500" />
+                      <h4 className="font-black text-xs text-foreground uppercase tracking-wider mb-2">
+                        03. Predefined Core Node Types & Built-In Schemas
+                      </h4>
+                      <p className="text-xs text-muted-foreground leading-relaxed mb-3">
+                        Ingestalt includes 5 predefined visual categories. When you load folders, these base classifications automatically inherit the following schema definitions out-of-the-box:
+                      </p>
+                      <div className="border border-border/10 rounded-sm overflow-hidden bg-background/30 text-xs">
+                        <table className="w-full text-left uppercase leading-normal">
+                          <thead>
+                            <tr className="bg-secondary/[0.04] border-b border-border/15 font-black text-foreground">
+                              <th className="p-2">NODE TYPE ID</th>
+                              <th className="p-2">PRE-WIRED FRONTMATTER VARIABLE KEY</th>
+                              <th className="p-2">FIELD TYPE</th>
+                              <th className="p-2">VISUAL BEHAVIOR</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-border/10 font-mono text-foreground/80">
+                            <tr>
+                              <td className="p-2 font-bold text-sky-400">database</td>
+                              <td className="p-2">tables</td>
+                              <td className="p-2">tables_list</td>
+                              <td className="p-2 font-sans">Database table schema & index-key console.</td>
+                            </tr>
+                            <tr>
+                              <td className="p-2 font-bold text-emerald-400" rowSpan={2}>api</td>
+                              <td className="p-2">methods</td>
+                              <td className="p-2">interface_list</td>
+                              <td className="p-2 font-sans">Interactive REST API endpoints table with jump-to-code lines.</td>
+                            </tr>
+                            <tr>
+                              <td className="p-2">filepath</td>
+                              <td className="p-2">file_path</td>
+                              <td className="p-2 font-sans">Active lightning badge link directly targeting source code.</td>
+                            </tr>
+                            <tr>
+                              <td className="p-2 font-bold text-purple-400" rowSpan={2}>frontend</td>
+                              <td className="p-2">stories</td>
+                              <td className="p-2">story_list</td>
+                              <td className="p-2 font-sans">Checklist checkboxes mapping UI/UX requirements.</td>
+                            </tr>
+                            <tr>
+                              <td className="p-2">filepath</td>
+                              <td className="p-2">file_path</td>
+                              <td className="p-2 font-sans">Active link targeting the corresponding page/component file.</td>
+                            </tr>
+                            <tr>
+                              <td className="p-2 font-bold text-amber-500" rowSpan={2}>hook</td>
+                              <td className="p-2">process</td>
+                              <td className="p-2">flow_list</td>
+                              <td className="p-2 font-sans">Numbered list mapping state changes or custom hooks flow loops.</td>
+                            </tr>
+                            <tr>
+                              <td className="p-2">filepath</td>
+                              <td className="p-2">file_path</td>
+                              <td className="p-2 font-sans">Active link pointing directly to physical helper or logic code.</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+
+                    {/* YAML Code Sample Panels */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {/* Panel 1: Regular classified note frontmatter */}
+                      <div className="border border-border/10 overflow-hidden bg-background/40 relative">
+                        <div className="px-4 py-3 bg-secondary/[0.03] border-b border-border/10 text-xs font-black tracking-widest text-foreground/80">
+                          EXAMPLE_CLASSIFIED_NOTE.MD
+                        </div>
+                        <pre className="p-4 overflow-x-auto text-xs leading-relaxed text-foreground/70 select-text font-mono h-[220px] whitespace-pre-wrap bg-secondary/[0.01]">
+{`---
+title: "User Controller"
+type: "api"
+filepath: "src/controllers/UserController.ts"
+methods:
+  - name: "fetchActiveUsers"
+    params: "limit: number"
+    returns: "Promise<User[]>"
+    line: 24
+stories:
+  - text: "Authenticate using session credentials"
+    completed: true
+  - text: "Apply pagination constraints to queries"
+    completed: false
+---`}
+                        </pre>
+                      </div>
+
+                      {/* Panel 2: Standard blueprint note frontmatter */}
+                      <div className="border border-border/10 overflow-hidden bg-background/40 relative">
+                        <div className="px-4 py-3 bg-secondary/[0.03] border-b border-border/10 text-xs font-black tracking-widest text-foreground/80">
+                          CUSTOM_STANDARD_BLUEPRINT.MD
+                        </div>
+                        <pre className="p-4 overflow-x-auto text-xs leading-relaxed text-foreground/70 select-text font-mono h-[220px] whitespace-pre-wrap bg-secondary/[0.01]">
+{`---
+title: "Custom Templates Blueprint"
+type: "standards"
+definitions:
+  - id: "microservice"
+    type: "Backend Microservice"
+    icon: "Cpu"
+    color: "#a855f7"
+    fields:
+      - name: "endpoints"
+        type: "interface_list"
+        icon: "Zap"
+        color: "#a855f7"
+      - name: "filepath"
+        type: "file_path"
+        icon: "FileText"
+        color: "#94a3b8"
+---`}
+                        </pre>
+                      </div>
+                      </div>
                     </div>
 
                     <div className="relative border border-border/10 p-5 bg-secondary/[0.01] pl-7">
                       <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-foreground/20" />
-                      <h4 className="font-black text-xs text-foreground mb-2">CUSTOM STANDARDS ENGINEERING</h4>
+                      <h4 className="font-black text-xs text-foreground mb-2">CUSTOM STANDARDS CREATION</h4>
                       <p className="text-xs text-muted-foreground leading-relaxed">
-                        YOU CAN DEFINE COMPLETELY NOVEL COMPONENT CLASSIFICATIONS BY SPECIFYING A TARGET NODE AS A <strong className="text-foreground">TYPE: STANDARDS</strong> BLUEPRINT AND ENUMERATING THE REQUIRED SCHEMA FIELDS IN YML.
+                        To define a novel schema classification, map a blueprint note as <strong className="text-foreground">type: standards</strong> and outline your bespoke custom fields inside the Node Types Editor. Any note assigned to that Standard inherits the corresponding interface inputs instantly!
                       </p>
                     </div>
                   </div>
@@ -1261,174 +1841,98 @@ Ask me to provide the contents of a specific node in \`_ingestalt\` if you are u
                       <h1 className="text-3xl font-black tracking-widest text-foreground/90 uppercase leading-none pb-1">
                         AI TASK CONTEXT ENGINEERING
                       </h1>
-                      <p className="text-muted-foreground text-xs leading-relaxed max-w-2xl mt-3">
-                        INGESTALT ACTS AS A SPATIAL SURGICAL FILTER FOR IDE ASSISTANTS, REDUCING HALLUCINATIONS BY PACKAGING EXACT SYSTEM MODELS.
+                      <p className="text-xs text-muted-foreground leading-relaxed max-w-2xl mt-3">
+                        Ingestalt acts as a spatial, surgical filter for your AI coding assistant. By visually wiring notes together, you compile highly informed context prompts that you can execute directly inside your local IDE.
                       </p>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-                      <div className="border border-border/10 p-4 bg-secondary/[0.01] text-center">
-                        <div className="text-emerald-500 font-bold text-lg mb-2">01</div>
-                        <div className="font-black text-xs text-foreground mb-1">CURATE METADATA</div>
-                        <p className="text-xs text-muted-foreground leading-relaxed">VERIFY THAT COMPONENT SCHEMAS & API METHODS REFLECT TRUTH IN THE PROPERTIES VIEW.</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 text-xs">
+                      <div className="border border-border/10 p-4 bg-secondary/[0.01]">
+                        <div className="text-emerald-500 font-bold text-lg mb-1">01</div>
+                        <div className="font-black text-xs text-foreground uppercase mb-1">Map Visually</div>
+                        <p className="text-foreground/80 leading-relaxed">
+                          Draw visual canvas lines from regular notes (API methods, database tables, user stories) directly to an <strong className="text-foreground">AI Task Node</strong>.
+                        </p>
                       </div>
-                      <div className="border border-border/10 p-4 bg-secondary/[0.01] text-center">
-                        <div className="text-emerald-500 font-bold text-lg mb-2">02</div>
-                        <div className="font-black text-xs text-foreground mb-1">SURGICAL SELECT</div>
-                        <p className="text-xs text-muted-foreground leading-relaxed">OPEN AI TASKS TAB AND TOGGLE SELECTIVE CHECKBOXES FOR MANDATORY METADATA BLOCKS.</p>
+                      <div className="border border-border/10 p-4 bg-secondary/[0.01]">
+                        <div className="text-emerald-500 font-bold text-lg mb-1">02</div>
+                        <div className="font-black text-xs text-foreground uppercase mb-1">Harvest Context</div>
+                        <p className="text-foreground/80 leading-relaxed">
+                          Ingestalt dynamically crawls connected nodes, automatically packaging their exact properties, schemas, and prompt templates into the background.
+                        </p>
                       </div>
-                      <div className="border border-border/10 p-4 bg-secondary/[0.01] text-center">
-                        <div className="text-emerald-500 font-bold text-lg mb-2">03</div>
-                        <div className="font-black text-xs text-foreground mb-1">DISCOVER VIRTUAL</div>
-                        <p className="text-xs text-muted-foreground leading-relaxed">TAP INTO INTUATIVE HEURISTIC CHECKBOXES TO HARVEST HIDDEN STRUCTURES MAPPED ON THE FLY.</p>
+                      <div className="border border-border/10 p-4 bg-secondary/[0.01]">
+                        <div className="text-emerald-500 font-bold text-lg mb-1">03</div>
+                        <div className="font-black text-xs text-foreground uppercase mb-1">Surgical Selection</div>
+                        <p className="text-foreground/80 leading-relaxed">
+                          Open the AI Task Node's Properties Workspace. Toggle checkboxes to selectively filter out unwanted metadata and pinpoint exact code context.
+                        </p>
                       </div>
-                      <div className="border border-border/10 p-4 bg-secondary/[0.01] text-center">
-                        <div className="text-emerald-500 font-bold text-lg mb-2">04</div>
-                        <div className="font-black text-xs text-foreground mb-1">FEED ASSISTANT</div>
-                        <p className="text-xs text-muted-foreground leading-relaxed">COPY THE BEAUTIFULLY BUNDLED BLOCK AND DROP DIRECTLY INTO CURSOR OR CO-PILOT CHATS.</p>
+                      <div className="border border-border/10 p-4 bg-secondary/[0.01]">
+                        <div className="text-emerald-500 font-bold text-lg mb-1">04</div>
+                        <div className="font-black text-xs text-foreground uppercase mb-1">IDE Execution</div>
+                        <p className="text-foreground/80 leading-relaxed">
+                          Copy the compiled grey-matter prompt and paste it into your local workspace chatbot (like <strong className="text-foreground">IBM Bob IDE</strong> or Cursor) to run the task!
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Spatial Mapping Flow Chart */}
+                    <div className="border border-border/10 p-5 bg-background/30 rounded-sm font-mono text-xs text-foreground/80">
+                      <div className="text-xs font-bold uppercase mb-3 text-emerald-400">
+                        SPATIAL GRAPH CONTEXT COMPILATION PIPELINE
+                      </div>
+                      <div className="whitespace-pre overflow-x-auto leading-relaxed text-emerald-400/90 select-none">
+{` [Database Schemas] ──(reads)──> [API Endpoints] ──(wires)──> [AI Task Node]
+                                                                     │
+                                                               [COPY PROMPT]
+                                                                     │
+                                                             (IBM Bob IDE Chat)`}
                       </div>
                     </div>
 
                     <div className="relative border border-border/10 p-6 bg-secondary/[0.02] pl-8">
                       <div className="absolute left-0 top-0 bottom-0 w-1 bg-emerald-500" />
-                      <h4 className="font-black text-xs text-foreground mb-3">SCENARIO: BRIDGING INTERFACE DEPENDENCIES</h4>
+                      <h4 className="font-black text-xs text-foreground uppercase mb-2 flex items-center gap-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                        Scenario: Visual Prompt Scaffolding side-by-side with IBM Bob
+                      </h4>
                       <p className="text-xs text-muted-foreground leading-relaxed">
-                        NEED AN AGENT TO COMPILE A BRAND NEW API ROUTE THAT DIRECTLY SCRAPES TABLES? SELECT THE TARGET <strong className="text-foreground">API NODE</strong>, DRAW A DRAWABLE <strong className="text-foreground">READS EDGE</strong> TO YOUR DATABASE NODE, OPEN THE CONTEXT FILTER, AND SELECT BOTH THE SPECIFIC ENDPOINT AND DATABASE SCHEMATICS. THE RESULTING PROMPT PACKAGES EVERYTHING PERFECTLY.
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {activeTab === 'prompts' && (
-                  <div className="space-y-6">
-                    <div>
-                      <div className="text-xs tracking-widest text-muted-foreground font-black mb-1">CHAPTER_07 // CONSTITUTION</div>
-                      <h1 className="text-3xl font-black tracking-widest text-foreground/90 uppercase leading-none pb-1">
-                        SYSTEM PROMPTS LIBRARY
-                      </h1>
-                      <p className="text-muted-foreground text-xs leading-relaxed max-w-2xl mt-3">
-                        THE SYSTEM CONSTITUTION TO GRADING AI BEHAVIOR. COPY AND FEED THIS PROMPT TO LLMS TO ESTABLISH COMPLIANCE WITH EDITORIAL ENGINEERING STANDARDS.
+                        Need an AI agent to build a new API route that queries your database? Rather than writing a complex prompt from scratch, simply draw a wire from your API Node to your Database Node, and connect both to an AI Task Node. Ingestalt automatically aggregates the exact DB columns, API parameters, and file targets into a clean, surgical prompt context. Paste it into your side-by-side <strong className="text-foreground">IBM Bob IDE</strong> window to generate error-free code instantly!
                       </p>
                     </div>
 
-                    {/* Copyable Console prompt */}
-                    <div className="border border-border/10 overflow-hidden bg-black/40 relative">
-                      <div className="flex justify-between items-center px-4 py-3 bg-secondary/[0.03] border-b border-border/10 text-xs font-black tracking-widest">
-                        <span>SYSTEM_ARCHITECTURAL_CONSTITUTION.MD</span>
-                        <button
-                          onClick={() => copyToClipboard(systemConstitution)}
-                          className="flex items-center gap-1.5 px-3 py-1.5 border border-border/15 hover:border-foreground/30 bg-background text-foreground/70 hover:text-foreground transition-all rounded-none"
-                        >
-                          {copiedPrompt ? (
-                            <>
-                              <Check size={12} className="text-emerald-500" />
-                              <span className="text-emerald-500 font-bold">COPIED!</span>
-                            </>
-                          ) : (
-                            <>
-                              <Copy size={12} />
-                              <span>COPY SYSTEM PROMPT</span>
-                            </>
-                          )}
-                        </button>
-                      </div>
-                      <pre className="p-4 overflow-x-auto text-xs leading-relaxed text-muted-foreground/90 select-text font-mono max-h-[300px] whitespace-pre-wrap">
-                        {systemConstitution}
-                      </pre>
-                    </div>
-                  </div>
-                )}
-
-                {activeTab === 'sync' && (
-                  <div className="space-y-6">
-                    <div>
-                      <div className="text-xs tracking-widest text-muted-foreground font-black mb-1">CHAPTER_08 // SYNCHRONIZATION</div>
-                      <h1 className="text-3xl font-black tracking-widest text-foreground/90 uppercase leading-none pb-1">
-                        GROUNDING & SYNC LOOP
-                      </h1>
-                      <p className="text-muted-foreground text-xs leading-relaxed max-w-2xl mt-3">
-                        UNDERSTAND HOW INGESTALT SECURELY ALIGNS IN-BROWSER INDEXEDDB INDEXES WITH ACTUAL LOCAL FILES USING MODERN BROWSER SANDBOX MECHANISMS.
-                      </p>
-                    </div>
-
+                    {/* Copyable Console prompt (Prompts Library) */}
                     <div className="space-y-4">
-                      {/* Sub-topic 1 */}
-                      <div className="relative border border-border/10 p-5 bg-secondary/[0.01] pl-7">
-                        <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-foreground/20" />
-                        <h4 className="font-black text-xs text-foreground mb-2 flex items-center gap-2">
-                          <Network size={14} className="text-muted-foreground" />
-                          FILE SYSTEM ACCESS (FSA) PERMISSIONS
-                        </h4>
-                        <p className="text-xs text-muted-foreground leading-relaxed">
-                          TO COMPILE EDITORIAL LOOPS, INGESTALT LEVERAGES SECURE W3C FSA DRIVERS. SELECT YOUR ROOT FOLDER, AND THE BROWSER MAPS PHYSICAL INODES. DATA NEVER LEAVES YOUR HARD DRIVE.
-                        </p>
+                      <div className="flex items-center gap-3">
+                        <div className="h-px flex-1 bg-border/15" />
+                        <span className="text-xs font-black tracking-widest text-foreground/70">SYSTEM CONSTITUTION PROMPT LIBRARY</span>
+                        <div className="h-px flex-1 bg-border/15" />
                       </div>
 
-                      {/* Sub-topic 2 */}
-                      <div className="relative border border-border/10 p-5 bg-secondary/[0.01] pl-7">
-                        <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-foreground/20" />
-                        <h4 className="font-black text-xs text-foreground mb-2 flex items-center gap-2">
-                          <ShieldCheck size={14} className="text-amber-400" />
-                          THE ORANGE "RE-AUTH" DE-COUPLING BADGE
-                        </h4>
-                        <p className="text-xs text-muted-foreground leading-relaxed">
-                          FOR HIGH-SECURITY SANBOXING, BROWSER ENGINES SCRUB MEMORY HANDLES ON PAGE REFRESH. THE RE-AUTH SYNC ICON WILL GLOW AMBER: <strong className="text-amber-400 bg-amber-500/10 px-1 py-0.5">RE-AUTH</strong>. SIMPLY CLICK THE BADGE AND APPROVE THE BROWSER POP-UP TO SECURELY RE-BIND YOUR FOLDER IN 1-CLICK.
-                        </p>
-                      </div>
-
-                      {/* Sub-topic 3 */}
-                      <div className="relative border border-border/10 p-5 bg-secondary/[0.01] pl-7">
-                        <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-foreground/20" />
-                        <h4 className="font-black text-xs text-foreground mb-2 flex items-center gap-2">
-                          <RefreshCw size={14} className="text-muted-foreground" />
-                          HEARTBEAT SCAN RATE
-                        </h4>
-                        <p className="text-xs text-muted-foreground leading-relaxed">
-                          PREFER AUTO-PULLING IDE SAVES WITHOUT CLICKING SYNC? TAP THE DROPDOWN DIRECTIVE NEXT TO THE TOOLBAR REFRESH BUTTON TO SET THE RE-INDEX PULSE HEARTBEAT RATE (<strong className="text-foreground">5S</strong>, <strong className="text-foreground">10S</strong>, <strong className="text-foreground">30S</strong>). THE BADGE SPINS SLOWLY TO COMMUNICATE PERIODIC HARVESTING.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {activeTab === 'export' && (
-                  <div className="space-y-6">
-                    <div>
-                      <div className="text-xs tracking-widest text-muted-foreground font-black mb-1">CHAPTER_09 // PERSISTENCE</div>
-                      <h1 className="text-3xl font-black tracking-widest text-foreground/90 uppercase leading-none pb-1">
-                        PORTABILITY & CURATION OUTPUTS
-                      </h1>
-                      <p className="text-muted-foreground text-xs leading-relaxed max-w-2xl mt-3">
-                        SHARE YOUR SYSTEM AND EXPORT DOCUMENTATION INTO MULTIPLE STYLES DESIGNED FOR TECHNICAL PORTALS AND LLM CHAT CHANNELS.
-                      </p>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                      <div className="relative border border-border/10 p-5 bg-secondary/[0.01] pl-7">
-                        <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-foreground/20" />
-                        <Camera className="w-5 h-5 text-foreground/50 mb-3" />
-                        <h4 className="font-black text-xs text-foreground mb-2">CANVAS SCREENSHOTS</h4>
-                        <p className="text-xs text-muted-foreground leading-relaxed">
-                          CLICK THE CAMERA BADGE IN the toolbar to summon high-fidelity PNG captures. The system applies a global normalization wrapper that isolates and disables filters/blurs for publication-grade vectors.
-                        </p>
-                      </div>
-
-                      <div className="relative border border-border/10 p-5 bg-secondary/[0.01] pl-7">
-                        <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-foreground/20" />
-                        <Network className="w-5 h-5 text-foreground/50 mb-3" />
-                        <h4 className="font-black text-xs text-foreground mb-2">INTERACTIVE WIKIS</h4>
-                        <p className="text-xs text-muted-foreground leading-relaxed">
-                          SELECT MULTIPLE NODES AND CLICK GENERATE WIKI IN the batch toolbar. Compiles a zero-dependency standalone HTML single page application with searchable filters, relational graphs, and property interpreters.
-                        </p>
-                      </div>
-
-                      <div className="relative border border-border/10 p-5 bg-secondary/[0.01] pl-7">
-                        <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-foreground/20" />
-                        <Layers className="w-5 h-5 text-foreground/50 mb-3" />
-                        <h4 className="font-black text-xs text-foreground mb-2">BATCH CONTEXT</h4>
-                        <p className="text-xs text-muted-foreground leading-relaxed">
-                          SUMMONED VIA SHIFT+DRAG BOX SELECTION. CLICK COPY MARKDOWN TO ACCUMULATE A SINGLE CONTINUOUS, DENSE DOCUMENTATION THREAD MAPPED TO ALL SELECTED TARGET COMPONENTS.
-                        </p>
+                      <div className="border border-border/10 overflow-hidden bg-background/40 relative">
+                        <div className="flex justify-between items-center px-4 py-3 bg-secondary/[0.03] border-b border-border/10 text-xs font-black tracking-widest">
+                          <span>SYSTEM_ARCHITECTURAL_CONSTITUTION.MD</span>
+                          <button
+                            onClick={() => copyToClipboard(systemConstitution)}
+                            className="flex items-center gap-1.5 px-3 py-1.5 border border-border/15 hover:border-foreground/30 bg-background text-foreground/70 hover:text-foreground transition-all rounded-none"
+                          >
+                            {copiedPrompt ? (
+                              <>
+                                <Check size={12} className="text-emerald-500" />
+                                <span className="text-emerald-500 font-bold">COPIED!</span>
+                              </>
+                            ) : (
+                              <>
+                                <Copy size={12} />
+                                <span>COPY SYSTEM PROMPT</span>
+                              </>
+                            )}
+                          </button>
+                        </div>
+                        <pre className="p-4 overflow-x-auto text-xs leading-relaxed text-muted-foreground/90 select-text font-mono max-h-[300px] whitespace-pre-wrap">
+                          {systemConstitution}
+                        </pre>
                       </div>
                     </div>
                   </div>
