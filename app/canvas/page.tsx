@@ -11,6 +11,7 @@ import { SyncManager } from '@/lib/drdpr-horizon/lib/sync/SyncManager';
 import { db } from '@/lib/drdpr-horizon/lib/db';
 import { eventBus } from '@/lib/drdpr-horizon/lib/events/EventBus';
 import { WelcomeOnboarding } from '@/lib/drdpr-horizon/components/layout/WelcomeOnboarding';
+import { UserGuide } from '@/lib/drdpr-horizon/components/layout/UserGuide';
 
 /**
  * Canvas Page - Spatial Graph IDE
@@ -47,6 +48,7 @@ export default function CanvasPage() {
         toolbar={toolbarComponent}
       >
         <WelcomeOnboarding />
+        <UserGuide />
       </WorkspaceLayout>
     </ReactFlowProvider>
   );

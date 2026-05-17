@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { RefreshCw, Share2, Anchor, Zap, ZapOff, Cpu, Plus, Compass, Trash2, FolderOpen, CheckCircle2, Loader2, Sun, Moon, Eraser, Keyboard, FileText, Camera, Info, ChevronDown } from 'lucide-react';
+import { RefreshCw, Share2, Anchor, Zap, ZapOff, Cpu, Plus, Compass, Trash2, FolderOpen, CheckCircle2, Loader2, Sun, Moon, Eraser, Keyboard, FileText, Camera, Info, ChevronDown, BookOpen } from 'lucide-react';
 import { useUIStore } from '@/lib/drdpr-horizon/lib/store/useUIStore';
 import { ingestFromFileSystem, getStoredFolderHandle, connectAndStoreFolder, verifyPermission, syncFromFileSystem, readFilesFromHandle } from '@/lib/drdpr-horizon/lib/ingest-fsa';
 import { db } from '@/lib/drdpr-horizon/lib/db';
@@ -22,6 +22,7 @@ export function Toolbar() {
     setActiveGraphId,
     activeGraphId,
     setShortcutsHelpOpen,
+    setGuideOpen,
     selectedNodeIds,
     selectedNodeId,
     clearNodeSelection,
@@ -627,6 +628,11 @@ export function Toolbar() {
           onClick={() => setShortcutsHelpOpen(true)}
           icon={<Keyboard size={14} />}
           label="Shortcuts"
+        />
+        <ActionButton
+          onClick={() => setGuideOpen(true)}
+          icon={<BookOpen size={14} />}
+          label="User Guide"
         />
         
         <Link href="/about" className="p-2 hover:bg-secondary rounded-lg transition-all group relative">

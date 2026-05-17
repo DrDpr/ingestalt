@@ -36,6 +36,7 @@ export function useKeyboardShortcuts(options: KeyboardShortcutsOptions = {}) {
     clearCopiedNodes,
     selectedNodeIds,
     clearSelection,
+    selectAllNodes,
   } = useUIStore();
 
   // Detect platform for Cmd (Mac) vs Ctrl (Windows/Linux)
@@ -94,6 +95,16 @@ export function useKeyboardShortcuts(options: KeyboardShortcutsOptions = {}) {
       if (mod && event.key === 'd' && selectedNodeIds.size > 0) {
         event.preventDefault();
         options.onDuplicate?.(Array.from(selectedNodeIds));
+        return;
+      }
+
+      // Select All Nodes (Ctrl/Cmd+A)
+      if (mod && event.key === 'a') {
+        if (options.getAllNodeIds) {
+          event.preventDefault();
+          const ids = options.getAllNodeIds();
+          selectAllNodes(ids);
+        }
         return;
       }
 
@@ -266,6 +277,7 @@ export function useKeyboardShortcuts(options: KeyboardShortcutsOptions = {}) {
       setCopiedNodeIds,
       selectedNodeIds,
       clearSelection,
+      selectAllNodes,
     ]
   );
 

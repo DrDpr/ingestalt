@@ -31,6 +31,7 @@ interface UIState {
   isToolbarOpen: boolean;
   isPaletteOpen: boolean;
   isShortcutsHelpOpen: boolean; // Keyboard shortcuts help modal
+  isGuideOpen: boolean;
   relationshipMode: 'all' | 'selected' | 'trace';
   edgeHandleType: 'fixed' | 'smart';
   edgePathType: 'organic' | 'circuit';
@@ -67,6 +68,7 @@ interface UIState {
   setToolbarOpen: (open: boolean) => void;
   setPaletteOpen: (open: boolean) => void;
   setShortcutsHelpOpen: (open: boolean) => void;
+  setGuideOpen: (open: boolean) => void;
   setRelationshipMode: (mode: 'all' | 'selected' | 'trace') => void;
   setEdgeHandleType: (mode: 'fixed' | 'smart') => void;
   setEdgePathType: (mode: 'organic' | 'circuit') => void;
@@ -101,6 +103,7 @@ export const useUIStore = create<UIState>()(
       isToolbarOpen: true,
       isPaletteOpen: true,
       isShortcutsHelpOpen: false,
+      isGuideOpen: false,
       relationshipMode: 'all',
       edgeHandleType: 'smart',
       edgePathType: 'circuit',
@@ -176,6 +179,7 @@ export const useUIStore = create<UIState>()(
       setToolbarOpen: (open) => set({ isToolbarOpen: open }),
       setPaletteOpen: (open) => set({ isPaletteOpen: open }),
       setShortcutsHelpOpen: (open) => set({ isShortcutsHelpOpen: open }),
+      setGuideOpen: (open) => set({ isGuideOpen: open }),
       setRelationshipMode: (mode) => set({ relationshipMode: mode }),
       setEdgeHandleType: (mode) => set({ edgeHandleType: mode }),
       setEdgePathType: (mode) => set({ edgePathType: mode }),
