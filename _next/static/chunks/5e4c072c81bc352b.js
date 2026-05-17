@@ -1670,7 +1670,7 @@ ${e.payload?.content||""}
         '</div>' +
         '<div class="prose">' + htmlContent + '</div>' +
         (propertyFields ? '<div class="properties-box" style="margin-top: 3rem;">' + propertyFields + '</div>' : '') +
-        '<div style="margin-top: 4rem; padding-top: 1rem; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; opacity: 0.4; font-size: 0.7rem; font-family: 'JetBrains Mono', monospace;">' +
+        '<div style="margin-top: 4rem; padding-top: 1rem; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; opacity: 0.4; font-size: 0.7rem; font-family: \\'JetBrains Mono\\', monospace;">' +
           '<span>ID: ' + node.id + '</span>' +
           '<span>CONFIG: ' + node.configId + '</span>' +
         '</div>' +
