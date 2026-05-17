@@ -47,7 +47,9 @@ export function SpatialSidebar() {
     show: boolean;
     title: string;
     message: string;
-    options?: { label: string; value: string }[];
+    type?: string;
+    icon?: React.ReactNode;
+    options?: { label: string; value: string; variant?: 'danger' | 'default' }[];
     onConfirm: (val: string) => void;
   }>({
     show: false,

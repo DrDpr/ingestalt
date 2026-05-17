@@ -17,7 +17,7 @@ export const LAYOUT_CONFIG = {
   ROOT_START_Y: 50,
 };
 
-export function getXBase(config: typeof LAYOUT_CONFIG) {
+export function getXBase(config: typeof LAYOUT_CONFIG): Record<string, number> {
   return {
     database: 0,
     api: config.COLUMN_WIDTH,

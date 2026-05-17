@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ingestalt-pwa-cache-v1';
+const CACHE_NAME = 'ingestalt-pwa-cache-v3';
 const ASSETS = [
   '/ingestalt/Logo.png',
   '/ingestalt/manifest.json'
@@ -29,6 +29,21 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   // Only intercept HTTP/HTTPS requests (avoid chrome-extension:// etc.)
   if (!event.request.url.startsWith('http')) return;
+
+  // Only intercept and cache GET requests (Cache API fails on HEAD/POST/PUT methods)
+  if (event.request.method !== 'GET') return;
+
+  // Skip caching for Next.js chunks, dynamic pages, and internal scripts
+  const url = new URL(event.request.url);
+  if (
+    url.pathname.includes('/_next/') || 
+    url.pathname.endsWith('.js') || 
+    url.pathname.endsWith('.css') ||
+    url.pathname.includes('/canvas') ||
+    url.pathname.includes('/wiki')
+  ) {
+    return;
+  }
 
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {

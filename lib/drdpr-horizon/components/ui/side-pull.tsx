@@ -133,7 +133,7 @@ export function SidePull({
           <div
             className={cn(
               'shrink-0 border-foreground/10 bg-background',
-              open && (side === 'top' || side === 'bottom') ? 'overflow-visible' : 'overflow-hidden',
+              open && side === 'top' ? 'overflow-visible' : 'overflow-hidden',
               isHorizontal ? 'border-r' : 'border-b',
               animate && (isHorizontal ? 'transition-[width] duration-200' : 'transition-[height] duration-200')
             )}
@@ -149,7 +149,7 @@ export function SidePull({
           <div
             className={cn(
               'shrink-0 border-foreground/10 bg-background',
-              open && (side === 'top' || side === 'bottom') ? 'overflow-visible' : 'overflow-hidden',
+              open && side === 'bottom' ? 'overflow-visible' : 'overflow-hidden',
               isHorizontal ? 'border-l' : 'border-t',
               animate && (isHorizontal ? 'transition-[width] duration-200' : 'transition-[height] duration-200')
             )}

@@ -35,7 +35,7 @@ interface UIState {
   isSelectionModeActive: boolean;
   relationshipMode: 'all' | 'selected' | 'trace';
   edgeHandleType: 'fixed' | 'smart';
-  edgePathType: 'organic' | 'circuit';
+  edgePathType: 'organic' | 'circuit' | 'smart';
   basePath: string;
   
   // Canvas State (React Flow Viewport)
@@ -73,7 +73,7 @@ interface UIState {
   setSelectionModeActive: (active: boolean) => void;
   setRelationshipMode: (mode: 'all' | 'selected' | 'trace') => void;
   setEdgeHandleType: (mode: 'fixed' | 'smart') => void;
-  setEdgePathType: (mode: 'organic' | 'circuit') => void;
+  setEdgePathType: (mode: 'organic' | 'circuit' | 'smart') => void;
   cycleEdgePathType: () => void;
   setBasePath: (path: string) => void;
   
@@ -188,7 +188,7 @@ export const useUIStore = create<UIState>()(
       setEdgeHandleType: (mode) => set({ edgeHandleType: mode }),
       setEdgePathType: (mode) => set({ edgePathType: mode }),
       cycleEdgePathType: () => set((state) => ({
-        edgePathType: state.edgePathType === 'organic' ? 'circuit' : 'organic'
+        edgePathType: state.edgePathType === 'organic' ? 'circuit' : (state.edgePathType === 'circuit' ? 'smart' : 'organic')
       })),
       setBasePath: (path) => set({ basePath: path }),
       

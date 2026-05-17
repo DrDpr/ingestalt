@@ -330,7 +330,39 @@ export function Toolbar() {
     setIsGenerating(true);
     try {
       const activeGraph = await db.graphs.get(activeGraphId);
-      await generateProfessionalWiki(activeGraphId, activeGraph?.name || 'Graph');
+      const targetWorkspaceId = activeGraph?.workspaceId || activeGraphId;
+
+      // 1. Fetch nodes and edges in the current active workspace
+      const allNodesInWorkspace = await db.nodes.where('workspaceId').equals(targetWorkspaceId).toArray();
+      const allEdgesInWorkspace = await db.edges.where('workspaceId').equals(targetWorkspaceId).toArray();
+
+      // 2. Fetch all standards to extract blueprinted schemas
+      const allNodes = await db.nodes.toArray();
+      const standards = allNodes.filter(n => n.payload?.type === 'standards');
+
+      // 3. Generate interactive wiki page HTML string
+      const html = generateProfessionalWiki(
+        allNodesInWorkspace,
+        allEdgesInWorkspace,
+        standards,
+        {
+          title: activeGraph?.name || 'Workspace Wiki',
+          author: 'Ingestalt Spatial Engine'
+        }
+      );
+
+      // 4. Download file as attachment
+      const blob = new Blob([html], { type: 'text/html;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `wiki_${(activeGraph?.name || 'workspace').toLowerCase().replace(/\s+/g, '_')}_${Date.now()}.html`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error('Failed to generate wiki:', e);
     } finally {
       setIsGenerating(false);
     }

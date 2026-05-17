@@ -57,10 +57,10 @@ export async function getStoredFolderHandle(): Promise<FileSystemDirectoryHandle
     const handle = config.handle as FileSystemDirectoryHandle;
 
     // Re-verify permission (required after page reload)
-    const perm = await handle.queryPermission({ mode: 'readwrite' });
+    const perm = await (handle as any).queryPermission({ mode: 'readwrite' });
     if (perm === 'granted') return handle;
 
-    const req = await handle.requestPermission({ mode: 'readwrite' });
+    const req = await (handle as any).requestPermission({ mode: 'readwrite' });
     if (req === 'granted') return handle;
 
     return null;
@@ -163,7 +163,7 @@ export async function syncFromFileSystem(workspaceId: string, onProgress?: (msg:
  */
 export async function verifyPermission(handle: FileSystemDirectoryHandle): Promise<boolean> {
   try {
-    const perm = await handle.queryPermission({ mode: 'readwrite' });
+    const perm = await (handle as any).queryPermission({ mode: 'readwrite' });
     return perm === 'granted';
   } catch {
     return false;

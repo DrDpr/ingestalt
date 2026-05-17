@@ -627,7 +627,7 @@ export function HorizonCanvas() {
     [screenToFlowPosition, activeStandardsMap, setSelectedNodeId, syncNodeToFile, autoSaveEnabled, workspaceFilter]
   );
 
-  const onPaneContextMenu = useCallback((event: React.MouseEvent) => {
+  const onPaneContextMenu = useCallback((event: any) => {
     event.preventDefault();
   }, []);
 
