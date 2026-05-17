@@ -636,6 +636,14 @@ export function Toolbar() {
           icon={<Camera size={14} />}
           label="Capture Canvas"
         />
+        
+        <Link href="/wiki" className="p-2 hover:bg-secondary rounded-lg transition-all group relative">
+          <FileText size={14} className="text-blue-400 group-hover:text-blue-300 transition-colors" />
+          <div className="absolute top-12 left-1/2 -translate-x-1/2 px-2 py-1 rounded bg-background/90 backdrop-blur-md text-xs text-foreground whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity uppercase tracking-widest border border-border/20 pointer-events-none z-[120]">
+            Browse Live Wiki
+          </div>
+        </Link>
+
         <ActionButton
           onClick={() => setShortcutsHelpOpen(true)}
           icon={<Keyboard size={14} />}
