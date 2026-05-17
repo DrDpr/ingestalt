@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useUIStore } from '@/lib/drdpr-horizon/lib/store/useUIStore';
 import { db } from '@/lib/drdpr-horizon/lib/db';
 import { X, Trash2, Download, FileText, Copy, Files, Sparkles, Loader2, LayoutGrid, ChevronUp, ChevronDown } from 'lucide-react';
@@ -29,6 +30,11 @@ export function BatchActionToolbar() {
     message: '',
     onConfirm: () => { },
   });
+
+  const [showWikiModal, setShowWikiModal] = useState(false);
+  const [wikiTitle, setWikiTitle] = useState('Project Knowledge Base');
+  const [wikiAuthor, setWikiAuthor] = useState('Ingestalt User');
+  const [wikiIcon, setWikiIcon] = useState('📚');
 
   if (selectedNodeIds.size === 0) return null;
 
@@ -88,60 +94,7 @@ export function BatchActionToolbar() {
   };
 
   const handleGenerateWiki = async () => {
-    // Step 1: Prompt for Wiki Title
-    setPromptConfig({
-      show: true,
-      title: 'WIKI TITLE',
-      message: 'Enter a professional title for your generated documentation portal.',
-      defaultValue: 'Project Knowledge Base',
-      type: 'info',
-      icon: <FileText size={24} />,
-      onConfirm: (wikiTitle) => {
-        // Step 2: Prompt for Author
-        setPromptConfig({
-          show: true,
-          title: 'AUTHOR NAME',
-          message: 'Who should be credited as the author of this documentation?',
-          defaultValue: 'Ingestalt User',
-          type: 'info',
-          icon: <Copy size={24} />,
-          onConfirm: async (authorName) => {
-            setPromptConfig(prev => ({ ...prev, show: false }));
-            setIsGenerating(true);
-            
-            try {
-              const selectedNodes = await db.nodes.bulkGet(Array.from(selectedNodeIds));
-              const validNodes = selectedNodes.filter(n => n !== undefined);
-              
-              const allEdges = await db.edges.toArray();
-              const relevantEdges = allEdges.filter(e => 
-                selectedNodeIds.has(e.sourceId) && selectedNodeIds.has(e.targetId)
-              );
-              
-              const allNodes = await db.nodes.toArray();
-              const standards = allNodes.filter(n => n.payload?.type === 'standards');
-              
-              const html = generateProfessionalWiki(validNodes, relevantEdges, standards, {
-                title: wikiTitle,
-                author: authorName
-              });
-              
-              const blob = new Blob([html], { type: 'text/html' });
-              const url = URL.createObjectURL(blob);
-              const a = document.createElement('a');
-              a.href = url;
-              a.download = `${wikiTitle.replace(/\s+/g, '_')}_wiki.html`;
-              document.body.appendChild(a);
-              a.click();
-              document.body.removeChild(a);
-              URL.revokeObjectURL(url);
-            } finally {
-              setIsGenerating(false);
-            }
-          }
-        });
-      }
-    });
+    setShowWikiModal(true);
   };
 
   const handleCopyContent = async () => {
@@ -334,6 +287,130 @@ export function BatchActionToolbar() {
         onConfirm={promptConfig.onConfirm}
         onCancel={() => setPromptConfig(prev => ({ ...prev, show: false }))}
       />
+
+      {showWikiModal && typeof window !== 'undefined' && createPortal(
+        <div className="fixed inset-0 z-[9999] bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm pointer-events-auto" onClick={() => setShowWikiModal(false)}>
+          <div className="w-full max-w-md border-2 border-border bg-card p-6 shadow-2xl rounded-xl text-left" onClick={(e) => e.stopPropagation()}>
+            {/* Header */}
+            <div className="flex items-start gap-4 mb-5 border-b border-border/10 pb-3">
+              <div className="text-blue-500/50 shrink-0">
+                <FileText size={32} />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-blue-500/80 font-bold text-lg mb-1">WIKI EXPORT SETTINGS</h3>
+                <p className="text-foreground/80 text-sm leading-relaxed">Configure your generated single-page documentation portal.</p>
+              </div>
+            </div>
+
+            {/* Inputs */}
+            <div className="space-y-4 mb-6">
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-foreground/75 block">PORTAL TITLE</label>
+                <input
+                  type="text"
+                  value={wikiTitle}
+                  onChange={(e) => setWikiTitle(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-background border border-border text-foreground/80 text-sm focus:outline-none rounded-lg transition-all focus:border-blue-500"
+                  placeholder="e.g. Project Knowledge Base"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-foreground/75 block">AUTHOR NAME</label>
+                <input
+                  type="text"
+                  value={wikiAuthor}
+                  onChange={(e) => setWikiAuthor(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-background border border-border text-foreground/80 text-sm focus:outline-none rounded-lg transition-all focus:border-blue-500"
+                  placeholder="e.g. Ingestalt User"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-foreground/75 block">BUNDLED WIKI ICON</label>
+                
+                {/* Emoji picker grid */}
+                <div className="grid grid-cols-8 gap-1.5 mb-2">
+                  {['📚', '🚀', '💡', '⚙️', '🌐', '🛡️', '🧬', '🎯', '💾', '🧩', '🔧', '💻', '⚡', '📊', '🔥', '🎨'].map(emoji => (
+                    <button
+                      key={emoji}
+                      type="button"
+                      onClick={() => setWikiIcon(emoji)}
+                      className={`h-9 flex items-center justify-center text-base border transition-all rounded-lg ${wikiIcon === emoji ? 'border-blue-500 bg-blue-500/10 scale-105 font-bold' : 'border-border hover:bg-secondary hover:scale-105'}`}
+                    >
+                      {emoji}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Custom Emoji input */}
+                <div className="flex gap-2 items-center">
+                  <span className="text-[10px] font-mono text-foreground/40 uppercase">CUSTOM:</span>
+                  <input
+                    type="text"
+                    value={wikiIcon}
+                    onChange={(e) => setWikiIcon(e.target.value)}
+                    className="px-3 py-1 bg-background border border-border text-foreground/80 text-sm focus:outline-none rounded-lg focus:border-blue-500 text-center max-w-[70px]"
+                    maxLength={4}
+                  />
+                  <span className="text-[10px] font-mono text-foreground/40">Current selection: <span className="text-foreground text-xs font-bold ml-1">{wikiIcon}</span></span>
+                </div>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-2">
+              <Button
+                onClick={() => setShowWikiModal(false)}
+                variant="outline"
+                className="flex-1 border-border bg-card text-foreground/80 hover:bg-secondary"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={async () => {
+                  setShowWikiModal(false);
+                  setIsGenerating(true);
+                  try {
+                    const selectedNodes = await db.nodes.bulkGet(Array.from(selectedNodeIds));
+                    const validNodes = selectedNodes.filter((n): n is any => n !== undefined);
+                    
+                    const allEdges = await db.edges.toArray();
+                    const relevantEdges = allEdges.filter(e => 
+                      selectedNodeIds.has(e.sourceId) && selectedNodeIds.has(e.targetId)
+                    );
+                    
+                    const allNodes = await db.nodes.toArray();
+                    const standards = allNodes.filter(n => n.payload?.type === 'standards');
+                    
+                    const html = generateProfessionalWiki(validNodes, relevantEdges, standards, {
+                      title: wikiTitle,
+                      author: wikiAuthor,
+                      icon: wikiIcon
+                    });
+                    
+                    const blob = new Blob([html], { type: 'text/html' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `${wikiTitle.replace(/\s+/g, '_')}_wiki.html`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                  } finally {
+                    setIsGenerating(false);
+                  }
+                }}
+                className="flex-1 text-white bg-blue-600 hover:bg-blue-500"
+              >
+                {isGenerating ? 'Generating...' : 'Generate Wiki'}
+              </Button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 }
