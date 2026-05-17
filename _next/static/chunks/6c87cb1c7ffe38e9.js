@@ -1202,9 +1202,8 @@ ${e.payload?.content||""}
           (node.payload?.tags || []).some(t => t.toLowerCase().includes(filter.toLowerCase()))
         );
 
-        container.innerHTML = \`
-          <div class="nav-group-title">Search Results</div>
-          ${filteredNodes.map(node => {
+        container.innerHTML = '<div class="nav-group-title">Search Results</div>' +
+          filteredNodes.map(node => {
             const content = node.payload?.content || '';
             const idx = content.toLowerCase().indexOf(filter.toLowerCase());
             let snippet = '';
@@ -1217,15 +1216,15 @@ ${e.payload?.content||""}
                 (end < content.length ? '...' : '');
             }
 
-            return \`
-              <a class="nav-item ${node.id === currentNodeId ? 'active' : ''}" 
-                 onclick="navigateTo('${node.id}')">
-                <div class="relation-title">${node.payload?.title || 'Untitled'}</div>
-                ${snippet ? \`<div class="search-result-snippet">${snippet}</div>\` : ''}
-              </a>
-            \`;
-          }).join('')}
-        \`;
+            const activeClass = node.id === currentNodeId ? 'active' : '';
+            const relationTitle = node.payload?.title || 'Untitled';
+            const snippetHtml = snippet ? '<div class="search-result-snippet">' + snippet + '</div>' : '';
+
+            return '<a class="nav-item ' + activeClass + '" onclick="navigateTo(\\'' + node.id + '\\')">' +
+                     '<div class="relation-title">' + relationTitle + '</div>' +
+                     snippetHtml +
+                   '</a>';
+          }).join('');
       } else {
         // Build hierarchy tree
         // 1. Group by type
@@ -1306,38 +1305,36 @@ ${e.payload?.content||""}
             return cItem.children.some(c => hasChildrenOfActive(c));
           }
 
-          return \`
-            <div class="tree-node-wrapper">
-              <div class="nav-item-wrapper">
-                ${hasChildren ? \`
-                  <div id="${node.id}-chevron" class="${chevronClass}" onclick="toggleGroup('${node.id}', event)">
-                    ▾
-                  </div>
-                \` : '<div style="width: 1.25rem;"></div>'}
-                <a class="nav-item ${node.id === currentNodeId ? 'active' : ''}" 
-                   style="flex: 1; padding-left: 0.5rem;"
-                   onclick="navigateTo('${node.id}')">
-                  ${node.payload?.title || 'Untitled'}
-                  <span class="nav-badge">${(node.payload?.tags || []).length || ''}</span>
-                </a>
-              </div>
-              ${hasChildren ? \`
-                <div id="${node.id}" class="${childrenClass} tree-node-container">
-                  ${children.map(renderTreeItem).join('')}
-                </div>
-              \` : ''}
-            </div>
-          \`;
+          const chevronHtml = hasChildren 
+            ? '<div id="' + node.id + '-chevron" class="' + chevronClass + '" onclick="toggleGroup(\\'' + node.id + '\\', event)">▾</div>'
+            : '<div style="width: 1.25rem;"></div>';
+            
+          const activeClass = node.id === currentNodeId ? 'active' : '';
+          const title = node.payload?.title || 'Untitled';
+          const tagCount = (node.payload?.tags || []).length;
+          const badgeHtml = tagCount > 0 ? '<span class="nav-badge">' + tagCount + '</span>' : '';
+          
+          const childrenHtml = hasChildren
+            ? '<div id="' + node.id + '" class="' + childrenClass + ' tree-node-container">' + children.map(renderTreeItem).join('') + '</div>'
+            : '';
+
+          return '<div class="tree-node-wrapper">' +
+                   '<div class="nav-item-wrapper">' +
+                     chevronHtml +
+                     '<a class="nav-item ' + activeClass + '" style="flex: 1; padding-left: 0.5rem;" onclick="navigateTo(\\'' + node.id + '\\')">' +
+                       title + badgeHtml +
+                     '</a>' +
+                   '</div>' +
+                   childrenHtml +
+                 '</div>';
         }
 
         container.innerHTML = Object.entries(groups).map(([type, typeNodes]) => {
           const tree = buildTree(typeNodes);
-          return \`
-            <div class="nav-group">
-              <div class="nav-group-title">${type}</div>
-              ${tree.map(renderTreeItem).join('')}
-            </div>
-          \`;
+          return '<div class="nav-group">' +
+                   '<div class="nav-group-title">' + type + '</div>' +
+                   tree.map(renderTreeItem).join('') +
+                 '</div>';
         }).join('');
       }
     }
@@ -1355,7 +1352,7 @@ ${e.payload?.content||""}
         level = arg2;
       }
       const id = (text || '').toString().toLowerCase().replace(/[^\\w]+/g, '-');
-      return \`<h${level} id="${id}">${text}</h${level}>\`;
+      return '<h' + level + ' id="' + id + '">' + text + '</h' + level + '>';
     };
 
     const originalLink = renderer.link.bind(renderer);
@@ -1371,12 +1368,12 @@ ${e.payload?.content||""}
 
       // If href matches a node ID, make it an internal navigation link
       if (nodes.some(n => n.id === href)) {
-        return \`<a href="#${href}" onclick="event.stopPropagation(); navigateTo('${href}'); return false;" title="${title || ''}">${text}</a>\`;
+        return '<a href="#' + href + '" onclick="event.stopPropagation(); navigateTo(\\'' + href + '\\'); return false;" title="' + (title || '') + '">' + text + '</a>';
       }
 
       // Local anchors for headings
       if (href && href.startsWith('#')) {
-        return \`<a href="${href}" title="${title || ''}">${text}</a>\`;
+        return '<a href="' + href + '" title="' + (title || '') + '">' + text + '</a>';
       }
 
       // VS Code Protocol Support for local files
@@ -1384,10 +1381,10 @@ ${e.payload?.content||""}
       
       if (isLocalPath && !href.startsWith('http')) {
         if (!enableProjectRoot) {
-          return \`<code>${text}</code>\`;
+          return '<code>' + text + '</code>';
         }
         if (!basePath) {
-          return \`<a href="#" onclick="alert('Please enter your Project Root path at the top of the page first!\\\\n\\\\nExample: d:/Desktop/ingestalt'); return false;" title="Set Project Root to open in VS Code" style="border-bottom: 1px dashed var(--accent); color: var(--accent); cursor: pointer;">${text} ⚙️</a>\`;
+          return '<a href="#" onclick="alert(\\'Please enter your Project Root path at the top of the page first!\\\\n\\\\nExample: d:/Desktop/ingestalt\\'); return false;" title="Set Project Root to open in VS Code" style="border-bottom: 1px dashed var(--accent); color: var(--accent); cursor: pointer;">' + text + ' ⚙️</a>';
         }
 
         // Clean up relative navigation by resolving ../ and ./
@@ -1404,11 +1401,11 @@ ${e.payload?.content||""}
         let absoluteHref = stack.join('/');
         if (!absoluteHref.startsWith('/')) absoluteHref = '/' + absoluteHref;
         
-        return \`<a href="vscode://file${absoluteHref}" title="Open in VS Code" style="border-bottom: 1px solid var(--accent); color: var(--accent); cursor: pointer;">${text} ↗</a>\`;
+        return '<a href="vscode://file' + absoluteHref + '" title="Open in VS Code" style="border-bottom: 1px solid var(--accent); color: var(--accent); cursor: pointer;">' + text + ' ↗</a>';
       }
 
       // Standard markdown links with target="_blank"
-      return \`<a href="${href}" title="${title || ''}" target="_blank" rel="noopener noreferrer">${text}</a>\`;
+      return '<a href="' + href + '" title="' + (title || '') + '" target="_blank" rel="noopener noreferrer">' + text + '</a>';
     };
 
     function scrollToHeading(id) {
@@ -1431,12 +1428,10 @@ ${e.payload?.content||""}
       const tocSidebar = document.getElementById('toc-sidebar');
       
       if (!node) {
-        contentEl.innerHTML = \`
-          <div class="empty-state">
-            <h2>Select an article</h2>
-            <p>Choose a document from the sidebar to start reading.</p>
-          </div>
-        \`;
+        contentEl.innerHTML = '<div class="empty-state">' +
+                                '<h2>Select an article</h2>' +
+                                '<p>Choose a document from the sidebar to start reading.</p>' +
+                              '</div>';
         tocSidebar.style.display = 'none';
         return;
       }
@@ -1510,22 +1505,20 @@ ${e.payload?.content||""}
       // Render TOC
       let tocHtml = '';
       if (headings.length > 0) {
-        tocHtml += headings.map(h => \`
-          <a href="#${h.id}" class="toc-link toc-level-${h.level}">${h.text}</a>
-        \`).join('');
+        tocHtml += headings.map(h => 
+          '<a href="#' + h.id + '" class="toc-link toc-level-' + h.level + '">' + h.text + '</a>'
+        ).join('');
       }
 
       const hasRelations = forwardLinks.length > 0 || backLinks.length > 0;
       if (hasRelations) {
-        tocHtml += \`
-          <div style="margin: 1.5rem 0 0.5rem; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; color: var(--muted); letter-spacing: 0.05em;">Related Links</div>
-        \`;
+        tocHtml += '<div style="margin: 1.5rem 0 0.5rem; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; color: var(--muted); letter-spacing: 0.05em;">Related Links</div>';
         
         forwardLinks.forEach(rel => {
-          tocHtml += \`<a href="#${rel.node.id}" onclick="navigateTo('${rel.node.id}')" class="toc-link" style="font-size: 0.75rem; border-left-color: transparent;">↗ ${rel.node.payload?.title}</a>\`;
+          tocHtml += '<a href="#' + rel.node.id + '" onclick="navigateTo(\\'' + rel.node.id + '\\')" class="toc-link" style="font-size: 0.75rem; border-left-color: transparent;">↗ ' + (rel.node.payload?.title || '') + '</a>';
         });
         backLinks.forEach(rel => {
-          tocHtml += \`<a href="#${rel.node.id}" onclick="navigateTo('${rel.node.id}')" class="toc-link" style="font-size: 0.75rem; border-left-color: transparent;">↙ ${rel.node.payload?.title}</a>\`;
+          tocHtml += '<a href="#' + rel.node.id + '" onclick="navigateTo(\\'' + rel.node.id + '\\')" class="toc-link" style="font-size: 0.75rem; border-left-color: transparent;">↙ ' + (rel.node.payload?.title || '') + '</a>';
         });
       }
 
@@ -1536,10 +1529,10 @@ ${e.payload?.content||""}
         tocSidebar.style.display = 'none';
       }
 
-      bodyContent = bodyContent.replace(/\\\\\\[\\\\\\[([^|\\\\\\\\]]+)(?:\\\\|([^\\\\\\\\]]+))?\\\\\\\\]\\\\\\\\]/g, (match, linkId, label) => {
+      bodyContent = bodyContent.replace(/\\[\\[([^|\\]]+)(?:\\|([^\\]]+))?\\]\\]/g, (match, linkId, label) => {
         const targetNode = nodes.find(n => n.id === linkId);
         if (targetNode) {
-          return \`[${label || targetNode.payload?.title || linkId}](${linkId})\`;
+          return '[' + (label || targetNode.payload?.title || linkId) + '](' + linkId + ')';
         }
         return match;
       });
@@ -1558,160 +1551,149 @@ ${e.payload?.content||""}
         standardDef.fields.map(f => renderField(f, (node.payload || {})[f.name])).filter(h => h).join('') :
         Object.entries(node.payload || {})
           .filter(([k]) => !['title', 'content', 'type', 'tags', 'definitions', 'id', 'color', 'icon', 'filename', 'configId', 'relations'].includes(k))
-          .map(([k, v]) => \`
-            <div class="property-row">
-              <span class="property-label">${k.toUpperCase()}</span>
-              <span class="property-value">${typeof v === 'object' ? JSON.stringify(v) : v}</span>
-            </div>
-          \`).join('');
+          .map(([k, v]) => 
+            '<div class="property-row">' +
+              '<span class="property-label">' + k.toUpperCase() + '</span>' +
+              '<span class="property-value">' + (typeof v === 'object' ? JSON.stringify(v) : v) + '</span>' +
+            '</div>'
+          ).join('');
 
       function renderField(field, data) {
         if (data === undefined || data === null) return '';
 
-        let html = \`<div class="field-container">\`;
-        html += \`<div class="field-header" style="color: ${field.color || 'inherit'}">${field.name.replace(/_/g, ' ')}</div>\`;
+        let html = '<div class="field-container">';
+        html += '<div class="field-header" style="color: ' + (field.color || 'inherit') + '">' + field.name.replace(/_/g, ' ') + '</div>';
 
         if (field.type === 'schema_table') {
-          html += \`<table class="wiki-table"><thead><tr><th>Field</th><th>Type / Details</th></tr></thead><tbody>\`;
+          html += '<table class="wiki-table"><thead><tr><th>Field</th><th>Type / Details</th></tr></thead><tbody>';
           (Array.isArray(data) ? data : []).forEach(col => {
             const colString = typeof col === 'string' ? col : col.name;
             const match = colString.match(/^(.*?)(?:\\s*\\((.*?)\\))?$/);
-            html += \`<tr><td class="font-mono">${match?.[1] || colString}</td><td class="muted font-mono">${match?.[2] || ''}</td></tr>\`;
+            html += '<tr><td class="font-mono">' + (match?.[1] || colString) + '</td><td class="muted font-mono">' + (match?.[2] || '') + '</td></tr>';
           });
-          html += \`</tbody></table>\`;
+          html += '</tbody></table>';
         } else if (field.type === 'tables_list') {
           (Array.isArray(data) ? data : []).forEach(table => {
-            html += \`<div style="margin-bottom: 1rem;"><div class="property-label font-mono" style="margin-bottom: 0.5rem; color: var(--accent)">TABLE: ${table.name}</div>\`;
-            html += \`<table class="wiki-table"><thead><tr><th>Column</th><th>Details</th></tr></thead><tbody>\`;
+            html += '<div style="margin-bottom: 1rem;"><div class="property-label font-mono" style="margin-bottom: 0.5rem; color: var(--accent)">TABLE: ' + table.name + '</div>';
+            html += '<table class="wiki-table"><thead><tr><th>Column</th><th>Details</th></tr></thead><tbody>';
             (table.columns || []).forEach(col => {
               const colString = typeof col === 'string' ? col : col.name;
               const match = colString.match(/^(.*?)(?:\\s*\\((.*?)\\))?$/);
-              html += \`<tr><td class="font-mono">${match?.[1] || colString}</td><td class="muted font-mono">${match?.[2] || ''}</td></tr>\`;
+              html += '<tr><td class="font-mono">' + (match?.[1] || colString) + '</td><td class="muted font-mono">' + (match?.[2] || '') + '</td></tr>';
             });
-            html += \`</tbody></table></div>\`;
+            html += '</tbody></table></div>';
           });
         } else if (field.type === 'interface_list') {
           (Array.isArray(data) ? data : []).forEach(item => {
             const name = typeof item === 'string' ? item : (item.name || 'unknown');
             const desc = typeof item === 'string' ? '' : (item.description || '');
-            html += \`<div class="wiki-list-item"><div class="wiki-list-item-title font-mono">${name}()</div>${desc ? \`<div class="wiki-list-item-desc">${desc}</div>\` : ''}</div>\`;
+            html += '<div class="wiki-list-item"><div class="wiki-list-item-title font-mono">' + name + '()</div>' + (desc ? '<div class="wiki-list-item-desc">' + desc + '</div>' : '') + '</div>';
           });
         } else if (field.type === 'code_list') {
           (Array.isArray(data) ? data : []).forEach(snip => {
-            html += \`<div style="margin-bottom: 1rem;"><div class="property-label font-mono" style="margin-bottom: 0.25rem;">${snip.name}</div><pre class="font-mono" style="margin: 0; padding: 1rem; background: var(--bg); border: 1px solid var(--border); border-radius: 0.5rem;"><code>${snip.code}</code></pre></div>\`;
+            html += '<div style="margin-bottom: 1rem;"><div class="property-label font-mono" style="margin-bottom: 0.25rem;">' + snip.name + '</div><pre class="font-mono" style="margin: 0; padding: 1rem; background: var(--bg); border: 1px solid var(--border); border-radius: 0.5rem;"><code>' + snip.code + '</code></pre></div>';
           });
         } else if (field.type === 'story_list') {
           (Array.isArray(data) ? data : []).forEach(story => {
             const text = typeof story === 'string' ? story : story.text;
             const isDone = typeof story === 'string' ? false : !!story.done;
-            html += \`<div class="wiki-list-item" style="display: flex; gap: 0.75rem; align-items: center; ${isDone ? 'opacity: 0.6' : ''}">
-              <div style="width: 14px; height: 14px; border: 1px solid var(--border); border-radius: 3px; display: flex; align-items: center; justify-content: center; background: ${isDone ? 'var(--accent)' : 'transparent'}">${isDone ? '✓' : ''}</div>
-              <div style="${isDone ? 'text-decoration: line-through' : ''}">${text}</div>
-            </div>\`;
+            html += '<div class="wiki-list-item" style="display: flex; gap: 0.75rem; align-items: center; ' + (isDone ? 'opacity: 0.6' : '') + '">' +
+              '<div style="width: 14px; height: 14px; border: 1px solid var(--border); border-radius: 3px; display: flex; align-items: center; justify-content: center; background: ' + (isDone ? 'var(--accent)' : 'transparent') + '">' + (isDone ? '✓' : '') + '</div>' +
+              '<div style="' + (isDone ? 'text-decoration: line-through' : '') + '">' + text + '</div>' +
+            '</div>';
           });
         } else if (field.type === 'flow_list') {
           (Array.isArray(data) ? data : []).forEach((step, i) => {
-            html += \`<div class="flow-step"><div class="flow-number">${i+1}</div><div class="flow-content"><div class="relation-title">${step.action}</div><div class="wiki-list-item-desc">${step.description}</div></div></div>\`;
+            html += '<div class="flow-step"><div class="flow-number">' + (i+1) + '</div><div class="flow-content"><div class="relation-title">' + step.action + '</div><div class="wiki-list-item-desc">' + step.description + '</div></div></div>';
           });
         } else if (Array.isArray(data)) {
-           html += \`<div class="tags-container">${data.map(t => \`<span class="tag-pill">${t}</span>\`).join('')}</div>\`;
+           html += '<div class="tags-container">' + data.map(t => '<span class="tag-pill">' + t + '</span>').join('') + '</div>';
         } else if (typeof data === 'object') {
-           html += \`<pre class="font-mono" style="background: var(--bg); border: 1px solid var(--border); border-radius: 0.5rem; padding: 1rem; font-size: 0.75rem;">${JSON.stringify(data, null, 2)}</pre>\`;
+           html += '<pre class="font-mono" style="background: var(--bg); border: 1px solid var(--border); border-radius: 0.5rem; padding: 1rem; font-size: 0.75rem;">' + JSON.stringify(data, null, 2) + '</pre>';
         } else {
-           html += \`<div class="field-value">${data}</div>\`;
+           html += '<div class="field-value">' + data + '</div>';
         }
 
-        html += \`</div>\`;
+        html += '</div>';
         return html;
       }
 
       function renderGovernanceManifest(definitions) {
         if (!definitions || !definitions.length) return '';
         
-        let html = \`<div class="relations-section" style="margin-top: 0; border-top: none;">\`;
-        html += \`<div class="nav-group-title">Node Types</div>\`;
+        let html = '<div class="relations-section" style="margin-top: 0; border-top: none;">';
+        html += '<div class="nav-group-title">Node Types</div>';
         
         definitions.forEach(def => {
-          html += \`
-            <div class="manifest-card" style="border-left-color: ${def.color || 'var(--accent)'}">
-              <div class="manifest-header">
-                <div class="manifest-type-id">${def.id}</div>
-                <div class="manifest-category" style="color: ${def.color || 'var(--accent)'}; background: ${def.color ? def.color + '15' : 'var(--accent-soft)'}">${def.type}</div>
-              </div>
-              <div style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; color: var(--muted);">
-                <span>Icon: ${def.icon || 'Box'}</span>
-                <span style="width: 12px; height: 12px; border-radius: 2px; background: ${def.color || '#888888'}"></span>
-                <span>${def.color || '#888888'}</span>
-              </div>
-              
-              <div class="wiki-table" style="background: transparent; border: none;">
-                <div class="nav-group-title" style="padding-left: 0.5rem; margin-bottom: 0.5rem;">Property Schema</div>
-                <div class="manifest-field-row" style="background: var(--nav-hover); border-radius: 4px; font-weight: 800; font-size: 0.65rem; color: var(--muted);">
-                  <div>PROPERTY</div>
-                  <div>DATA TYPE</div>
-                  <div>ICON</div>
-                </div>
-                ${(def.fields || []).map(field => \`
-                  <div class="manifest-field-row">
-                    <div class="manifest-field-name">${field.name}</div>
-                    <div class="manifest-field-type">${field.type}</div>
-                    <div style="font-size: 0.7rem; opacity: 0.6;">${field.icon || 'Box'}</div>
-                  </div>
-                \`).join('')}
-              </div>
-            </div>
-          \`;
+          html += '<div class="manifest-card" style="border-left-color: ' + (def.color || 'var(--accent)') + '">' +
+                    '<div class="manifest-header">' +
+                      '<div class="manifest-type-id">' + def.id + '</div>' +
+                      '<div class="manifest-category" style="color: ' + (def.color || 'var(--accent)') + '; background: ' + (def.color ? def.color + '15' : 'var(--accent-soft)') + '">' + def.type + '</div>' +
+                    '</div>' +
+                    '<div style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; color: var(--muted);">' +
+                      '<span>Icon: ' + (def.icon || 'Box') + '</span>' +
+                      '<span style="width: 12px; height: 12px; border-radius: 2px; background: ' + (def.color || '#888888') + '"></span>' +
+                      '<span>' + (def.color || '#888888') + '</span>' +
+                    '</div>' +
+                    '<div class="wiki-table" style="background: transparent; border: none;">' +
+                      '<div class="nav-group-title" style="padding-left: 0.5rem; margin-bottom: 0.5rem;">Property Schema</div>' +
+                      '<div class="manifest-field-row" style="background: var(--nav-hover); border-radius: 4px; font-weight: 800; font-size: 0.65rem; color: var(--muted);">' +
+                        '<div>PROPERTY</div>' +
+                        '<div>DATA TYPE</div>' +
+                        '<div>ICON</div>' +
+                      '</div>' +
+                      (def.fields || []).map(field => 
+                        '<div class="manifest-field-row">' +
+                          '<div class="manifest-field-name">' + field.name + '</div>' +
+                          '<div class="manifest-field-type">' + field.type + '</div>' +
+                          '<div style="font-size: 0.7rem; opacity: 0.6;">' + (field.icon || 'Box') + '</div>' +
+                        '</div>'
+                      ).join('') +
+                    '</div>' +
+                  '</div>';
         });
         
-        html += \`</div>\`;
+        html += '</div>';
         return html;
       }
 
-      contentEl.innerHTML = \`
-        <div class="page-header">
-          <div class="page-meta">
-            <span class="badge">${node.payload?.type || 'article'}</span>
-            <span>Last modified: ${new Date(node.lastModified).toLocaleDateString()}</span>
-          </div>
-          <h1>${node.payload?.title || 'Untitled'}</h1>
-          <div class="tags-container">
-            ${(node.payload?.tags || []).map(t => \`<span class="tag-pill">#${t}</span>\`).join('')}
-          </div>
-        </div>
-
-        <div class="prose">
-          ${htmlContent}
-        </div>
-
-        ${propertyFields ? \`<div class="properties-box" style="margin-top: 3rem;">${propertyFields}</div>\` : ''}
-
-        <div style="margin-top: 4rem; padding-top: 1rem; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; opacity: 0.4; font-size: 0.7rem; font-family: 'JetBrains Mono', monospace;">
-          <span>ID: ${node.id}</span>
-          <span>CONFIG: ${node.configId}</span>
-        </div>
-
-        ${node.payload?.type === 'standards' ? renderGovernanceManifest(node.payload?.definitions) : ''}
-
-        ${forwardLinks.length > 0 || backLinks.length > 0 ? \`
-          <div class="relations-section">
-            <div class="nav-group-title">Relationships</div>
-            <div class="relations-grid">
-              ${forwardLinks.map(rel => \`
-                <a class="relation-card" onclick="navigateTo('${rel.node.id}')">
-                  <div class="relation-type">Refers to (${rel.type})</div>
-                  <div class="relation-title">${rel.node.payload?.title}</div>
-                </a>
-              \`).join('')}
-              ${backLinks.map(rel => \`
-                <a class="relation-card" onclick="navigateTo('${rel.node.id}')">
-                  <div class="relation-type">Referenced by (${rel.type})</div>
-                  <div class="relation-title">${rel.node.payload?.title}</div>
-                </a>
-              \`).join('')}
-            </div>
-          </div>
-        \` : ''}
-      \`;
+      contentEl.innerHTML = 
+        '<div class="page-header">' +
+          '<div class="page-meta">' +
+            '<span class="badge">' + (node.payload?.type || 'article') + '</span>' +
+            '<span>Last modified: ' + new Date(node.lastModified).toLocaleDateString() + '</span>' +
+          '</div>' +
+          '<h1>' + (node.payload?.title || 'Untitled') + '</h1>' +
+          '<div class="tags-container">' +
+            (node.payload?.tags || []).map(t => '<span class="tag-pill">#' + t + '</span>').join('') +
+          '</div>' +
+        '</div>' +
+        '<div class="prose">' + htmlContent + '</div>' +
+        (propertyFields ? '<div class="properties-box" style="margin-top: 3rem;">' + propertyFields + '</div>' : '') +
+        '<div style="margin-top: 4rem; padding-top: 1rem; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; opacity: 0.4; font-size: 0.7rem; font-family: 'JetBrains Mono', monospace;">' +
+          '<span>ID: ' + node.id + '</span>' +
+          '<span>CONFIG: ' + node.configId + '</span>' +
+        '</div>' +
+        (node.payload?.type === 'standards' ? renderGovernanceManifest(node.payload?.definitions) : '') +
+        (forwardLinks.length > 0 || backLinks.length > 0 ? 
+          '<div class="relations-section">' +
+            '<div class="nav-group-title">Relationships</div>' +
+            '<div class="relations-grid">' +
+              forwardLinks.map(rel => 
+                '<a class="relation-card" onclick="navigateTo(\\'' + rel.node.id + '\\')">' +
+                  '<div class="relation-type">Refers to (' + rel.type + ')</div>' +
+                  '<div class="relation-title">' + (rel.node.payload?.title || '') + '</div>' +
+                '</a>'
+              ).join('') +
+              backLinks.map(rel => 
+                '<a class="relation-card" onclick="navigateTo(\\'' + rel.node.id + '\\')">' +
+                  '<div class="relation-type">Referenced by (' + rel.type + ')</div>' +
+                  '<div class="relation-title">' + (rel.node.payload?.title || '') + '</div>' +
+                '</a>'
+              ).join('') +
+            '</div>' +
+          '</div>' 
+        : '');
 
       // Trigger highlight.js for any new code blocks
       document.querySelectorAll('pre code').forEach((block) => {
