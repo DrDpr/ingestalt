@@ -309,20 +309,30 @@ export const WIKI_STYLES = `
       padding-bottom: 0.5rem;
     }
 
+    .field-value {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--fg);
+      line-height: 1.4;
+      word-break: break-word;
+      padding: 0.25rem 0.5rem 0;
+    }
+
     .property-row {
       display: flex;
       justify-content: space-between;
+      align-items: flex-start;
+      gap: 1.5rem;
       padding: 0.6rem 0.5rem;
       border-bottom: 1px solid var(--border);
       font-size: 0.75rem;
       font-family: var(--font-mono);
-      text-transform: uppercase;
       letter-spacing: 0.05em;
     }
 
     .property-row:last-child { border: none; }
-    .property-label { color: var(--muted); font-weight: 600; font-size: 0.7rem; }
-    .property-value { font-weight: 700; color: var(--fg); }
+    .property-label { color: var(--muted); font-weight: 600; font-size: 0.7rem; text-transform: uppercase; flex-shrink: 0; min-width: 100px; }
+    .property-value { font-weight: 700; color: var(--fg); text-transform: none; text-align: right; word-break: break-word; max-width: 75%; }
 
     /* Schema Table Styling */
     .wiki-table {

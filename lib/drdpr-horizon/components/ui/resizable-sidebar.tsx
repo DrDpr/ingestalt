@@ -148,10 +148,10 @@ export function ResizableSidebar({
         <Sheet open={open} onOpenChange={onOpenChange}>
           <SheetContent
             side={side}
-            className={cn('p-0 w-full', !animate && 'transition-none', className)}
+            className={cn('p-0 w-full border-none rounded-none', !animate && 'transition-none', className)}
             overlayClassName={cn(!animate && 'duration-200')}
             showCloseButton={true}
-            style={{ width: `${width}px`, maxWidth: `${effectiveMaxWidth}px` }}
+            style={{ width: '100%', maxWidth: '100%' }}
           >
             <div className={cn('h-full w-full', panelClassName)}>{panel}</div>
           </SheetContent>

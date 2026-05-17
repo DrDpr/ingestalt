@@ -13,6 +13,7 @@ import { exportCanvas, exportNodeWithRelationships, exportSelectedNodes } from '
 import { ExportPreviewModal } from '../ExportPreviewModal';
 import { useReactFlow } from '@xyflow/react';
 import { useToast } from '@/lib/drdpr-horizon/lib/store/useToastStore';
+import { useMediaQuery } from '@/lib/drdpr-horizon/lib/hooks/useMediaQuery';
 
 export function Toolbar() {
   const {
@@ -29,8 +30,11 @@ export function Toolbar() {
     isPaletteOpen,
     setPaletteOpen,
     autoSaveEnabled, setAutoSaveEnabled,
-    refreshRate, setRefreshRate
+    refreshRate, setRefreshRate,
+    isLeftOpen, isInspectorOpen
   } = useUIStore();
+  
+  const isDesktop = useMediaQuery('(min-width: 768px)');
   
   const { setTheme, resolvedTheme } = useTheme();
   const { getNodes, getEdges } = useReactFlow();
@@ -360,9 +364,11 @@ export function Toolbar() {
     });
   };
 
+  if (!isDesktop && (isLeftOpen || isInspectorOpen)) return null;
+
   return (
-    <div className="absolute top-6 left-0 right-0 z-[100] flex justify-center pointer-events-none transition-all duration-200">
-      <div className="flex items-center gap-3 pointer-events-auto">
+    <div className="absolute top-4 md:top-6 left-0 right-0 z-[100] flex justify-center pointer-events-none transition-all duration-200">
+      <div className="flex flex-wrap items-center justify-center gap-2 md:gap-3 pointer-events-auto max-w-[95vw] px-4">
       {/* 1. SYSTEM ISLAND */}
       <Island>
                 
@@ -503,8 +509,11 @@ export function Toolbar() {
             {relationshipMode === 'all' && <Share2 size={13} />}
             {relationshipMode === 'selected' && <Compass size={13} />}
             {relationshipMode === 'trace' && <Anchor size={13} />}
-            <span className="text-xs   uppercase tracking-wider">
+            <span className="hidden md:inline text-xs uppercase tracking-wider">
               Relations: {relationshipMode}
+            </span>
+            <span className="inline md:hidden text-xs uppercase tracking-wider">
+              {relationshipMode}
             </span>
             <ChevronDown size={11} className={`transition-transform duration-300 ${showRelationMenu ? 'rotate-180' : ''}`} />
           </button>
@@ -554,8 +563,11 @@ export function Toolbar() {
             {edgePathType === 'organic' && <Share2 size={13} />}
             {edgePathType === 'circuit' && <Cpu size={13} className="text-emerald-400" />}
             {edgePathType === 'smart' && <Compass size={13} className="text-blue-400" />}
-            <span className="text-xs   uppercase tracking-wider">
+            <span className="hidden md:inline text-xs uppercase tracking-wider">
               Edges: {edgePathType === 'smart' ? 'Avoidance' : edgePathType} ({edgeHandleType})
+            </span>
+            <span className="inline md:hidden text-xs uppercase tracking-wider">
+              {edgePathType === 'smart' ? 'Avoid' : edgePathType} ({edgeHandleType})
             </span>
             <ChevronDown size={11} className={`transition-transform duration-300 ${showEdgeMenu ? 'rotate-180' : ''}`} />
           </button>

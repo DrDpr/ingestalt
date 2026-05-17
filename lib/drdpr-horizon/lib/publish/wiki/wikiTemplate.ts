@@ -1,4 +1,4 @@
-export function getWikiHtml(wikiTitle: string, author: string, styles: string, script: string, icon: string = '📚'): string {
+export function getWikiHtml(wikiTitle: string, author: string, styles: string, script: string, icon: string = '📚', enableProjectRoot: boolean = true): string {
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -39,6 +39,7 @@ export function getWikiHtml(wikiTitle: string, author: string, styles: string, s
       <button class="mobile-menu-toggle" id="mobile-menu-toggle" aria-label="Toggle Menu" onclick="toggleMobileSidebar(event)">
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
       </button>
+      ${enableProjectRoot ? `
       <div class="workspace-config">
         <span class="workspace-label">Project Root</span>
         <div class="workspace-input-group">
@@ -47,6 +48,7 @@ export function getWikiHtml(wikiTitle: string, author: string, styles: string, s
           <button id="guess-path-btn" title="Guess path from current URL" class="workspace-btn">AUTO</button>
         </div>
       </div>
+      ` : ''}
       
       <div class="topbar-actions">
         <div class="brand-logo">

@@ -1,8 +1,9 @@
-export function getWikiScript(serializedNodes: string, serializedEdges: string, serializedStandards: string): string {
+export function getWikiScript(serializedNodes: string, serializedEdges: string, serializedStandards: string, enableProjectRoot: boolean = true): string {
   return `
     const nodes = ${serializedNodes};
     const edges = ${serializedEdges};
     const standards = ${serializedStandards};
+    const enableProjectRoot = ${enableProjectRoot};
     let currentNodeId = null;
     let basePath = localStorage.getItem('horizon-wiki-base-path') || '';
 
@@ -10,35 +11,38 @@ export function getWikiScript(serializedNodes: string, serializedEdges: string, 
     const pathInput = document.getElementById('base-path-input');
     const guessBtn = document.getElementById('guess-path-btn');
     
-    pathInput.value = basePath;
+    if (pathInput) {
+      pathInput.value = basePath;
+      pathInput.addEventListener('change', (e) => updatePath(e.target.value));
+    }
     
     const updatePath = (val) => {
       basePath = val.replace(/\\\\/g, '/');
       if (basePath && !basePath.endsWith('/')) basePath += '/';
       localStorage.setItem('horizon-wiki-base-path', basePath);
-      pathInput.value = basePath;
+      if (pathInput) pathInput.value = basePath;
       if (currentNodeId) navigateTo(currentNodeId); 
     };
-
-    pathInput.addEventListener('change', (e) => updatePath(e.target.value));
     
-    guessBtn.addEventListener('click', () => {
-      let path = window.location.pathname;
-      // Handle Windows format /C:/...
-      if (path.startsWith('/')) path = path.substring(1);
-      
-      // Remove filename
-      const parts = path.split('/');
-      parts.pop();
-      
-      // If we are in a 'docs' or similar subfolder, try to suggest the parent
-      if (parts.length > 0 && ['docs', 'wiki', 'out', 'dist'].includes(parts[parts.length-1].toLowerCase())) {
+    if (guessBtn) {
+      guessBtn.addEventListener('click', () => {
+        let path = window.location.pathname;
+        // Handle Windows format /C:/...
+        if (path.startsWith('/')) path = path.substring(1);
+        
+        // Remove filename
+        const parts = path.split('/');
         parts.pop();
-      }
-      
-      const guessed = parts.join('/');
-      updatePath(guessed);
-    });
+        
+        // If we are in a 'docs' or similar subfolder, try to suggest the parent
+        if (parts.length > 0 && ['docs', 'wiki', 'out', 'dist'].includes(parts[parts.length-1].toLowerCase())) {
+          parts.pop();
+        }
+        
+        const guessed = parts.join('/');
+        updatePath(guessed);
+      });
+    }
 
     // Initialize marked with highlight.js
     marked.setOptions({
@@ -240,6 +244,9 @@ export function getWikiScript(serializedNodes: string, serializedEdges: string, 
       const isLocalPath = href && (href.endsWith('.md') || href.endsWith('.ts') || href.endsWith('.tsx') || href.endsWith('.js') || href.endsWith('.jsx') || href.startsWith('../') || href.startsWith('./'));
       
       if (isLocalPath && !href.startsWith('http')) {
+        if (!enableProjectRoot) {
+          return \`<code>\x24{text}</code>\`;
+        }
         if (!basePath) {
           return \`<a href="#" onclick="alert('Please enter your Project Root path at the top of the page first!\\\\n\\\\nExample: d:/Desktop/ingestalt'); return false;" title="Set Project Root to open in VS Code" style="border-bottom: 1px dashed var(--accent); color: var(--accent); cursor: pointer;">\x24{text} ⚙️</a>\`;
         }
@@ -312,8 +319,42 @@ export function getWikiScript(serializedNodes: string, serializedEdges: string, 
       }
 
       // Calculate relationships
-      const outgoing = edges.filter(e => e.sourceId === id);
-      const incoming = edges.filter(e => e.targetId === id);
+      const outgoing = [...edges.filter(e => e.sourceId === id)];
+      const incoming = [...edges.filter(e => e.targetId === id)];
+
+      // Merge relationships parsed from node's YAML front-matter relations list!
+      const payloadRelations = node.payload?.relations || [];
+      if (Array.isArray(payloadRelations)) {
+        payloadRelations.forEach(rel => {
+          if (rel && rel.targetId && !outgoing.some(e => e.targetId === rel.targetId)) {
+            outgoing.push({
+              sourceId: id,
+              targetId: rel.targetId,
+              type: rel.type || 'relates',
+              payload: { label: rel.label }
+            });
+          }
+        });
+      }
+
+      // Also let's scan all other nodes in the system to see if any refers to this node in their front-matter relations!
+      nodes.forEach(otherNode => {
+        if (otherNode.id !== id && otherNode.payload?.relations) {
+          const otherRels = otherNode.payload.relations;
+          if (Array.isArray(otherRels)) {
+            otherRels.forEach(rel => {
+              if (rel && rel.targetId === id && !incoming.some(e => e.sourceId === otherNode.id)) {
+                incoming.push({
+                  sourceId: otherNode.id,
+                  targetId: id,
+                  type: rel.type || 'relates',
+                  payload: { label: rel.label }
+                });
+              }
+            });
+          }
+        }
+      });
 
       const relatedNodes = (edgeList, isIncoming) => {
         return edgeList.map(edge => {
@@ -356,7 +397,7 @@ export function getWikiScript(serializedNodes: string, serializedEdges: string, 
         tocSidebar.style.display = 'none';
       }
 
-      bodyContent = bodyContent.replace(/\\[\\[([^|\\]]+)(?:\\|([^\\]]+))?\\]\\]/g, (match, linkId, label) => {
+      bodyContent = bodyContent.replace(/\\\\\\[\\\\\\[([^|\\\\\\\\]]+)(?:\\\\|([^\\\\\\\\]]+))?\\\\\\\\]\\\\\\\\]/g, (match, linkId, label) => {
         const targetNode = nodes.find(n => n.id === linkId);
         if (targetNode) {
           return \`[\x24{label || targetNode.payload?.title || linkId}](\x24{linkId})\`;
@@ -377,7 +418,7 @@ export function getWikiScript(serializedNodes: string, serializedEdges: string, 
       const propertyFields = standardDef && standardDef.fields ? 
         standardDef.fields.map(f => renderField(f, (node.payload || {})[f.name])).filter(h => h).join('') :
         Object.entries(node.payload || {})
-          .filter(([k]) => !['title', 'content', 'type', 'tags', 'definitions'].includes(k))
+          .filter(([k]) => !['title', 'content', 'type', 'tags', 'definitions', 'id', 'color', 'icon', 'filename', 'configId', 'relations'].includes(k))
           .map(([k, v]) => \`
             <div class="property-row">
               <span class="property-label">\x24{k.toUpperCase()}</span>
@@ -438,7 +479,7 @@ export function getWikiScript(serializedNodes: string, serializedEdges: string, 
         } else if (typeof data === 'object') {
            html += \`<pre class="font-mono" style="background: var(--bg); border: 1px solid var(--border); border-radius: 0.5rem; padding: 1rem; font-size: 0.75rem;">\x24{JSON.stringify(data, null, 2)}</pre>\`;
         } else {
-           html += \`<div class="property-value">\x24{data}</div>\`;
+           html += \`<div class="field-value">\x24{data}</div>\`;
         }
 
         html += \`</div>\`;

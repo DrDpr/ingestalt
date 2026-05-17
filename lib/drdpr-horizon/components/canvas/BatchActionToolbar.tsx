@@ -9,9 +9,11 @@ import { Button } from '@/components/ui/button';
 import { generateProfessionalWiki } from '@/lib/drdpr-horizon/lib/publish/wikiGenerator';
 import { performAutoLayout, LAYOUT_CONFIG } from '@/lib/drdpr-horizon/lib/ingest-client';
 import { PromptModal } from '../PromptModal';
+import { useMediaQuery } from '@/lib/drdpr-horizon/lib/hooks/useMediaQuery';
 
 export function BatchActionToolbar() {
-  const { selectedNodeIds, clearNodeSelection, selectAllNodes, setPrimaryNodeId } = useUIStore();
+  const { selectedNodeIds, clearNodeSelection, selectAllNodes, setPrimaryNodeId, isLeftOpen, isInspectorOpen } = useUIStore();
+  const isDesktop = useMediaQuery('(min-width: 768px)');
   const [isGenerating, setIsGenerating] = useState(false);
   const [isLayouting, setIsLayouting] = useState(false);
   const [showLayoutSettings, setShowLayoutSettings] = useState(false);
@@ -35,8 +37,10 @@ export function BatchActionToolbar() {
   const [wikiTitle, setWikiTitle] = useState('Project Knowledge Base');
   const [wikiAuthor, setWikiAuthor] = useState('Ingestalt User');
   const [wikiIcon, setWikiIcon] = useState('📚');
+  const [wikiEnableProjectRoot, setWikiEnableProjectRoot] = useState(true);
 
   if (selectedNodeIds.size === 0) return null;
+  if (!isDesktop && (isLeftOpen || isInspectorOpen)) return null;
 
   const handleDelete = async () => {
     setPromptConfig({
@@ -289,7 +293,7 @@ export function BatchActionToolbar() {
       />
 
       {showWikiModal && typeof window !== 'undefined' && createPortal(
-        <div className="fixed inset-0 z-[9999] bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm pointer-events-auto" onClick={() => setShowWikiModal(false)}>
+        <div className="fixed inset-0 z-[9999] bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm pointer-events-auto">
           <div className="w-full max-w-md border-2 border-border bg-card p-6 shadow-2xl rounded-xl text-left" onClick={(e) => e.stopPropagation()}>
             {/* Header */}
             <div className="flex items-start gap-4 mb-5 border-b border-border/10 pb-3">
@@ -356,6 +360,20 @@ export function BatchActionToolbar() {
                   <span className="text-[10px] font-mono text-foreground/40">Current selection: <span className="text-foreground text-xs font-bold ml-1">{wikiIcon}</span></span>
                 </div>
               </div>
+
+              {/* Project Root / Local File Linking Checkbox */}
+              <div className="flex items-center gap-2 px-1 pt-2 border-t border-border/10">
+                <input
+                  type="checkbox"
+                  id="wiki-enable-root-cb"
+                  checked={wikiEnableProjectRoot}
+                  onChange={(e) => setWikiEnableProjectRoot(e.target.checked)}
+                  className="w-4 h-4 rounded border-border bg-background text-blue-600 focus:ring-blue-500 focus:ring-offset-background cursor-pointer"
+                />
+                <label htmlFor="wiki-enable-root-cb" className="text-[10px] font-bold text-foreground/60 cursor-pointer select-none uppercase tracking-wider leading-snug">
+                  Enable Project Root / VS Code File Opening
+                </label>
+              </div>
             </div>
 
             {/* Action Buttons */}
@@ -386,7 +404,8 @@ export function BatchActionToolbar() {
                     const html = generateProfessionalWiki(validNodes, relevantEdges, standards, {
                       title: wikiTitle,
                       author: wikiAuthor,
-                      icon: wikiIcon
+                      icon: wikiIcon,
+                      enableProjectRoot: wikiEnableProjectRoot
                     });
                     
                     const blob = new Blob([html], { type: 'text/html' });

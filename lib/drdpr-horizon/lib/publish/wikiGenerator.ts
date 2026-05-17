@@ -7,12 +7,14 @@ export interface WikiOptions {
   title?: string;
   author?: string;
   icon?: string;
+  enableProjectRoot?: boolean;
 }
 
 export function generateProfessionalWiki(nodes: HorizonNode[], edges: HorizonEdge[] = [], standards: HorizonNode[] = [], options: WikiOptions = {}): string {
   const wikiTitle = options.title || 'Documentation Wiki';
   const author = options.author || 'Ingestalt Spatial Engine';
   const icon = options.icon || '📚';
+  const enableProjectRoot = options.enableProjectRoot ?? true;
   
   const sortedNodes = [...nodes].sort((a, b) => 
     (a.payload?.title || '').localeCompare(b.payload?.title || '')
@@ -22,7 +24,7 @@ export function generateProfessionalWiki(nodes: HorizonNode[], edges: HorizonEdg
   const serializedEdges = JSON.stringify(edges);
   const serializedStandards = JSON.stringify(standards);
 
-  const scriptContent = getWikiScript(serializedNodes, serializedEdges, serializedStandards);
+  const scriptContent = getWikiScript(serializedNodes, serializedEdges, serializedStandards, enableProjectRoot);
   
-  return getWikiHtml(wikiTitle, author, WIKI_STYLES, scriptContent, icon);
+  return getWikiHtml(wikiTitle, author, WIKI_STYLES, scriptContent, icon, enableProjectRoot);
 }
