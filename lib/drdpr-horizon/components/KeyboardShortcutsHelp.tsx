@@ -16,7 +16,9 @@ export function KeyboardShortcutsHelp() {
   const { isShortcutsHelpOpen, setShortcutsHelpOpen } = useUIStore();
   
   // Detect platform
-  const isMac = typeof navigator !== 'undefined' && navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+  const isMac = typeof navigator !== 'undefined' && 
+                ((typeof navigator.platform === 'string' && navigator.platform.toUpperCase().indexOf('MAC') >= 0) ||
+                 (typeof navigator.userAgent === 'string' && /Mac|iPhone|iPod|iPad/i.test(navigator.userAgent)));
   const mod = isMac ? '⌘' : 'Ctrl';
 
   if (!isShortcutsHelpOpen) return null;

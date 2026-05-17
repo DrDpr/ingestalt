@@ -40,7 +40,9 @@ export function useKeyboardShortcuts(options: KeyboardShortcutsOptions = {}) {
   } = useUIStore();
 
   // Detect platform for Cmd (Mac) vs Ctrl (Windows/Linux)
-  const isMac = typeof navigator !== 'undefined' && navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+  const isMac = typeof navigator !== 'undefined' && 
+                ((typeof navigator.platform === 'string' && navigator.platform.toUpperCase().indexOf('MAC') >= 0) ||
+                 (typeof navigator.userAgent === 'string' && /Mac|iPhone|iPod|iPad/i.test(navigator.userAgent)));
   const modKey = isMac ? 'metaKey' : 'ctrlKey';
 
   const handleKeyDown = useCallback(

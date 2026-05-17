@@ -15,7 +15,7 @@ export class FSASyncAdapter {
   }
   private serialize(node: any): string {
     const { content, ...restOfPayload } = node.payload;
-    
+
     // Merge core spatial data with payload customizations
     const frontmatter = {
       id: node.id,
@@ -23,7 +23,7 @@ export class FSASyncAdapter {
       position: node.position,
       ...restOfPayload
     };
-    
+
     // gray-matter's stringify will create the perfect Markdown + YAML file
     return matter.stringify(content || '', frontmatter);
   }
@@ -31,13 +31,13 @@ export class FSASyncAdapter {
   private async writeFile(root: FileSystemDirectoryHandle, path: string, content: string) {
     const parts = path.split(/[/\\]/); // Handle both slashes
     let current = root;
-    
+
     // Traverse/Create directories
     for (let i = 0; i < parts.length - 1; i++) {
       if (!parts[i]) continue;
       current = await current.getDirectoryHandle(parts[i], { create: true });
     }
-    
+
     // Write file
     const filename = parts[parts.length - 1];
     const fileHandle = await current.getFileHandle(filename, { create: true });

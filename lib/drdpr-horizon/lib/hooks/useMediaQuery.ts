@@ -9,12 +9,16 @@ import { useEffect, useState } from 'react';
  * @returns boolean - true if query matches
  */
 export function useMediaQuery(query: string): boolean {
-  const [matches, setMatches] = useState(false);
+  // Default to true (desktop-first) to prevent portal-based Sheet components from mounting
+  // during SSR/hydration and immediately unmounting, which crashes React.
+  const [matches, setMatches] = useState(true);
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
     const media = window.matchMedia(query);
     
-    // Set initial value
+    // Set correct value immediately after mount on the client
     setMatches(media.matches);
 
     // Create listener

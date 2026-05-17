@@ -16,16 +16,16 @@ export function parseMarkdownToNode(
   forceNewId: boolean = false
 ): ParsedResult {
   const { data, content } = matter(rawMarkdown);
-  
+
   // Generate truly unique IDs with better entropy
   const id = (forceNewId || !data.id)
     ? `node_${Date.now()}_${Math.random().toString(36).substring(2, 15)}_${Math.random().toString(36).substring(2, 9)}`
     : data.id;
   const configId = data.configId || data.config_id || (data.type ? `node_standards_${data.type}` : 'node_standards_other');
-  
+
   // Intelligent Title Extraction
   let title = data.title || data.name;
-  
+
   if (!title) {
     // Fallback 1: Try to find the first H1 in the content
     const h1Match = content.match(/^#\s+(.*)$/m);
@@ -33,7 +33,7 @@ export function parseMarkdownToNode(
       title = h1Match[1].trim();
     }
   }
-  
+
   const node: HorizonNode = {
     id,
     configId,
